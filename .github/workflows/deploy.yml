@@ -1,28 +1,42 @@
-name: Deploy to EC2  # ワークフローの名前 (任意)
+name: Deploy to EC2
 
 on:
   push:
-    branches: [ "main" ] # main ブランチに push されたときにワークフローを実行
+    branches: [ "main" ]
 
 jobs:
-  deploy: # ジョブの名前 (任意)
-    runs-on: ubuntu-latest # ワークフローを実行する環境 (今回は Ubuntu)
+  deploy:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code # ステップの名前 (任意)
-        uses: actions/checkout@v3 # actions/checkout@v3 アクションを使ってコードをチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Build Docker image # ステップの名前 (任意)
-        run: docker build -t my-app . # Docker イメージをビルド (my-app はイメージ名、. は Dockerfile がある場所)
+      - name: Build Docker image
+        run: docker build -t my-app .
 
-      - name: SSH remote server # ステップの名前 (任意)
-        uses: appleboy/ssh-action@v0.1.10 # appleboy/ssh-action@v0.1.10 アクションを使って SSH 接続
+      # ---  Docker イメージを Push するステップを追加  ---
+      - name: Docker Login to Docker Hub  # Docker Hub にログイン
+        uses: docker/login-action@v2
         with:
-          host: ${{ secrets.EC2_HOST }} # EC2 インスタンスの IP アドレスまたはホスト名 (GitHub Secrets で設定)
-          username: ${{ secrets.EC2_USER }} # EC2 インスタンスのユーザー名 (GitHub Secrets で設定)
-          key: ${{ secrets.EC2_SSH_KEY }} # EC2 インスタンスの SSH 秘密鍵 (GitHub Secrets で設定)
+          username: ${{ secrets.DOCKER_HUB_USERNAME }} # GitHub Secrets に登録した Docker Hub ユーザー名
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }} # GitHub Secrets に登録した Docker Hub パスワード
+
+      - name: Docker Push to Docker Hub  # Docker Hub に Push
+        run: docker push rtart/my-app:latest 
+
+      # ---  修正ここまで ---
+
+      - name: SSH remote server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker stop my-app || true # 既存のコンテナを停止 (my-app はコンテナ名)
-            docker rm my-app || true   # 既存のコンテナを削除 (my-app はコンテナ名)
-            docker run -d --name my-app -p 80:80 my-app # 新しいコンテナを起動 (my-app はコンテナ名、80:80 はポートマッピング)
-            echo "Successfully deployed!" # デプロイ成功メッセージを表示
+            docker stop my-app || true
+            docker rm my-app || true
+            # ---  docker run でイメージ名を修正  ---
+            docker run -d --name my-app -p 80:80 <docker-hub-username>/my-app:latest # イメージ名を修正
+            # ---  修正ここまで ---
+            echo "Successfully deployed!"
