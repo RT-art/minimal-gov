@@ -1,0 +1,28 @@
+name: Deploy to EC2  # ワークフローの名前 (任意)
+
+on:
+  push:
+    branches: [ "main" ] # main ブランチに push されたときにワークフローを実行
+
+jobs:
+  deploy: # ジョブの名前 (任意)
+    runs-on: ubuntu-latest # ワークフローを実行する環境 (今回は Ubuntu)
+
+    steps:
+      - name: Checkout code # ステップの名前 (任意)
+        uses: actions/checkout@v3 # actions/checkout@v3 アクションを使ってコードをチェックアウト
+
+      - name: Build Docker image # ステップの名前 (任意)
+        run: docker build -t my-app . # Docker イメージをビルド (my-app はイメージ名、. は Dockerfile がある場所)
+
+      - name: SSH remote server # ステップの名前 (任意)
+        uses: appleboy/ssh-action@v0.1.10 # appleboy/ssh-action@v0.1.10 アクションを使って SSH 接続
+        with:
+          host: ${{ secrets.EC2_HOST }} # EC2 インスタンスの IP アドレスまたはホスト名 (GitHub Secrets で設定)
+          username: ${{ secrets.EC2_USER }} # EC2 インスタンスのユーザー名 (GitHub Secrets で設定)
+          key: ${{ secrets.EC2_SSH_KEY }} # EC2 インスタンスの SSH 秘密鍵 (GitHub Secrets で設定)
+          script: |
+            docker stop my-app || true # 既存のコンテナを停止 (my-app はコンテナ名)
+            docker rm my-app || true   # 既存のコンテナを削除 (my-app はコンテナ名)
+            docker run -d --name my-app -p 80:80 my-app # 新しいコンテナを起動 (my-app はコンテナ名、80:80 はポートマッピング)
+            echo "Successfully deployed!" # デプロイ成功メッセージを表示
