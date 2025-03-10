@@ -32,5 +32,5 @@ jobs:
           script: |
             docker stop my-app || true
             docker rm my-app || true
-            docker run -d --name my-app -p 80:80 rtart/my-app:latest # イメージ名を修正
+            docker run -d --name my-app -p 80:5000 rtart/my-app:latest #portを変更
             echo "Successfully deployed!"
