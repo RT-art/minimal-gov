@@ -85,7 +85,7 @@ resource "aws_instance" "rt-practice-terraform" {
   subnet_id                   = aws_subnet.subnet-practice-terraform.id
   vpc_security_group_ids      = [aws_security_group.security-group-practice-terraform.id]
   associate_public_ip_address = true
-  key_name                    = "ec2-practice-docker.pem"
+  key_name                    = "ec2-practice-docker"
   user_data                   = <<-EOF
     #!/bin/bash
     sudo dnf update -y

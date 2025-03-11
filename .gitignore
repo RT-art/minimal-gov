@@ -221,7 +221,7 @@ override.tf.json
 # example: *tfplan*
 
 # Ignore CLI configuration files
-.terraformrc
+.terraformrcc:\Users\mailn\bk\.gitignore
 terraform.rc
 
-# End of https://www.toptal.com/developers/gitignore/api/terraform,python,git
+# End of c:\Users\mailn\bk\.gitignore://www.toptal.com/developers/gitignore/api/terraform,python,git
