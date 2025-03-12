@@ -97,17 +97,9 @@ resource "aws_instance" "rt-practice-terraform" {
   vpc_security_group_ids      = [aws_security_group.security-group-practice-terraform.id]
   associate_public_ip_address = true
   key_name                    = var.instance_key_name
-  user_data                   = <<-EOF
-    #!/bin/bash
-    sudo dnf update -y
-    sudo dnf install docker -y
-    sudo systemctl start docker
-    sudo systemctl enable docker
-    docker stop my-app || true
-    docker rm my-app || true
-    docker run -d --name my-app -p 80:5000 ${var.docker_image_name}
-    echo "Successfully deployed by Terraform!" > /tmp/terraform_deployed.txt
-    EOF
+  user_data = templatefile("setup-docker.sh.tpl", {
+    docker_image_name = var.docker_image_name
+  })
 
   tags = {
     Name = "rt-practice-terraform"

@@ -4,10 +4,10 @@ variable "vpc_cidr_block" {
   default     = "10.0.0.0/16"
 }
 
-variable "subnet_cidr_block"{
-    type = strung
-    description = "サブネットのCIDRブロック"
-    default =  "10.0.0.0/24"
+variable "subnet_cidr_block" {
+  type        = string
+  description = "サブネットのCIDRブロック"
+  default     = "10.0.0.0/24"
 }
 
 variable "availability_zone" {
@@ -31,7 +31,7 @@ variable "ami_name_filter" {
 variable "instance_key_name" {
   type        = string
   description = "EC2インスタンスのキーペア名"
-  default     = "ec2-practice-docker" 
+  default     = "ec2-practice-docker"
 }
 
 variable "docker_image_name" {
@@ -39,3 +39,4 @@ variable "docker_image_name" {
   description = "Dockerイメージ名"
   default     = "rtart/my-app:latest"
 }
+
