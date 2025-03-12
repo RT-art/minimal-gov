@@ -1,6 +1,5 @@
-
 resource "aws_vpc" "vpc-practice-terraform" {
-  cidr_block                       = "10.0.0.0/16"
+  cidr_block                       = var.vpc_cidr_block
   assign_generated_ipv6_cidr_block = false
   instance_tenancy                 = "default"
   enable_dns_support               = true
@@ -12,8 +11,8 @@ resource "aws_vpc" "vpc-practice-terraform" {
 
 resource "aws_subnet" "subnet-practice-terraform" {
   vpc_id                  = aws_vpc.vpc-practice-terraform.id
-  cidr_block              = "10.0.0.0/24"
-  availability_zone       = "ap-northeast-1a"
+  cidr_block              = var.subnet_cidr_block
+  availability_zone       = var.availability_zone
   map_public_ip_on_launch = true
   tags = {
     Name = "subnet-practice-terraform"
@@ -70,22 +69,34 @@ resource "aws_security_group_rule" "https-ingress-rule" {
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.security-group-practice-terraform.id
 }
+#セキュリティグループのアウトバウンドを未設定にしてたらlinuxコマンド反応しなかったため、全てのアウトバウンドを許可するように変更
+resource "aws_security_group_rule" "all-egress-rule" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.security-group-practice-terraform.id
+}
 
-data "aws_ami" "amazon_linux_2" {
+#参考にした記事のamiが、amaoznon-linux-2だったので、最新のamiを取得するように変更
+data "aws_ami" "amazon_linux_latest" {
   most_recent = true
   owners      = ["amazon"]
+
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"] # ワイルドカードを使用
+    values = [var.ami_name_filter]
   }
 }
+
 resource "aws_instance" "rt-practice-terraform" {
-  ami                         = data.aws_ami.amazon_linux_2.id
-  instance_type               = "t2.micro"
+  ami                         = data.aws_ami.amazon_linux_latest.id #amiの名前変更
+  instance_type               = var.instance_type
   subnet_id                   = aws_subnet.subnet-practice-terraform.id
   vpc_security_group_ids      = [aws_security_group.security-group-practice-terraform.id]
   associate_public_ip_address = true
-  key_name                    = "ec2-practice-docker"
+  key_name                    = var.instance_key_name
   user_data                   = <<-EOF
     #!/bin/bash
     sudo dnf update -y
@@ -94,7 +105,7 @@ resource "aws_instance" "rt-practice-terraform" {
     sudo systemctl enable docker
     docker stop my-app || true
     docker rm my-app || true
-    docker run -d --name my-app -p 80:5000 rtart/my-app:latest
+    docker run -d --name my-app -p 80:5000 ${var.docker_image_name}
     echo "Successfully deployed by Terraform!" > /tmp/terraform_deployed.txt
     EOF
 

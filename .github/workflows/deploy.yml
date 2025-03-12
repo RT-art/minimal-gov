@@ -23,6 +23,7 @@ jobs:
 
       - name: Docker Push to Docker Hub  # Docker Hub に Push
         run: docker push rtart/my-app:latest 
+
       - name: SSH remote server
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -32,5 +33,5 @@ jobs:
           script: |
             docker stop my-app || true
             docker rm my-app || true
-            docker run -d --name my-app -p 80:5000 rtart/my-app:latest #portを変更
+            docker run -d --name my-app -p 80:5000 rtart/my-app:latest 
             echo "Successfully deployed!"
