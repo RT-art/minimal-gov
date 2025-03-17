@@ -33,5 +33,6 @@ jobs:
           script: |
             docker stop my-app || true
             docker rm my-app || true
+            docker pull rtart/my-app:latest 
             docker run -d --name my-app -p 80:5000 rtart/my-app:latest 
             echo "デプロイが成功しました！"
