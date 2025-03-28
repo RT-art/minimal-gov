@@ -89,6 +89,17 @@ data "aws_ami" "amazon_linux_latest" {
     values = [var.ami_name_filter]
   }
 }
+# EIPを作成し、パブリックIPが変わってもCICDが動作するようにする
+resource "aws_eip" "eip_for_instance" {
+  tags = {
+    Name = "eip-rt-practice"
+  }
+}
+
+resource "aws_eip_association" "eip_assoc" {
+  instance_id   = aws_instance.rt-practice-terraform.id
+  allocation_id = aws_eip.eip_for_instance.id
+}
 
 resource "aws_instance" "rt-practice-terraform" {
   ami                         = data.aws_ami.amazon_linux_latest.id #amiの名前変更
