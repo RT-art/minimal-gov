@@ -4,36 +4,89 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  IMAGE_NAME: rtart/my-app
+
 jobs:
-  deploy:
+  build_and_deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t rtart/my-app:latest .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Docker Login to Docker Hub
-        uses: docker/login-action@v2
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      - name: Docker Push to Docker Hub
-        run: docker push rtart/my-app:latest
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          # main ブランチへのプッシュ時に 'latest' と Git SHA タグを生成
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: SSH remote server
-        uses: appleboy/ssh-action@v0.1.10
+      - name: Build and push Docker image
+        id: build-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha # GitHub Actions のキャッシュを利用
+          cache-to: type=gha,mode=max # キャッシュを書き出す
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3 
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # ↓↓↓ sudo を追加 ↓↓↓
-            sudo docker stop my-app || true
-            sudo docker rm my-app || true
-            sudo docker pull rtart/my-app:latest 
-            sudo docker run -d --name my-app -p 80:5000 rtart/my-app:latest 
-            echo "デプロイが成功しました！"
+            # 環境変数としてイメージ名とタグを設定 (可読性のため)
+            IMAGE_TAG=${{ steps.meta.outputs.version }} # metadata-action が生成したSHAタグ
+            IMAGE_NAME=${{ env.IMAGE_NAME }}
+            CONTAINER_NAME=my-app
+
+            echo "Deploying image: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+            # 1. 最新イメージをプル
+            sudo docker pull "${IMAGE_NAME}:${IMAGE_TAG}"
+
+            # 2. 既存コンテナがあれば停止・削除 (失敗しても続行)
+            if [ "$(sudo docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
+              echo "Stopping existing container..."
+              sudo docker stop ${CONTAINER_NAME}
+            fi
+            if [ "$(sudo docker ps -aq -f status=exited -f name=^/${CONTAINER_NAME}$)" ]; then
+              echo "Removing existing container..."
+              sudo docker rm ${CONTAINER_NAME}
+            fi
+
+            # 3. 新しいコンテナを実行
+            #   -d: デタッチモード (バックグラウンド実行)
+            #   --name: コンテナ名指定
+            #   -p 80:8000: ホストのポート80をコンテナのポート8000にマッピング
+            #   --restart always: Dockerデーモン起動時やコンテナが予期せず終了した場合に自動再起動
+            echo "Running new container..."
+            sudo docker run \
+              -d \
+              --name ${CONTAINER_NAME} \
+              -p 80:8000 \
+              --restart always \
+              "${IMAGE_NAME}:${IMAGE_TAG}"
+
+            # 4. 古い未使用イメージを削除 
+            echo "Pruning old images..."
+            sudo docker image prune -af
+
+            echo "Deployment successful! Container '${CONTAINER_NAME}' is running image '${IMAGE_NAME}:${IMAGE_TAG}'"
