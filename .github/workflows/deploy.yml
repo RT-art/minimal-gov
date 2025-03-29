@@ -15,14 +15,14 @@ jobs:
       - name: Build Docker image
         run: docker build -t rtart/my-app:latest .
 
-      - name: Docker Login to Docker Hub  # Docker Hub にログイン
+      - name: Docker Login to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }} # GitHub Secrets に登録した Docker Hub ユーザー名
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }} # GitHub Secrets に登録した Docker Hub パスワード
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      - name: Docker Push to Docker Hub  # Docker Hub に Push
-        run: docker push rtart/my-app:latest 
+      - name: Docker Push to Docker Hub
+        run: docker push rtart/my-app:latest
 
       - name: SSH remote server
         uses: appleboy/ssh-action@v0.1.10
@@ -31,8 +31,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker stop my-app || true
-            docker rm my-app || true
-            docker pull rtart/my-app:latest 
-            docker run -d --name my-app -p 80:5000 rtart/my-app:latest 
+            # ↓↓↓ sudo を追加 ↓↓↓
+            sudo docker stop my-app || true
+            sudo docker rm my-app || true
+            sudo docker pull rtart/my-app:latest 
+            sudo docker run -d --name my-app -p 80:5000 rtart/my-app:latest 
             echo "デプロイが成功しました！"
