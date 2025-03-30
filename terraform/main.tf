@@ -90,15 +90,22 @@ data "aws_ami" "amazon_linux_latest" {
   }
 }
 # EIPを作成し、パブリックIPが変わってもCICDが動作するようにする
-resource "aws_eip" "eip_for_instance" {
-  tags = {
-    Name = "eip-rt-practice"
+# resource "aws_eip" "eip_for_instance" {
+#   tags = {
+#     Name = "eip-rt-practice"
+#   }
+# } # ← このブロックは不要
+
+# EIPを手動で作成し、destroy時に削除しないようにする
+data "aws_eip" "rt_eip" {
+  filter {
+    name   = "tag:Name"
+    values = ["rt-practice-eip"]
   }
 }
-
 resource "aws_eip_association" "eip_assoc" {
   instance_id   = aws_instance.rt-practice-terraform.id
-  allocation_id = aws_eip.eip_for_instance.id
+  allocation_id = data.aws_eip.rt_eip.id
 }
 
 resource "aws_instance" "rt-practice-terraform" {
@@ -106,7 +113,7 @@ resource "aws_instance" "rt-practice-terraform" {
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.subnet-practice-terraform.id
   vpc_security_group_ids      = [aws_security_group.security-group-practice-terraform.id]
-  associate_public_ip_address = true
+  associate_public_ip_address = false # EIPを使うため、パブリックIPは割り当てない
   key_name                    = var.instance_key_name
   user_data = templatefile("setup-docker.sh.tpl", {
     docker_image_name = var.docker_image_name
