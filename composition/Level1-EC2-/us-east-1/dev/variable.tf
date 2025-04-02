@@ -46,10 +46,9 @@ variable "comp_instance_type" {
   default     = "t3.micro" # 必要に応じてデフォルト値を設定
 }
 
-variable "comp_ami_name_filter" {
+variable "comp_ami_ssm_parameter_name" {
   type        = string
-  description = "Name filter for the AWS AMI data source."
-  default     = "amzn2023-ami-hvm-*-x86_64-gp2" # 例: Amazon Linux 2023
+  description = "SSM parameter name for the desired AMI."
 }
 
 variable "comp_instance_key_name" {

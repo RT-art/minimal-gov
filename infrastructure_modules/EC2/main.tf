@@ -1,16 +1,5 @@
 #EC2 Module
 
-# AMI ID の取得 
-data "aws_ami" "selected_ami" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = [var.ami_name_filter]
-  }
-}
-
 # UserData のレンダリング
 locals {
   rendered_user_data = templatefile("${path.module}/${var.user_data_template_path}", {
@@ -21,13 +10,13 @@ locals {
 
 
 module "ec2_instance" {
-  source = "../../resource_modules/compute/ec2"
+  source = "../../resource_modules/compute/ec2_instance"
 
   # --- 基本設定 ---
   name          = var.instance_name
   instance_type = var.instance_type
-  ami           = data.aws_ami.selected_ami.id
   key_name      = var.instance_key_name
+  ami_ssm_parameter = var.ami_ssm_parameter_name
 
   # --- ネットワーク設定 ---
   subnet_id                   = var.subnet_id
@@ -41,7 +30,7 @@ module "ec2_instance" {
   tags = var.tags
 }
 
-# 既存 EIP の取得 (元のコードと同様に data source を使用)
+# 既存 EIP の取得
 data "aws_eip" "existing_eip" {
   filter {
     name   = "tag:Name"

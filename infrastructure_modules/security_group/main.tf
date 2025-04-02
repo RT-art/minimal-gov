@@ -2,7 +2,7 @@
 
 module "sg" {
   # リソースモジュールを参照
-  source = "../../resource_modules/compute/security_group"
+  source = "../../resource_modules/compute/security_group" # 作成したSG用Infraモジュールのパス
 
   # --- 基本設定 ---
   name        = var.sg_name
@@ -22,7 +22,4 @@ module "sg" {
 
   # --- タグ ---
   tags = var.tags # 共通タグを受け取る (Name タグはモジュール内で自動的に付与される)
-
-  # --- その他 ---
-  # use_name_prefix = true # デフォルトtrue (Nameタグが更新可能)
 }

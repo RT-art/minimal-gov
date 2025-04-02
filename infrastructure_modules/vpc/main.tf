@@ -3,7 +3,7 @@
 # Public Subnet用にルートテーブルを作成し、IGWへのルートを設定する
 
 module "vpc" {
-  source = "../../resource_modules/network/vpc"
+  source = "../../resource_modules/network"# 作成したNetwork用Infraモジュールのパス
 
   # --- VPC ---
   name = var.vpc_name
@@ -17,7 +17,7 @@ module "vpc" {
   database_subnets= [] # Database Subnet は後日作成
 
   # --- Internet Gateway & Routing ---
-  enable_internet_gateway = true  # IGW を作成し VPC にアタッチ (Default: true)
+  create_igw = true  # IGW を作成し VPC にアタッチ (Default: true)
   # enable_nat_gateway    = false # NAT Gateway は後日作成 (Default: false if private_subnets is empty)
   # single_nat_gateway    = false # NAT Gateway は後日作成 (Default: false)
 

@@ -12,7 +12,7 @@ variable "instance_type" {
   # No default, must be provided by composition layer
 }
 
-variable "ami_name_filter" {
+variable "ami_ssm_parameter_name" {
   type        = string
   description = "Name filter for the AWS AMI data source (e.g., 'amzn2023-ami-hvm-*-x86_64-gp2')."
   # No default, must be provided by composition layer
