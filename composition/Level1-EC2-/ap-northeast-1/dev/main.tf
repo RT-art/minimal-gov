@@ -12,9 +12,9 @@ module "network" {
   tags              = local.common_tags
 }
 
-# ########################################
-# # Security Group Infrastructure
-# ########################################
+########################################
+# Security Group Infrastructure
+########################################
 module "security_group" {
   source = "../../../../infrastructure_modules/security_group" # 作成したSG用Infraモジュールのパス
 
