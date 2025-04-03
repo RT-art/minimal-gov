@@ -1,5 +1,5 @@
 locals {
-  s3_bucket_name      = lower("${var.app_name}-tfstate-${var.region}-")
+  s3_bucket_name = lower("${var.app_name}-tfstate-${var.region}-${var.aws_account_id}")
   dynamodb_table_name = lower("${var.app_name}-tf-locks")
 
   common_tags = merge(var.tags, {
@@ -10,11 +10,12 @@ locals {
   versioning = {
     enabled = var.versioning_enabled
   }
-  
-  global_secondary_indexes = []
-  local_secondary_indexes  = []
-  replica_regions          = []
 
-
+attributes = [
+    {
+      name = "LockID"  
+      type = "S"       
+    }
+  ]
 
 }

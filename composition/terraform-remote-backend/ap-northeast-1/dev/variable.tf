@@ -15,12 +15,6 @@ variable "region" {
   description = "The AWS region this bucket should reside in."
   type        = string
 }
-
-variable "tags" {
-  description = "A mapping of tags to assign to the resources."
-  type        = map(any)
-}
-
 ########################################
 ## S3
 ########################################

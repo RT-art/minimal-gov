@@ -21,6 +21,11 @@ variable "tags" {
   type        = map(any)
 }
 
+variable "aws_account_id" {
+  description = "AWS Account ID."
+  type        = string
+}
+
 ########################################
 ## S3
 ########################################
