@@ -1,4 +1,24 @@
-# infrastructure_modules/compute/variables.tf
+# SG
+
+variable "sg_name" {
+  type        = string
+  description = "Name tag for the Security Group."
+  default     = "security-group-practice-terraform"
+}
+
+variable "vpc_id" {
+  type        = string
+  description = "ID of the VPC where the Security Group will be created."
+  # No default, must be provided by composition layer (from network module output)
+}
+
+variable "ingress_cidr_blocks" {
+  type        = list(string)
+  description = "List of IPv4 CIDR blocks for the ingress rules (HTTP, HTTPS, SSH)."
+  default     = ["0.0.0.0/0"]
+}
+
+# EC2
 
 variable "instance_name" {
   type        = string
@@ -34,12 +54,6 @@ variable "subnet_id" {
   type        = string
   description = "ID of the Subnet to launch the instance in."
   # No default, must be provided by composition layer (e.g., from network module output)
-}
-
-variable "security_group_id" {
-  type        = string
-  description = "ID of the Security Group to associate with the instance."
-  # No default, must be provided by composition layer (e.g., from security group module output)
 }
 
 variable "eip_name_tag_filter" {

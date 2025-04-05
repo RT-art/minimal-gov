@@ -1,5 +1,5 @@
 locals {
-  s3_bucket_name = lower("${var.app_name}-tfstate-${var.region}-${var.aws_account_id}")
+  s3_bucket_name      = lower("${var.app_name}-tfstate-${var.region}-${var.aws_account_id}")
   dynamodb_table_name = lower("${var.app_name}-tf-locks")
 
   common_tags = merge(var.tags, {
@@ -11,10 +11,10 @@ locals {
     enabled = var.versioning_enabled
   }
 
-attributes = [
+  attributes = [
     {
-      name = "LockID"  
-      type = "S"       
+      name = "LockID"
+      type = "S"
     }
   ]
 
