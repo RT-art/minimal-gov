@@ -17,10 +17,10 @@ output "private_ip" {
 
 output "associated_eip_public_ip" {
   description = "The public IP address of the EIP associated with the instance."
-  value       = data.aws_eip.existing_eip.public_ip
+  value       = aws_eip.this.public_ip
 }
 
 output "associated_eip_allocation_id" {
   description = "The allocation ID of the EIP associated with the instance."
-  value       = data.aws_eip.existing_eip.id
+  value       = aws_eip.this.id
 }

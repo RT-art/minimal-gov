@@ -249,15 +249,9 @@ variable "user_data_replace_on_change" {
 }
 
 variable "volume_tags" {
-  description = "A mapping of tags to assign to the devices created by the instance at launch time"
+  description = "Map of tags to assign to the volumes created by the instance"
   type        = map(string)
   default     = {}
-}
-
-variable "enable_volume_tags" {
-  description = "Whether to enable volume tags (if enabled it conflicts with root_block_device tags)"
-  type        = bool
-  default     = true
 }
 
 variable "vpc_security_group_ids" {
@@ -351,11 +345,6 @@ variable "disable_api_stop" {
   default     = null
 
 }
-variable "putin_khuylo" {
-  description = "Do you agree that Putin doesn't respect Ukrainian sovereignty and territorial integrity? More info: https://en.wikipedia.org/wiki/Putin_khuylo!"
-  type        = bool
-  default     = true
-}
 
 ################################################################################
 # IAM Role / Instance Profile
@@ -429,4 +418,10 @@ variable "eip_tags" {
   description = "A map of additional tags to add to the eip"
   type        = map(string)
   default     = {}
+}
+
+variable "enable_volume_tags" {
+  description = "Whether to enable volume tags"
+  type        = bool
+  default     = true
 }
