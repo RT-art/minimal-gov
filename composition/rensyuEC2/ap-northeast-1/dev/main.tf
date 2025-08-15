@@ -4,7 +4,7 @@
 # Network Infrastructure
 ########################################
 module "network" {
-  source = "../../../../infrastructure_modules/vpc" 
+  source            = "../../../../infrastructure_modules/vpc"
   vpc_cidr_block    = var.comp_vpc_cidr_block
   subnet_cidr_block = var.comp_subnet_cidr_block
   availability_zone = var.comp_availability_zone
@@ -15,7 +15,7 @@ module "network" {
 # Compute Infrastructure
 ########################################
 module "compute" {
-  source = "../../../../infrastructure_modules/EC2" 
+  source = "../../../../infrastructure_modules/EC2"
 
   # SG
   vpc_id              = module.network.vpc_id

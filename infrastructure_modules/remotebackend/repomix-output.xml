@@ -1,0 +1,148 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+local.tf
+main.tf
+outputs.tf
+variable.tf
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="local.tf">
+locals {
+  s3_bucket_name_raw = lower(replace("${var.app_name}-tfstate-${var.region}-${var.aws_account_id}", "_", "-"))
+  s3_bucket_name_63  = substr(local.s3_bucket_name_raw, 0, 63)
+  s3_bucket_name     = trim(local.s3_bucket_name_63, "-.")
+
+  versioning = {
+    enabled = var.versioning_enabled
+  }
+}
+</file>
+
+<file path="main.tf">
+module "state_bucket" {
+  source = "../../resource_modules/storage/s3"
+
+  bucket                               = local.s3_bucket_name
+  versioning                           = { enabled = var.versioning_enabled }
+  server_side_encryption_configuration = var.server_side_encryption_configuration
+
+  control_object_ownership = var.control_object_ownership
+  object_ownership         = "BucketOwnerEnforced"
+
+  # Public Access Block
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  # 通信/暗号化関連のポリシー
+  attach_require_latest_tls_policy       = true
+  attach_deny_unencrypted_object_uploads = true
+  attach_deny_insecure_transport_policy  = true
+
+  expected_bucket_owner = var.aws_account_id
+  force_destroy         = false
+}
+</file>
+
+<file path="outputs.tf">
+output "state_bucket_name" {
+  value = module.state_bucket.s3_bucket_id
+}
+</file>
+
+<file path="variable.tf">
+########################################
+# Metadata
+########################################
+
+variable "env" {
+  description = "The name of the environment."
+  type        = string
+}
+
+variable "app_name" {
+  description = "The name of the application."
+  type        = string
+}
+
+variable "region" {
+  description = "The AWS region this bucket should reside in."
+  type        = string
+}
+
+variable "tags" {
+  description = "Additional tags to merge on top of provider default_tags"
+  type        = map(string)
+  default     = {}
+}
+
+variable "aws_account_id" {
+  description = "AWS Account ID."
+  type        = string
+}
+
+########################################
+## S3
+########################################
+
+variable "versioning_enabled" {
+  description = "Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state."
+  type        = bool
+}
+
+variable "server_side_encryption_configuration" {
+  description = "Map containing server-side encryption configuration."
+  type        = any
+}
+
+variable "control_object_ownership" {
+  description = "Whether to manage S3 Bucket Ownership Controls on this bucket."
+  type        = bool
+}
+</file>
+
+</files>

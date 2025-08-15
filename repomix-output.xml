@@ -45,9 +45,11 @@ The content is organized as follows:
 .gitignore
 app.py
 composition/rensyuEC2/ap-northeast-1/dev/.terraform.lock.hcl
+composition/rensyuEC2/ap-northeast-1/dev/backend.tf
 composition/rensyuEC2/ap-northeast-1/dev/locals.tf
 composition/rensyuEC2/ap-northeast-1/dev/main.tf
 composition/rensyuEC2/ap-northeast-1/dev/provider.tf
+composition/rensyuEC2/ap-northeast-1/dev/terraform.tfvars.example
 composition/rensyuEC2/ap-northeast-1/dev/variable.tf
 composition/terraform-remote-backend/ap-northeast-1/dev/.terraform.lock.hcl
 composition/terraform-remote-backend/ap-northeast-1/dev/local.tf
@@ -126,6 +128,20 @@ provider "registry.terraform.io/hashicorp/aws" {
 }
 </file>
 
+<file path="composition/rensyuEC2/ap-northeast-1/dev/backend.tf">
+terraform {
+  backend "s3" {
+    # backend.tf には変数が使えないため、以下の値を環境に合わせて手動で設定してください。
+    # AWSアカウントIDは `aws sts get-caller-identity --query Account --output text` コマンドで確認できます。
+    bucket         = "rensyu-app-tfstate-ap-northeast-1-[YOUR_AWS_ACCOUNT_ID]"
+    key            = "rensyuEC2/ap-northeast-1/dev/terraform.tfstate"
+    region         = "ap-northeast-1"
+    dynamodb_table = "rensyu-app-tf-locks"
+    encrypt        = true
+  }
+}
+</file>
+
 <file path="composition/rensyuEC2/ap-northeast-1/dev/locals.tf">
 locals {
   common_tags = {
@@ -134,43 +150,6 @@ locals {
     ManagedBy   = "Terraform"
     Region      = var.region
   }
-}
-</file>
-
-<file path="composition/rensyuEC2/ap-northeast-1/dev/main.tf">
-# composition/my-app/ap-northeast-1/dev/main.tf
-
-########################################
-# Network Infrastructure
-########################################
-module "network" {
-  source = "../../../../infrastructure_modules/vpc" # 作成したNetwork用Infraモジュールのパス
-
-  vpc_cidr_block    = var.comp_vpc_cidr_block
-  subnet_cidr_block = var.comp_subnet_cidr_block
-  availability_zone = var.comp_availability_zone
-  tags              = local.common_tags
-}
-
-########################################
-# Compute Infrastructure
-########################################
-module "compute" {
-  source = "../../../../infrastructure_modules/EC2" # EC2用Infraモジュールのパス
-
-  # SG
-  vpc_id              = module.network.vpc_id
-  ingress_cidr_blocks = var.comp_ingress_cidr_blocks
-  tags                = local.common_tags
-
-  # EC2
-  instance_name          = var.comp_instance_name
-  instance_type          = var.comp_instance_type
-  ami_ssm_parameter_name = var.comp_ami_ssm_parameter_name
-  instance_key_name      = var.comp_instance_key_name
-  subnet_id              = module.network.subnet_id
-  eip_name_tag_filter    = var.comp_eip_name_tag_filter
-  docker_image_name      = var.comp_docker_image_name
 }
 </file>
 
@@ -185,6 +164,33 @@ terraform {
     }
   }
 }
+</file>
+
+<file path="composition/rensyuEC2/ap-northeast-1/dev/terraform.tfvars.example">
+# composition/rensyuEC2/ap-northeast-1/dev/terraform.tfvars.example
+
+env                        = "dev"
+region                     = "ap-northeast-1"
+app_name                   = "rensyu-app"
+
+# --- VPC Network Variables ---
+comp_vpc_cidr_block      = "10.0.0.0/16"
+comp_subnet_cidr_block   = "10.0.1.0/24"
+comp_availability_zone   = "ap-northeast-1a"
+
+# --- EC2 Compute Variables ---
+# Amazon Linux 2023 の最新AMIを指定
+comp_ami_ssm_parameter_name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64"
+# 事前に作成したキーペアの名前に変更してください
+comp_instance_key_name      = "your-key-pair-name"
+
+# --- Docker Image ---
+# GitHub ActionsでビルドするDockerイメージ名を指定
+comp_docker_image_name = "rtart/my-app:latest"
+
+# --- EIP ---
+# 作成するEIPに付けるNameタグ
+comp_eip_name_tag_filter = "rt-practice-eip-dev"
 </file>
 
 <file path="composition/rensyuEC2/ap-northeast-1/dev/variable.tf">
@@ -304,35 +310,6 @@ terraform {
       version = ">= 5.79"
     }
   }
-}
-</file>
-
-<file path="infrastructure_modules/EC2/outputs.tf">
-# infrastructure_modules/compute/outputs.tf
-
-output "instance_id" {
-  description = "The ID of the EC2 instance created."
-  value       = module.ec2_instance.id
-}
-
-output "instance_arn" {
-  description = "The ARN of the EC2 instance created."
-  value       = module.ec2_instance.arn
-}
-
-output "private_ip" {
-  description = "The private IP address assigned to the instance."
-  value       = module.ec2_instance.private_ip
-}
-
-output "associated_eip_public_ip" {
-  description = "The public IP address of the EIP associated with the instance."
-  value       = data.aws_eip.existing_eip.public_ip
-}
-
-output "associated_eip_allocation_id" {
-  description = "The allocation ID of the EIP associated with the instance."
-  value       = data.aws_eip.existing_eip.id
 }
 </file>
 
@@ -540,643 +517,6 @@ try {
 
 } catch {
     Write-Error "An error occurred: $($_.Exception.Message)"
-}
-</file>
-
-<file path="resource_modules/compute/ec2_instance/main.tf">
-########################################
-# AWS EC2 Instance resource module
-#
-# https://github.com/terraform-aws-modules/terraform-aws-ec2-instance
-########################################
-
-data "aws_partition" "current" {}
-
-locals {
-  create = var.create && var.putin_khuylo
-
-  is_t_instance_type = replace(var.instance_type, "/^t(2|3|3a|4g){1}\\..*$/", "1") == "1" ? true : false
-
-  ami = try(coalesce(var.ami, try(nonsensitive(data.aws_ssm_parameter.this[0].value), null)), null)
-}
-
-data "aws_ssm_parameter" "this" {
-  count = local.create && var.ami == null ? 1 : 0
-
-  name = var.ami_ssm_parameter
-}
-
-################################################################################
-# Instance
-################################################################################
-
-resource "aws_instance" "this" {
-  count = local.create && !var.ignore_ami_changes && !var.create_spot_instance ? 1 : 0
-
-  ami                  = local.ami
-  instance_type        = var.instance_type
-  // Removed deprecated attribute "cpu_core_count"
-  cpu_options {
-    threads_per_core = var.cpu_threads_per_core
-  }
-  hibernation          = var.hibernation
-
-  user_data                   = var.user_data
-  user_data_base64            = var.user_data_base64
-  user_data_replace_on_change = var.user_data_replace_on_change
-
-  availability_zone      = var.availability_zone
-  subnet_id              = var.subnet_id
-  vpc_security_group_ids = var.vpc_security_group_ids
-
-  key_name             = var.key_name
-  monitoring           = var.monitoring
-  get_password_data    = var.get_password_data
-  iam_instance_profile = var.create_iam_instance_profile ? aws_iam_instance_profile.this[0].name : var.iam_instance_profile
-
-  associate_public_ip_address = var.associate_public_ip_address
-  private_ip                  = var.private_ip
-  secondary_private_ips       = var.secondary_private_ips
-  ipv6_address_count          = var.ipv6_address_count
-  ipv6_addresses              = var.ipv6_addresses
-
-  ebs_optimized = var.ebs_optimized
-
-  dynamic "cpu_options" {
-    for_each = length(var.cpu_options) > 0 ? [var.cpu_options] : []
-
-    content {
-      core_count       = try(cpu_options.value.core_count, null)
-      threads_per_core = try(cpu_options.value.threads_per_core, null)
-      amd_sev_snp      = try(cpu_options.value.amd_sev_snp, null)
-    }
-  }
-
-  dynamic "capacity_reservation_specification" {
-    for_each = length(var.capacity_reservation_specification) > 0 ? [var.capacity_reservation_specification] : []
-
-    content {
-      capacity_reservation_preference = try(capacity_reservation_specification.value.capacity_reservation_preference, null)
-
-      dynamic "capacity_reservation_target" {
-        for_each = try([capacity_reservation_specification.value.capacity_reservation_target], [])
-
-        content {
-          capacity_reservation_id                 = try(capacity_reservation_target.value.capacity_reservation_id, null)
-          capacity_reservation_resource_group_arn = try(capacity_reservation_target.value.capacity_reservation_resource_group_arn, null)
-        }
-      }
-    }
-  }
-
-  dynamic "root_block_device" {
-    for_each = var.root_block_device
-
-    content {
-      delete_on_termination = try(root_block_device.value.delete_on_termination, null)
-      encrypted             = try(root_block_device.value.encrypted, null)
-      iops                  = try(root_block_device.value.iops, null)
-      kms_key_id            = lookup(root_block_device.value, "kms_key_id", null)
-      volume_size           = try(root_block_device.value.volume_size, null)
-      volume_type           = try(root_block_device.value.volume_type, null)
-      throughput            = try(root_block_device.value.throughput, null)
-      tags                  = try(root_block_device.value.tags, null)
-    }
-  }
-
-  dynamic "ebs_block_device" {
-    for_each = var.ebs_block_device
-
-    content {
-      delete_on_termination = try(ebs_block_device.value.delete_on_termination, null)
-      device_name           = ebs_block_device.value.device_name
-      encrypted             = try(ebs_block_device.value.encrypted, null)
-      iops                  = try(ebs_block_device.value.iops, null)
-      kms_key_id            = lookup(ebs_block_device.value, "kms_key_id", null)
-      snapshot_id           = lookup(ebs_block_device.value, "snapshot_id", null)
-      volume_size           = try(ebs_block_device.value.volume_size, null)
-      volume_type           = try(ebs_block_device.value.volume_type, null)
-      throughput            = try(ebs_block_device.value.throughput, null)
-      tags                  = try(ebs_block_device.value.tags, null)
-    }
-  }
-
-  dynamic "ephemeral_block_device" {
-    for_each = var.ephemeral_block_device
-
-    content {
-      device_name  = ephemeral_block_device.value.device_name
-      no_device    = try(ephemeral_block_device.value.no_device, null)
-      virtual_name = try(ephemeral_block_device.value.virtual_name, null)
-    }
-  }
-
-  dynamic "metadata_options" {
-    for_each = length(var.metadata_options) > 0 ? [var.metadata_options] : []
-
-    content {
-      http_endpoint               = try(metadata_options.value.http_endpoint, "enabled")
-      http_tokens                 = try(metadata_options.value.http_tokens, "required")
-      http_put_response_hop_limit = try(metadata_options.value.http_put_response_hop_limit, 1)
-      instance_metadata_tags      = try(metadata_options.value.instance_metadata_tags, null)
-    }
-  }
-
-  dynamic "network_interface" {
-    for_each = var.network_interface
-
-    content {
-      device_index          = network_interface.value.device_index
-      network_interface_id  = lookup(network_interface.value, "network_interface_id", null)
-      delete_on_termination = try(network_interface.value.delete_on_termination, false)
-    }
-  }
-
-  dynamic "private_dns_name_options" {
-    for_each = length(var.private_dns_name_options) > 0 ? [var.private_dns_name_options] : []
-
-    content {
-      hostname_type                        = try(private_dns_name_options.value.hostname_type, null)
-      enable_resource_name_dns_a_record    = try(private_dns_name_options.value.enable_resource_name_dns_a_record, null)
-      enable_resource_name_dns_aaaa_record = try(private_dns_name_options.value.enable_resource_name_dns_aaaa_record, null)
-    }
-  }
-
-  dynamic "launch_template" {
-    for_each = length(var.launch_template) > 0 ? [var.launch_template] : []
-
-    content {
-      id      = lookup(var.launch_template, "id", null)
-      name    = lookup(var.launch_template, "name", null)
-      version = lookup(var.launch_template, "version", null)
-    }
-  }
-
-  dynamic "maintenance_options" {
-    for_each = length(var.maintenance_options) > 0 ? [var.maintenance_options] : []
-
-    content {
-      auto_recovery = try(maintenance_options.value.auto_recovery, null)
-    }
-  }
-
-  enclave_options {
-    enabled = var.enclave_options_enabled
-  }
-
-  source_dest_check                    = length(var.network_interface) > 0 ? null : var.source_dest_check
-  disable_api_termination              = var.disable_api_termination
-  disable_api_stop                     = var.disable_api_stop
-  instance_initiated_shutdown_behavior = var.instance_initiated_shutdown_behavior
-  placement_group                      = var.placement_group
-  tenancy                              = var.tenancy
-  host_id                              = var.host_id
-
-  credit_specification {
-    cpu_credits = local.is_t_instance_type ? var.cpu_credits : null
-  }
-
-  timeouts {
-    create = try(var.timeouts.create, null)
-    update = try(var.timeouts.update, null)
-    delete = try(var.timeouts.delete, null)
-  }
-
-  tags        = merge({ "Name" = var.name }, var.instance_tags, var.tags)
-  volume_tags = var.enable_volume_tags ? merge({ "Name" = var.name }, var.volume_tags) : null
-}
-
-################################################################################
-# Instance - Ignore AMI Changes
-################################################################################
-
-resource "aws_instance" "ignore_ami" {
-  count = local.create && var.ignore_ami_changes && !var.create_spot_instance ? 1 : 0
-
-  ami                  = local.ami
-  instance_type        = var.instance_type
-  // Removed deprecated attribute "cpu_core_count"
-  cpu_options {
-    threads_per_core = var.cpu_threads_per_core
-  }
-  hibernation          = var.hibernation
-
-  user_data                   = var.user_data
-  user_data_base64            = var.user_data_base64
-  user_data_replace_on_change = var.user_data_replace_on_change
-
-  availability_zone      = var.availability_zone
-  subnet_id              = var.subnet_id
-  vpc_security_group_ids = var.vpc_security_group_ids
-
-  key_name             = var.key_name
-  monitoring           = var.monitoring
-  get_password_data    = var.get_password_data
-  iam_instance_profile = var.create_iam_instance_profile ? aws_iam_instance_profile.this[0].name : var.iam_instance_profile
-
-  associate_public_ip_address = var.associate_public_ip_address
-  private_ip                  = var.private_ip
-  secondary_private_ips       = var.secondary_private_ips
-  ipv6_address_count          = var.ipv6_address_count
-  ipv6_addresses              = var.ipv6_addresses
-
-  ebs_optimized = var.ebs_optimized
-
-  dynamic "cpu_options" {
-    for_each = length(var.cpu_options) > 0 ? [var.cpu_options] : []
-
-    content {
-      core_count       = try(cpu_options.value.core_count, null)
-      threads_per_core = try(cpu_options.value.threads_per_core, null)
-      amd_sev_snp      = try(cpu_options.value.amd_sev_snp, null)
-    }
-  }
-
-  dynamic "capacity_reservation_specification" {
-    for_each = length(var.capacity_reservation_specification) > 0 ? [var.capacity_reservation_specification] : []
-
-    content {
-      capacity_reservation_preference = try(capacity_reservation_specification.value.capacity_reservation_preference, null)
-
-      dynamic "capacity_reservation_target" {
-        for_each = try([capacity_reservation_specification.value.capacity_reservation_target], [])
-
-        content {
-          capacity_reservation_id                 = try(capacity_reservation_target.value.capacity_reservation_id, null)
-          capacity_reservation_resource_group_arn = try(capacity_reservation_target.value.capacity_reservation_resource_group_arn, null)
-        }
-      }
-    }
-  }
-
-  dynamic "root_block_device" {
-    for_each = var.root_block_device
-
-    content {
-      delete_on_termination = try(root_block_device.value.delete_on_termination, null)
-      encrypted             = try(root_block_device.value.encrypted, null)
-      iops                  = try(root_block_device.value.iops, null)
-      kms_key_id            = lookup(root_block_device.value, "kms_key_id", null)
-      volume_size           = try(root_block_device.value.volume_size, null)
-      volume_type           = try(root_block_device.value.volume_type, null)
-      throughput            = try(root_block_device.value.throughput, null)
-      tags                  = try(root_block_device.value.tags, null)
-    }
-  }
-
-  dynamic "ebs_block_device" {
-    for_each = var.ebs_block_device
-
-    content {
-      delete_on_termination = try(ebs_block_device.value.delete_on_termination, null)
-      device_name           = ebs_block_device.value.device_name
-      encrypted             = try(ebs_block_device.value.encrypted, null)
-      iops                  = try(ebs_block_device.value.iops, null)
-      kms_key_id            = lookup(ebs_block_device.value, "kms_key_id", null)
-      snapshot_id           = lookup(ebs_block_device.value, "snapshot_id", null)
-      volume_size           = try(ebs_block_device.value.volume_size, null)
-      volume_type           = try(ebs_block_device.value.volume_type, null)
-      throughput            = try(ebs_block_device.value.throughput, null)
-      tags                  = try(ebs_block_device.value.tags, null)
-    }
-  }
-
-  dynamic "ephemeral_block_device" {
-    for_each = var.ephemeral_block_device
-
-    content {
-      device_name  = ephemeral_block_device.value.device_name
-      no_device    = try(ephemeral_block_device.value.no_device, null)
-      virtual_name = try(ephemeral_block_device.value.virtual_name, null)
-    }
-  }
-
-  dynamic "metadata_options" {
-    for_each = length(var.metadata_options) > 0 ? [var.metadata_options] : []
-
-    content {
-      http_endpoint               = try(metadata_options.value.http_endpoint, "enabled")
-      http_tokens                 = try(metadata_options.value.http_tokens, "required")
-      http_put_response_hop_limit = try(metadata_options.value.http_put_response_hop_limit, 1)
-      instance_metadata_tags      = try(metadata_options.value.instance_metadata_tags, null)
-    }
-  }
-
-  dynamic "network_interface" {
-    for_each = var.network_interface
-
-    content {
-      device_index          = network_interface.value.device_index
-      network_interface_id  = lookup(network_interface.value, "network_interface_id", null)
-      delete_on_termination = try(network_interface.value.delete_on_termination, false)
-    }
-  }
-
-  dynamic "private_dns_name_options" {
-    for_each = length(var.private_dns_name_options) > 0 ? [var.private_dns_name_options] : []
-
-    content {
-      hostname_type                        = try(private_dns_name_options.value.hostname_type, null)
-      enable_resource_name_dns_a_record    = try(private_dns_name_options.value.enable_resource_name_dns_a_record, null)
-      enable_resource_name_dns_aaaa_record = try(private_dns_name_options.value.enable_resource_name_dns_aaaa_record, null)
-    }
-  }
-
-  dynamic "launch_template" {
-    for_each = length(var.launch_template) > 0 ? [var.launch_template] : []
-
-    content {
-      id      = lookup(var.launch_template, "id", null)
-      name    = lookup(var.launch_template, "name", null)
-      version = lookup(var.launch_template, "version", null)
-    }
-  }
-
-  dynamic "maintenance_options" {
-    for_each = length(var.maintenance_options) > 0 ? [var.maintenance_options] : []
-
-    content {
-      auto_recovery = try(maintenance_options.value.auto_recovery, null)
-    }
-  }
-
-  enclave_options {
-    enabled = var.enclave_options_enabled
-  }
-
-  source_dest_check                    = length(var.network_interface) > 0 ? null : var.source_dest_check
-  disable_api_termination              = var.disable_api_termination
-  disable_api_stop                     = var.disable_api_stop
-  instance_initiated_shutdown_behavior = var.instance_initiated_shutdown_behavior
-  placement_group                      = var.placement_group
-  tenancy                              = var.tenancy
-  host_id                              = var.host_id
-
-  credit_specification {
-    cpu_credits = local.is_t_instance_type ? var.cpu_credits : null
-  }
-
-  timeouts {
-    create = try(var.timeouts.create, null)
-    update = try(var.timeouts.update, null)
-    delete = try(var.timeouts.delete, null)
-  }
-
-  tags        = merge({ "Name" = var.name }, var.instance_tags, var.tags)
-  volume_tags = var.enable_volume_tags ? merge({ "Name" = var.name }, var.volume_tags) : null
-
-  lifecycle {
-    ignore_changes = [
-      ami
-    ]
-  }
-}
-
-################################################################################
-# Spot Instance
-################################################################################
-
-resource "aws_spot_instance_request" "this" {
-  count = local.create && var.create_spot_instance ? 1 : 0
-
-  ami                  = local.ami
-  instance_type        = var.instance_type
-  // Removed deprecated attribute "cpu_core_count"
-  cpu_options {
-    threads_per_core = var.cpu_threads_per_core
-  }
-  hibernation          = var.hibernation
-
-  user_data                   = var.user_data
-  user_data_base64            = var.user_data_base64
-  user_data_replace_on_change = var.user_data_replace_on_change
-
-  availability_zone      = var.availability_zone
-  subnet_id              = var.subnet_id
-  vpc_security_group_ids = var.vpc_security_group_ids
-
-  key_name             = var.key_name
-  monitoring           = var.monitoring
-  get_password_data    = var.get_password_data
-  iam_instance_profile = var.create_iam_instance_profile ? aws_iam_instance_profile.this[0].name : var.iam_instance_profile
-
-  associate_public_ip_address = var.associate_public_ip_address
-  private_ip                  = var.private_ip
-  secondary_private_ips       = var.secondary_private_ips
-  ipv6_address_count          = var.ipv6_address_count
-  ipv6_addresses              = var.ipv6_addresses
-
-  ebs_optimized = var.ebs_optimized
-
-  # Spot request specific attributes
-  spot_price                     = var.spot_price
-  wait_for_fulfillment           = var.spot_wait_for_fulfillment
-  spot_type                      = var.spot_type
-  launch_group                   = var.spot_launch_group
-  block_duration_minutes         = var.spot_block_duration_minutes
-  instance_interruption_behavior = var.spot_instance_interruption_behavior
-  valid_until                    = var.spot_valid_until
-  valid_from                     = var.spot_valid_from
-  # End spot request specific attributes
-
-  dynamic "cpu_options" {
-    for_each = length(var.cpu_options) > 0 ? [var.cpu_options] : []
-
-    content {
-      core_count       = try(cpu_options.value.core_count, null)
-      threads_per_core = try(cpu_options.value.threads_per_core, null)
-      amd_sev_snp      = try(cpu_options.value.amd_sev_snp, null)
-    }
-  }
-
-  dynamic "capacity_reservation_specification" {
-    for_each = length(var.capacity_reservation_specification) > 0 ? [var.capacity_reservation_specification] : []
-
-    content {
-      capacity_reservation_preference = try(capacity_reservation_specification.value.capacity_reservation_preference, null)
-
-      dynamic "capacity_reservation_target" {
-        for_each = try([capacity_reservation_specification.value.capacity_reservation_target], [])
-        content {
-          capacity_reservation_id                 = try(capacity_reservation_target.value.capacity_reservation_id, null)
-          capacity_reservation_resource_group_arn = try(capacity_reservation_target.value.capacity_reservation_resource_group_arn, null)
-        }
-      }
-    }
-  }
-
-  dynamic "root_block_device" {
-    for_each = var.root_block_device
-
-    content {
-      delete_on_termination = try(root_block_device.value.delete_on_termination, null)
-      encrypted             = try(root_block_device.value.encrypted, null)
-      iops                  = try(root_block_device.value.iops, null)
-      kms_key_id            = lookup(root_block_device.value, "kms_key_id", null)
-      volume_size           = try(root_block_device.value.volume_size, null)
-      volume_type           = try(root_block_device.value.volume_type, null)
-      throughput            = try(root_block_device.value.throughput, null)
-      tags                  = try(root_block_device.value.tags, null)
-    }
-  }
-
-  dynamic "ebs_block_device" {
-    for_each = var.ebs_block_device
-
-    content {
-      delete_on_termination = try(ebs_block_device.value.delete_on_termination, null)
-      device_name           = ebs_block_device.value.device_name
-      encrypted             = try(ebs_block_device.value.encrypted, null)
-      iops                  = try(ebs_block_device.value.iops, null)
-      kms_key_id            = lookup(ebs_block_device.value, "kms_key_id", null)
-      snapshot_id           = lookup(ebs_block_device.value, "snapshot_id", null)
-      volume_size           = try(ebs_block_device.value.volume_size, null)
-      volume_type           = try(ebs_block_device.value.volume_type, null)
-      throughput            = try(ebs_block_device.value.throughput, null)
-      tags                  = try(ebs_block_device.value.tags, null)
-    }
-  }
-
-  dynamic "ephemeral_block_device" {
-    for_each = var.ephemeral_block_device
-
-    content {
-      device_name  = ephemeral_block_device.value.device_name
-      no_device    = try(ephemeral_block_device.value.no_device, null)
-      virtual_name = try(ephemeral_block_device.value.virtual_name, null)
-    }
-  }
-
-  dynamic "metadata_options" {
-    for_each = length(var.metadata_options) > 0 ? [var.metadata_options] : []
-
-    content {
-      http_endpoint               = try(metadata_options.value.http_endpoint, "enabled")
-      http_tokens                 = try(metadata_options.value.http_tokens, "required")
-      http_put_response_hop_limit = try(metadata_options.value.http_put_response_hop_limit, 1)
-      instance_metadata_tags      = try(metadata_options.value.instance_metadata_tags, null)
-    }
-  }
-
-  dynamic "network_interface" {
-    for_each = var.network_interface
-
-    content {
-      device_index          = network_interface.value.device_index
-      network_interface_id  = lookup(network_interface.value, "network_interface_id", null)
-      delete_on_termination = try(network_interface.value.delete_on_termination, false)
-    }
-  }
-
-  dynamic "launch_template" {
-    for_each = length(var.launch_template) > 0 ? [var.launch_template] : []
-
-    content {
-      id      = lookup(var.launch_template, "id", null)
-      name    = lookup(var.launch_template, "name", null)
-      version = lookup(var.launch_template, "version", null)
-    }
-  }
-
-  enclave_options {
-    enabled = var.enclave_options_enabled
-  }
-
-  source_dest_check                    = length(var.network_interface) > 0 ? null : var.source_dest_check
-  disable_api_termination              = var.disable_api_termination
-  instance_initiated_shutdown_behavior = var.instance_initiated_shutdown_behavior
-  placement_group                      = var.placement_group
-  tenancy                              = var.tenancy
-  host_id                              = var.host_id
-
-  credit_specification {
-    cpu_credits = local.is_t_instance_type ? var.cpu_credits : null
-  }
-
-  timeouts {
-    create = try(var.timeouts.create, null)
-    delete = try(var.timeouts.delete, null)
-  }
-
-  tags        = merge({ "Name" = var.name }, var.instance_tags, var.tags)
-  volume_tags = var.enable_volume_tags ? merge({ "Name" = var.name }, var.volume_tags) : null
-}
-
-################################################################################
-# IAM Role / Instance Profile
-################################################################################
-
-locals {
-  iam_role_name = try(coalesce(var.iam_role_name, var.name), "")
-}
-
-data "aws_iam_policy_document" "assume_role_policy" {
-  count = var.create && var.create_iam_instance_profile ? 1 : 0
-
-  statement {
-    sid     = "EC2AssumeRole"
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.${data.aws_partition.current.dns_suffix}"]
-    }
-  }
-}
-
-resource "aws_iam_role" "this" {
-  count = var.create && var.create_iam_instance_profile ? 1 : 0
-
-  name        = var.iam_role_use_name_prefix ? null : local.iam_role_name
-  name_prefix = var.iam_role_use_name_prefix ? "${local.iam_role_name}-" : null
-  path        = var.iam_role_path
-  description = var.iam_role_description
-
-  assume_role_policy    = data.aws_iam_policy_document.assume_role_policy[0].json
-  permissions_boundary  = var.iam_role_permissions_boundary
-  force_detach_policies = true
-
-  tags = merge(var.tags, var.iam_role_tags)
-}
-
-resource "aws_iam_role_policy_attachment" "this" {
-  for_each = { for k, v in var.iam_role_policies : k => v if var.create && var.create_iam_instance_profile }
-
-  policy_arn = each.value
-  role       = aws_iam_role.this[0].name
-}
-
-resource "aws_iam_instance_profile" "this" {
-  count = var.create && var.create_iam_instance_profile ? 1 : 0
-
-  role = aws_iam_role.this[0].name
-
-  name        = var.iam_role_use_name_prefix ? null : local.iam_role_name
-  name_prefix = var.iam_role_use_name_prefix ? "${local.iam_role_name}-" : null
-  path        = var.iam_role_path
-
-  tags = merge(var.tags, var.iam_role_tags)
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-################################################################################
-# Elastic IP
-################################################################################
-
-resource "aws_eip" "this" {
-  count = local.create && var.create_eip && !var.create_spot_instance ? 1 : 0
-
-  instance = try(
-    aws_instance.this[0].id,
-    aws_instance.ignore_ami[0].id,
-  )
-
-  domain = var.eip_domain
-
-  tags = merge(var.tags, var.eip_tags)
 }
 </file>
 
@@ -1412,441 +752,6 @@ output "ephemeral_block_device" {
     aws_spot_instance_request.this[0].ephemeral_block_device,
     null
   )
-}
-</file>
-
-<file path="resource_modules/compute/ec2_instance/variable.tf">
-variable "create" {
-  description = "Whether to create an instance"
-  type        = bool
-  default     = true
-}
-
-variable "name" {
-  description = "Name to be used on EC2 instance created"
-  type        = string
-  default     = ""
-}
-
-variable "ami_ssm_parameter" {
-  description = "SSM parameter name for the AMI ID. For Amazon Linux AMI SSM parameters see [reference](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html)"
-  type        = string
-  default     = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
-}
-
-variable "ami" {
-  description = "ID of AMI to use for the instance"
-  type        = string
-  default     = null
-}
-
-variable "ignore_ami_changes" {
-  description = "Whether changes to the AMI ID changes should be ignored by Terraform. Note - changing this value will result in the replacement of the instance"
-  type        = bool
-  default     = false
-}
-
-variable "associate_public_ip_address" {
-  description = "Whether to associate a public IP address with an instance in a VPC"
-  type        = bool
-  default     = null
-}
-
-variable "maintenance_options" {
-  description = "The maintenance options for the instance"
-  type        = any
-  default     = {}
-}
-
-variable "availability_zone" {
-  description = "AZ to start the instance in"
-  type        = string
-  default     = null
-}
-
-variable "capacity_reservation_specification" {
-  description = "Describes an instance's Capacity Reservation targeting option"
-  type        = any
-  default     = {}
-}
-
-variable "cpu_credits" {
-  description = "The credit option for CPU usage (unlimited or standard)"
-  type        = string
-  default     = null
-}
-
-variable "disable_api_termination" {
-  description = "If true, enables EC2 Instance Termination Protection"
-  type        = bool
-  default     = null
-}
-
-variable "ebs_block_device" {
-  description = "Additional EBS block devices to attach to the instance"
-  type        = list(any)
-  default     = []
-}
-
-variable "ebs_optimized" {
-  description = "If true, the launched EC2 instance will be EBS-optimized"
-  type        = bool
-  default     = null
-}
-
-variable "enclave_options_enabled" {
-  description = "Whether Nitro Enclaves will be enabled on the instance. Defaults to `false`"
-  type        = bool
-  default     = null
-}
-
-variable "ephemeral_block_device" {
-  description = "Customize Ephemeral (also known as Instance Store) volumes on the instance"
-  type        = list(map(string))
-  default     = []
-}
-
-variable "get_password_data" {
-  description = "If true, wait for password data to become available and retrieve it"
-  type        = bool
-  default     = null
-}
-
-variable "hibernation" {
-  description = "If true, the launched EC2 instance will support hibernation"
-  type        = bool
-  default     = null
-}
-
-variable "host_id" {
-  description = "ID of a dedicated host that the instance will be assigned to. Use when an instance is to be launched on a specific dedicated host"
-  type        = string
-  default     = null
-}
-
-variable "iam_instance_profile" {
-  description = "IAM Instance Profile to launch the instance with. Specified as the name of the Instance Profile"
-  type        = string
-  default     = null
-}
-
-variable "instance_initiated_shutdown_behavior" {
-  description = "Shutdown behavior for the instance. Amazon defaults this to stop for EBS-backed instances and terminate for instance-store instances. Cannot be set on instance-store instance" # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/terminating-instances.html#Using_ChangingInstanceInitiatedShutdownBehavior
-  type        = string
-  default     = null
-}
-
-variable "instance_type" {
-  description = "The type of instance to start"
-  type        = string
-  default     = "t3.micro"
-}
-
-variable "instance_tags" {
-  description = "Additional tags for the instance"
-  type        = map(string)
-  default     = {}
-}
-
-variable "ipv6_address_count" {
-  description = "A number of IPv6 addresses to associate with the primary network interface. Amazon EC2 chooses the IPv6 addresses from the range of your subnet"
-  type        = number
-  default     = null
-}
-
-variable "ipv6_addresses" {
-  description = "Specify one or more IPv6 addresses from the range of the subnet to associate with the primary network interface"
-  type        = list(string)
-  default     = null
-}
-
-variable "key_name" {
-  description = "Key name of the Key Pair to use for the instance; which can be managed using the `aws_key_pair` resource"
-  type        = string
-  default     = null
-}
-
-variable "launch_template" {
-  description = "Specifies a Launch Template to configure the instance. Parameters configured on this resource will override the corresponding parameters in the Launch Template"
-  type        = map(string)
-  default     = {}
-}
-
-variable "metadata_options" {
-  description = "Customize the metadata options of the instance"
-  type        = map(string)
-  default = {
-    "http_endpoint"               = "enabled"
-    "http_put_response_hop_limit" = 1
-    "http_tokens"                 = "required"
-  }
-}
-
-variable "monitoring" {
-  description = "If true, the launched EC2 instance will have detailed monitoring enabled"
-  type        = bool
-  default     = null
-}
-
-variable "network_interface" {
-  description = "Customize network interfaces to be attached at instance boot time"
-  type        = list(map(string))
-  default     = []
-}
-
-variable "private_dns_name_options" {
-  description = "Customize the private DNS name options of the instance"
-  type        = map(string)
-  default     = {}
-}
-
-variable "placement_group" {
-  description = "The Placement Group to start the instance in"
-  type        = string
-  default     = null
-}
-
-variable "private_ip" {
-  description = "Private IP address to associate with the instance in a VPC"
-  type        = string
-  default     = null
-}
-
-variable "root_block_device" {
-  description = "Customize details about the root block device of the instance. See Block Devices below for details"
-  type        = list(any)
-  default     = []
-}
-
-variable "secondary_private_ips" {
-  description = "A list of secondary private IPv4 addresses to assign to the instance's primary network interface (eth0) in a VPC. Can only be assigned to the primary network interface (eth0) attached at instance creation, not a pre-existing network interface i.e. referenced in a `network_interface block`"
-  type        = list(string)
-  default     = null
-}
-
-variable "source_dest_check" {
-  description = "Controls if traffic is routed to the instance when the destination address does not match the instance. Used for NAT or VPNs"
-  type        = bool
-  default     = null
-}
-
-variable "subnet_id" {
-  description = "The VPC Subnet ID to launch in"
-  type        = string
-  default     = null
-}
-
-variable "tags" {
-  description = "A mapping of tags to assign to the resource"
-  type        = map(string)
-  default     = {}
-}
-
-variable "tenancy" {
-  description = "The tenancy of the instance (if the instance is running in a VPC). Available values: default, dedicated, host"
-  type        = string
-  default     = null
-}
-
-variable "user_data" {
-  description = "The user data to provide when launching the instance. Do not pass gzip-compressed data via this argument; see user_data_base64 instead"
-  type        = string
-  default     = null
-}
-
-variable "user_data_base64" {
-  description = "Can be used instead of user_data to pass base64-encoded binary data directly. Use this instead of user_data whenever the value is not a valid UTF-8 string. For example, gzip-encoded user data must be base64-encoded and passed via this argument to avoid corruption"
-  type        = string
-  default     = null
-}
-
-variable "user_data_replace_on_change" {
-  description = "When used in combination with user_data or user_data_base64 will trigger a destroy and recreate when set to true. Defaults to false if not set"
-  type        = bool
-  default     = null
-}
-
-variable "volume_tags" {
-  description = "A mapping of tags to assign to the devices created by the instance at launch time"
-  type        = map(string)
-  default     = {}
-}
-
-variable "enable_volume_tags" {
-  description = "Whether to enable volume tags (if enabled it conflicts with root_block_device tags)"
-  type        = bool
-  default     = true
-}
-
-variable "vpc_security_group_ids" {
-  description = "A list of security group IDs to associate with"
-  type        = list(string)
-  default     = null
-}
-
-variable "timeouts" {
-  description = "Define maximum timeout for creating, updating, and deleting EC2 instance resources"
-  type        = map(string)
-  default     = {}
-}
-
-variable "cpu_options" {
-  description = "Defines CPU options to apply to the instance at launch time."
-  type        = any
-  default     = {}
-}
-
-variable "cpu_core_count" {
-  description = "Sets the number of CPU cores for an instance" # This option is only supported on creation of instance type that support CPU Options https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html#cpu-options-supported-instances-values
-  type        = number
-  default     = null
-}
-
-variable "cpu_threads_per_core" {
-  description = "Sets the number of CPU threads per core for an instance (has no effect unless cpu_core_count is also set)"
-  type        = number
-  default     = null
-}
-
-# Spot instance request
-variable "create_spot_instance" {
-  description = "Depicts if the instance is a spot instance"
-  type        = bool
-  default     = false
-}
-
-variable "spot_price" {
-  description = "The maximum price to request on the spot market. Defaults to on-demand price"
-  type        = string
-  default     = null
-}
-
-variable "spot_wait_for_fulfillment" {
-  description = "If set, Terraform will wait for the Spot Request to be fulfilled, and will throw an error if the timeout of 10m is reached"
-  type        = bool
-  default     = null
-}
-
-variable "spot_type" {
-  description = "If set to one-time, after the instance is terminated, the spot request will be closed. Default `persistent`"
-  type        = string
-  default     = null
-}
-
-variable "spot_launch_group" {
-  description = "A launch group is a group of spot instances that launch together and terminate together. If left empty instances are launched and terminated individually"
-  type        = string
-  default     = null
-}
-
-variable "spot_block_duration_minutes" {
-  description = "The required duration for the Spot instances, in minutes. This value must be a multiple of 60 (60, 120, 180, 240, 300, or 360)"
-  type        = number
-  default     = null
-}
-
-variable "spot_instance_interruption_behavior" {
-  description = "Indicates Spot instance behavior when it is interrupted. Valid values are `terminate`, `stop`, or `hibernate`"
-  type        = string
-  default     = null
-}
-
-variable "spot_valid_until" {
-  description = "The end date and time of the request, in UTC RFC3339 format(for example, YYYY-MM-DDTHH:MM:SSZ)"
-  type        = string
-  default     = null
-}
-
-variable "spot_valid_from" {
-  description = "The start date and time of the request, in UTC RFC3339 format(for example, YYYY-MM-DDTHH:MM:SSZ)"
-  type        = string
-  default     = null
-}
-
-variable "disable_api_stop" {
-  description = "If true, enables EC2 Instance Stop Protection"
-  type        = bool
-  default     = null
-
-}
-variable "putin_khuylo" {
-  description = "Do you agree that Putin doesn't respect Ukrainian sovereignty and territorial integrity? More info: https://en.wikipedia.org/wiki/Putin_khuylo!"
-  type        = bool
-  default     = true
-}
-
-################################################################################
-# IAM Role / Instance Profile
-################################################################################
-
-variable "create_iam_instance_profile" {
-  description = "Determines whether an IAM instance profile is created or to use an existing IAM instance profile"
-  type        = bool
-  default     = false
-}
-
-variable "iam_role_name" {
-  description = "Name to use on IAM role created"
-  type        = string
-  default     = null
-}
-
-variable "iam_role_use_name_prefix" {
-  description = "Determines whether the IAM role name (`iam_role_name` or `name`) is used as a prefix"
-  type        = bool
-  default     = true
-}
-
-variable "iam_role_path" {
-  description = "IAM role path"
-  type        = string
-  default     = null
-}
-
-variable "iam_role_description" {
-  description = "Description of the role"
-  type        = string
-  default     = null
-}
-
-variable "iam_role_permissions_boundary" {
-  description = "ARN of the policy that is used to set the permissions boundary for the IAM role"
-  type        = string
-  default     = null
-}
-
-variable "iam_role_policies" {
-  description = "Policies attached to the IAM role"
-  type        = map(string)
-  default     = {}
-}
-
-variable "iam_role_tags" {
-  description = "A map of additional tags to add to the IAM role/profile created"
-  type        = map(string)
-  default     = {}
-}
-
-################################################################################
-# Elastic IP
-################################################################################
-
-variable "create_eip" {
-  description = "Determines whether a public EIP will be created and associated with the instance."
-  type        = bool
-  default     = false
-}
-
-variable "eip_domain" {
-  description = "Indicates if this EIP is for use in VPC"
-  type        = string
-  default     = "vpc"
-}
-
-variable "eip_tags" {
-  description = "A map of additional tags to add to the eip"
-  type        = map(string)
-  default     = {}
 }
 </file>
 
@@ -9301,6 +8206,42 @@ terraform.rc
 # End of c:\Users\mailn\bk\.gitignore://www.toptal.com/developers/gitignore/api/terraform,python,git
 </file>
 
+<file path="composition/rensyuEC2/ap-northeast-1/dev/main.tf">
+# composition/my-app/ap-northeast-1/dev/main.tf
+
+########################################
+# Network Infrastructure
+########################################
+module "network" {
+  source = "../../../../infrastructure_modules/vpc" 
+  vpc_cidr_block    = var.comp_vpc_cidr_block
+  subnet_cidr_block = var.comp_subnet_cidr_block
+  availability_zone = var.comp_availability_zone
+  tags              = local.common_tags
+}
+
+########################################
+# Compute Infrastructure
+########################################
+module "compute" {
+  source = "../../../../infrastructure_modules/EC2" 
+
+  # SG
+  vpc_id              = module.network.vpc_id
+  ingress_cidr_blocks = var.comp_ingress_cidr_blocks
+  tags                = local.common_tags
+
+  # EC2
+  instance_name          = var.comp_instance_name
+  instance_type          = var.comp_instance_type
+  ami_ssm_parameter_name = var.comp_ami_ssm_parameter_name
+  instance_key_name      = var.comp_instance_key_name
+  subnet_id              = module.network.subnet_id
+  eip_name_tag_filter    = var.comp_eip_name_tag_filter
+  docker_image_name      = var.comp_docker_image_name
+}
+</file>
+
 <file path="composition/terraform-remote-backend/ap-northeast-1/dev/local.tf">
 locals {
   tags = {
@@ -9318,7 +8259,7 @@ locals {
 data "aws_caller_identity" "current" {}
 
 module "terraform_remote_backend" {
-  source = "../../../../infrastructure_modules/remotebackend" # 作成したRemoteBackend用Infraモジュールのパス
+  source = "../../../../infrastructure_modules/remotebackend" 
 
   env      = var.env
   app_name = var.app_name
@@ -9329,7 +8270,7 @@ module "terraform_remote_backend" {
   versioning_enabled                   = var.versioning_enabled
   server_side_encryption_configuration = var.server_side_encryption_configuration
   control_object_ownership             = var.control_object_ownership
-  aws_account_id = data.aws_caller_identity.current.account_id
+  aws_account_id                       = data.aws_caller_identity.current.account_id
 
   #dynamodb table
   hash_key                       = var.hash_key
@@ -9346,6 +8287,7 @@ module "terraform_remote_backend" {
 ########################################
 # Metadata
 ########################################
+
 variable "env" {
   description = "The name of the environment."
   type        = string
@@ -9360,6 +8302,7 @@ variable "region" {
   description = "The AWS region this bucket should reside in."
   type        = string
 }
+
 ########################################
 ## S3
 ########################################
@@ -9378,6 +8321,7 @@ variable "control_object_ownership" {
   description = "Whether to manage S3 Bucket Ownership Controls on this bucket."
   type        = bool
 }
+
 ########################################
 ## DynamoDB
 ########################################
@@ -9390,25 +8334,25 @@ variable "hash_key" {
 variable "dynamodb_billing_mode" {
   description = "Billing mode for the DynamoDB table (PROVISIONED or PAY_PER_REQUEST)."
   type        = string
-  default     = "PAY_PER_REQUEST" # オンデマンドを推奨
+  default     = "PAY_PER_REQUEST" 
 }
 
 variable "dynamodb_deletion_protection" {
   description = "Enable deletion protection for the DynamoDB table."
   type        = bool
-  default     = true # 誤削除防止のため推奨
+  default     = true 
 }
 
 variable "dynamodb_pitr_enabled" {
   description = "Enable Point-in-Time Recovery for the DynamoDB table."
   type        = bool
-  default     = true # データ保護のため推奨
+  default     = true 
 }
 
 variable "dynamodb_sse_enabled" {
   description = "Enable Server-Side Encryption for the DynamoDB table."
   type        = bool
-  default     = true # 保管時の暗号化のため推奨
+  default     = true 
 }
 
 variable "point_in_time_recovery_enabled" {
@@ -9486,10 +8430,40 @@ EXPOSE 8000
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
 </file>
 
+<file path="infrastructure_modules/EC2/outputs.tf">
+# infrastructure_modules/compute/outputs.tf
+
+output "instance_id" {
+  description = "The ID of the EC2 instance created."
+  value       = module.ec2_instance.id
+}
+
+output "instance_arn" {
+  description = "The ARN of the EC2 instance created."
+  value       = module.ec2_instance.arn
+}
+
+output "private_ip" {
+  description = "The private IP address assigned to the instance."
+  value       = module.ec2_instance.private_ip
+}
+
+output "associated_eip_public_ip" {
+  description = "The public IP address of the EIP associated with the instance."
+  value       = aws_eip.this.public_ip
+}
+
+output "associated_eip_allocation_id" {
+  description = "The allocation ID of the EIP associated with the instance."
+  value       = aws_eip.this.id
+}
+</file>
+
 <file path="infrastructure_modules/remotebackend/variable.tf">
 ########################################
 # Metadata
 ########################################
+
 variable "env" {
   description = "The name of the environment."
   type        = string
@@ -9533,6 +8507,7 @@ variable "control_object_ownership" {
   description = "Whether to manage S3 Bucket Ownership Controls on this bucket."
   type        = bool
 }
+
 ########################################
 ## DynamoDB
 ########################################
@@ -9545,25 +8520,25 @@ variable "hash_key" {
 variable "dynamodb_billing_mode" {
   description = "Billing mode for the DynamoDB table (PROVISIONED or PAY_PER_REQUEST)."
   type        = string
-  default     = "PAY_PER_REQUEST" # オンデマンドを推奨
+  default     = "PAY_PER_REQUEST" 
 }
 
 variable "dynamodb_deletion_protection" {
   description = "Enable deletion protection for the DynamoDB table."
   type        = bool
-  default     = true # 誤削除防止のため推奨
+  default     = true 
 }
 
 variable "dynamodb_pitr_enabled" {
   description = "Enable Point-in-Time Recovery for the DynamoDB table."
   type        = bool
-  default     = true # データ保護のため推奨
+  default     = true 
 }
 
 variable "dynamodb_sse_enabled" {
   description = "Enable Server-Side Encryption for the DynamoDB table."
   type        = bool
-  default     = true # 保管時の暗号化のため推奨
+  default     = true 
 }
 
 variable "point_in_time_recovery_enabled" {
@@ -9632,6 +8607,1076 @@ output "default_route_table_id" {
 <file path="requirements.txt">
 Flask>=2.0 
 gunicorn>=20.0
+</file>
+
+<file path="resource_modules/compute/ec2_instance/main.tf">
+########################################
+# AWS EC2 Instance resource module
+#
+# https://github.com/terraform-aws-modules/terraform-aws-ec2-instance
+########################################
+
+data "aws_partition" "current" {}
+
+locals {
+  create = var.create
+
+  is_t_instance_type = replace(var.instance_type, "/^t(2|3|3a|4g){1}\\..*$/", "1") == "1" ? true : false
+  # ... (以下変更なし)
+}
+
+data "aws_ssm_parameter" "this" {
+  count = local.create && var.ami == null ? 1 : 0
+
+  name = var.ami_ssm_parameter
+}
+
+locals {
+  ami = var.ami != null ? var.ami : data.aws_ssm_parameter.this[0].value
+}
+
+################################################################################
+# Instance
+################################################################################
+
+resource "aws_instance" "this" {
+  count = local.create && !var.ignore_ami_changes && !var.create_spot_instance ? 1 : 0
+
+  ami                  = local.ami
+  instance_type        = var.instance_type
+  // Removed deprecated attribute "cpu_core_count"
+  cpu_options {
+    threads_per_core = var.cpu_threads_per_core
+  }
+  hibernation          = var.hibernation
+
+  user_data                   = var.user_data
+  user_data_base64            = var.user_data_base64
+  user_data_replace_on_change = var.user_data_replace_on_change
+
+  availability_zone      = var.availability_zone
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = var.vpc_security_group_ids
+
+  key_name             = var.key_name
+  monitoring           = var.monitoring
+  get_password_data    = var.get_password_data
+  iam_instance_profile = var.create_iam_instance_profile ? aws_iam_instance_profile.this[0].name : var.iam_instance_profile
+
+  associate_public_ip_address = var.associate_public_ip_address
+  private_ip                  = var.private_ip
+  secondary_private_ips       = var.secondary_private_ips
+  ipv6_address_count          = var.ipv6_address_count
+  ipv6_addresses              = var.ipv6_addresses
+
+  ebs_optimized = var.ebs_optimized
+
+  dynamic "cpu_options" {
+    for_each = length(var.cpu_options) > 0 ? [var.cpu_options] : []
+
+    content {
+      core_count       = try(cpu_options.value.core_count, null)
+      threads_per_core = try(cpu_options.value.threads_per_core, null)
+      amd_sev_snp      = try(cpu_options.value.amd_sev_snp, null)
+    }
+  }
+
+  dynamic "capacity_reservation_specification" {
+    for_each = length(var.capacity_reservation_specification) > 0 ? [var.capacity_reservation_specification] : []
+
+    content {
+      capacity_reservation_preference = try(capacity_reservation_specification.value.capacity_reservation_preference, null)
+
+      dynamic "capacity_reservation_target" {
+        for_each = try([capacity_reservation_specification.value.capacity_reservation_target], [])
+
+        content {
+          capacity_reservation_id                 = try(capacity_reservation_target.value.capacity_reservation_id, null)
+          capacity_reservation_resource_group_arn = try(capacity_reservation_target.value.capacity_reservation_resource_group_arn, null)
+        }
+      }
+    }
+  }
+
+  dynamic "root_block_device" {
+    for_each = var.root_block_device
+
+    content {
+      delete_on_termination = try(root_block_device.value.delete_on_termination, null)
+      encrypted             = try(root_block_device.value.encrypted, null)
+      iops                  = try(root_block_device.value.iops, null)
+      kms_key_id            = lookup(root_block_device.value, "kms_key_id", null)
+      volume_size           = try(root_block_device.value.volume_size, null)
+      volume_type           = try(root_block_device.value.volume_type, null)
+      throughput            = try(root_block_device.value.throughput, null)
+      tags                  = try(root_block_device.value.tags, null)
+    }
+  }
+
+  dynamic "ebs_block_device" {
+    for_each = var.ebs_block_device
+
+    content {
+      delete_on_termination = try(ebs_block_device.value.delete_on_termination, null)
+      device_name           = ebs_block_device.value.device_name
+      encrypted             = try(ebs_block_device.value.encrypted, null)
+      iops                  = try(ebs_block_device.value.iops, null)
+      kms_key_id            = lookup(ebs_block_device.value, "kms_key_id", null)
+      snapshot_id           = lookup(ebs_block_device.value, "snapshot_id", null)
+      volume_size           = try(ebs_block_device.value.volume_size, null)
+      volume_type           = try(ebs_block_device.value.volume_type, null)
+      throughput            = try(ebs_block_device.value.throughput, null)
+      tags                  = try(ebs_block_device.value.tags, null)
+    }
+  }
+
+  dynamic "ephemeral_block_device" {
+    for_each = var.ephemeral_block_device
+
+    content {
+      device_name  = ephemeral_block_device.value.device_name
+      no_device    = try(ephemeral_block_device.value.no_device, null)
+      virtual_name = try(ephemeral_block_device.value.virtual_name, null)
+    }
+  }
+
+  dynamic "metadata_options" {
+    for_each = length(var.metadata_options) > 0 ? [var.metadata_options] : []
+
+    content {
+      http_endpoint               = try(metadata_options.value.http_endpoint, "enabled")
+      http_tokens                 = try(metadata_options.value.http_tokens, "required")
+      http_put_response_hop_limit = try(metadata_options.value.http_put_response_hop_limit, 1)
+      instance_metadata_tags      = try(metadata_options.value.instance_metadata_tags, null)
+    }
+  }
+
+  dynamic "network_interface" {
+    for_each = var.network_interface
+
+    content {
+      device_index          = network_interface.value.device_index
+      network_interface_id  = lookup(network_interface.value, "network_interface_id", null)
+      delete_on_termination = try(network_interface.value.delete_on_termination, false)
+    }
+  }
+
+  dynamic "private_dns_name_options" {
+    for_each = length(var.private_dns_name_options) > 0 ? [var.private_dns_name_options] : []
+
+    content {
+      hostname_type                        = try(private_dns_name_options.value.hostname_type, null)
+      enable_resource_name_dns_a_record    = try(private_dns_name_options.value.enable_resource_name_dns_a_record, null)
+      enable_resource_name_dns_aaaa_record = try(private_dns_name_options.value.enable_resource_name_dns_aaaa_record, null)
+    }
+  }
+
+  dynamic "launch_template" {
+    for_each = length(var.launch_template) > 0 ? [var.launch_template] : []
+
+    content {
+      id      = lookup(var.launch_template, "id", null)
+      name    = lookup(var.launch_template, "name", null)
+      version = lookup(var.launch_template, "version", null)
+    }
+  }
+
+  dynamic "maintenance_options" {
+    for_each = length(var.maintenance_options) > 0 ? [var.maintenance_options] : []
+
+    content {
+      auto_recovery = try(maintenance_options.value.auto_recovery, null)
+    }
+  }
+
+  enclave_options {
+    enabled = var.enclave_options_enabled
+  }
+
+  source_dest_check                    = length(var.network_interface) > 0 ? null : var.source_dest_check
+  disable_api_termination              = var.disable_api_termination
+  disable_api_stop                     = var.disable_api_stop
+  instance_initiated_shutdown_behavior = var.instance_initiated_shutdown_behavior
+  placement_group                      = var.placement_group
+  tenancy                              = var.tenancy
+  host_id                              = var.host_id
+
+  credit_specification {
+    cpu_credits = local.is_t_instance_type ? var.cpu_credits : null
+  }
+
+  timeouts {
+    create = try(var.timeouts.create, null)
+    update = try(var.timeouts.update, null)
+    delete = try(var.timeouts.delete, null)
+  }
+
+  tags        = merge({ "Name" = var.name }, var.instance_tags, var.tags)
+  volume_tags = var.enable_volume_tags ? merge({ "Name" = var.name }, var.volume_tags) : null
+}
+
+################################################################################
+# Instance - Ignore AMI Changes
+################################################################################
+
+resource "aws_instance" "ignore_ami" {
+  count = local.create && var.ignore_ami_changes && !var.create_spot_instance ? 1 : 0
+
+  ami                  = local.ami
+  instance_type        = var.instance_type
+  // Removed deprecated attribute "cpu_core_count"
+  cpu_options {
+    threads_per_core = var.cpu_threads_per_core
+  }
+  hibernation          = var.hibernation
+
+  user_data                   = var.user_data
+  user_data_base64            = var.user_data_base64
+  user_data_replace_on_change = var.user_data_replace_on_change
+
+  availability_zone      = var.availability_zone
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = var.vpc_security_group_ids
+
+  key_name             = var.key_name
+  monitoring           = var.monitoring
+  get_password_data    = var.get_password_data
+  iam_instance_profile = var.create_iam_instance_profile ? aws_iam_instance_profile.this[0].name : var.iam_instance_profile
+
+  associate_public_ip_address = var.associate_public_ip_address
+  private_ip                  = var.private_ip
+  secondary_private_ips       = var.secondary_private_ips
+  ipv6_address_count          = var.ipv6_address_count
+  ipv6_addresses              = var.ipv6_addresses
+
+  ebs_optimized = var.ebs_optimized
+
+  dynamic "cpu_options" {
+    for_each = length(var.cpu_options) > 0 ? [var.cpu_options] : []
+
+    content {
+      core_count       = try(cpu_options.value.core_count, null)
+      threads_per_core = try(cpu_options.value.threads_per_core, null)
+      amd_sev_snp      = try(cpu_options.value.amd_sev_snp, null)
+    }
+  }
+
+  dynamic "capacity_reservation_specification" {
+    for_each = length(var.capacity_reservation_specification) > 0 ? [var.capacity_reservation_specification] : []
+
+    content {
+      capacity_reservation_preference = try(capacity_reservation_specification.value.capacity_reservation_preference, null)
+
+      dynamic "capacity_reservation_target" {
+        for_each = try([capacity_reservation_specification.value.capacity_reservation_target], [])
+
+        content {
+          capacity_reservation_id                 = try(capacity_reservation_target.value.capacity_reservation_id, null)
+          capacity_reservation_resource_group_arn = try(capacity_reservation_target.value.capacity_reservation_resource_group_arn, null)
+        }
+      }
+    }
+  }
+
+  dynamic "root_block_device" {
+    for_each = var.root_block_device
+
+    content {
+      delete_on_termination = try(root_block_device.value.delete_on_termination, null)
+      encrypted             = try(root_block_device.value.encrypted, null)
+      iops                  = try(root_block_device.value.iops, null)
+      kms_key_id            = lookup(root_block_device.value, "kms_key_id", null)
+      volume_size           = try(root_block_device.value.volume_size, null)
+      volume_type           = try(root_block_device.value.volume_type, null)
+      throughput            = try(root_block_device.value.throughput, null)
+      tags                  = try(root_block_device.value.tags, null)
+    }
+  }
+
+  dynamic "ebs_block_device" {
+    for_each = var.ebs_block_device
+
+    content {
+      delete_on_termination = try(ebs_block_device.value.delete_on_termination, null)
+      device_name           = ebs_block_device.value.device_name
+      encrypted             = try(ebs_block_device.value.encrypted, null)
+      iops                  = try(ebs_block_device.value.iops, null)
+      kms_key_id            = lookup(ebs_block_device.value, "kms_key_id", null)
+      snapshot_id           = lookup(ebs_block_device.value, "snapshot_id", null)
+      volume_size           = try(ebs_block_device.value.volume_size, null)
+      volume_type           = try(ebs_block_device.value.volume_type, null)
+      throughput            = try(ebs_block_device.value.throughput, null)
+      tags                  = try(ebs_block_device.value.tags, null)
+    }
+  }
+
+  dynamic "ephemeral_block_device" {
+    for_each = var.ephemeral_block_device
+
+    content {
+      device_name  = ephemeral_block_device.value.device_name
+      no_device    = try(ephemeral_block_device.value.no_device, null)
+      virtual_name = try(ephemeral_block_device.value.virtual_name, null)
+    }
+  }
+
+  dynamic "metadata_options" {
+    for_each = length(var.metadata_options) > 0 ? [var.metadata_options] : []
+
+    content {
+      http_endpoint               = try(metadata_options.value.http_endpoint, "enabled")
+      http_tokens                 = try(metadata_options.value.http_tokens, "required")
+      http_put_response_hop_limit = try(metadata_options.value.http_put_response_hop_limit, 1)
+      instance_metadata_tags      = try(metadata_options.value.instance_metadata_tags, null)
+    }
+  }
+
+  dynamic "network_interface" {
+    for_each = var.network_interface
+
+    content {
+      device_index          = network_interface.value.device_index
+      network_interface_id  = lookup(network_interface.value, "network_interface_id", null)
+      delete_on_termination = try(network_interface.value.delete_on_termination, false)
+    }
+  }
+
+  dynamic "private_dns_name_options" {
+    for_each = length(var.private_dns_name_options) > 0 ? [var.private_dns_name_options] : []
+
+    content {
+      hostname_type                        = try(private_dns_name_options.value.hostname_type, null)
+      enable_resource_name_dns_a_record    = try(private_dns_name_options.value.enable_resource_name_dns_a_record, null)
+      enable_resource_name_dns_aaaa_record = try(private_dns_name_options.value.enable_resource_name_dns_aaaa_record, null)
+    }
+  }
+
+  dynamic "launch_template" {
+    for_each = length(var.launch_template) > 0 ? [var.launch_template] : []
+
+    content {
+      id      = lookup(var.launch_template, "id", null)
+      name    = lookup(var.launch_template, "name", null)
+      version = lookup(var.launch_template, "version", null)
+    }
+  }
+
+  dynamic "maintenance_options" {
+    for_each = length(var.maintenance_options) > 0 ? [var.maintenance_options] : []
+
+    content {
+      auto_recovery = try(maintenance_options.value.auto_recovery, null)
+    }
+  }
+
+  enclave_options {
+    enabled = var.enclave_options_enabled
+  }
+
+  source_dest_check                    = length(var.network_interface) > 0 ? null : var.source_dest_check
+  disable_api_termination              = var.disable_api_termination
+  disable_api_stop                     = var.disable_api_stop
+  instance_initiated_shutdown_behavior = var.instance_initiated_shutdown_behavior
+  placement_group                      = var.placement_group
+  tenancy                              = var.tenancy
+  host_id                              = var.host_id
+
+  credit_specification {
+    cpu_credits = local.is_t_instance_type ? var.cpu_credits : null
+  }
+
+  timeouts {
+    create = try(var.timeouts.create, null)
+    update = try(var.timeouts.update, null)
+    delete = try(var.timeouts.delete, null)
+  }
+
+  tags        = merge({ "Name" = var.name }, var.instance_tags, var.tags)
+  volume_tags = var.enable_volume_tags ? merge({ "Name" = var.name }, var.volume_tags) : null
+
+  lifecycle {
+    ignore_changes = [
+      ami
+    ]
+  }
+}
+
+################################################################################
+# Spot Instance
+################################################################################
+
+resource "aws_spot_instance_request" "this" {
+  count = local.create && var.create_spot_instance ? 1 : 0
+
+  ami                  = local.ami
+  instance_type        = var.instance_type
+  // Removed deprecated attribute "cpu_core_count"
+  cpu_options {
+    threads_per_core = var.cpu_threads_per_core
+  }
+  hibernation          = var.hibernation
+
+  user_data                   = var.user_data
+  user_data_base64            = var.user_data_base64
+  user_data_replace_on_change = var.user_data_replace_on_change
+
+  availability_zone      = var.availability_zone
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = var.vpc_security_group_ids
+
+  key_name             = var.key_name
+  monitoring           = var.monitoring
+  get_password_data    = var.get_password_data
+  iam_instance_profile = var.create_iam_instance_profile ? aws_iam_instance_profile.this[0].name : var.iam_instance_profile
+
+  associate_public_ip_address = var.associate_public_ip_address
+  private_ip                  = var.private_ip
+  secondary_private_ips       = var.secondary_private_ips
+  ipv6_address_count          = var.ipv6_address_count
+  ipv6_addresses              = var.ipv6_addresses
+
+  ebs_optimized = var.ebs_optimized
+
+  # Spot request specific attributes
+  spot_price                     = var.spot_price
+  wait_for_fulfillment           = var.spot_wait_for_fulfillment
+  spot_type                      = var.spot_type
+  launch_group                   = var.spot_launch_group
+  block_duration_minutes         = var.spot_block_duration_minutes
+  instance_interruption_behavior = var.spot_instance_interruption_behavior
+  valid_until                    = var.spot_valid_until
+  valid_from                     = var.spot_valid_from
+  # End spot request specific attributes
+
+  dynamic "cpu_options" {
+    for_each = length(var.cpu_options) > 0 ? [var.cpu_options] : []
+
+    content {
+      core_count       = try(cpu_options.value.core_count, null)
+      threads_per_core = try(cpu_options.value.threads_per_core, null)
+      amd_sev_snp      = try(cpu_options.value.amd_sev_snp, null)
+    }
+  }
+
+  dynamic "capacity_reservation_specification" {
+    for_each = length(var.capacity_reservation_specification) > 0 ? [var.capacity_reservation_specification] : []
+
+    content {
+      capacity_reservation_preference = try(capacity_reservation_specification.value.capacity_reservation_preference, null)
+
+      dynamic "capacity_reservation_target" {
+        for_each = try([capacity_reservation_specification.value.capacity_reservation_target], [])
+        content {
+          capacity_reservation_id                 = try(capacity_reservation_target.value.capacity_reservation_id, null)
+          capacity_reservation_resource_group_arn = try(capacity_reservation_target.value.capacity_reservation_resource_group_arn, null)
+        }
+      }
+    }
+  }
+
+  dynamic "root_block_device" {
+    for_each = var.root_block_device
+
+    content {
+      delete_on_termination = try(root_block_device.value.delete_on_termination, null)
+      encrypted             = try(root_block_device.value.encrypted, null)
+      iops                  = try(root_block_device.value.iops, null)
+      kms_key_id            = lookup(root_block_device.value, "kms_key_id", null)
+      volume_size           = try(root_block_device.value.volume_size, null)
+      volume_type           = try(root_block_device.value.volume_type, null)
+      throughput            = try(root_block_device.value.throughput, null)
+      tags                  = try(root_block_device.value.tags, null)
+    }
+  }
+
+  dynamic "ebs_block_device" {
+    for_each = var.ebs_block_device
+
+    content {
+      delete_on_termination = try(ebs_block_device.value.delete_on_termination, null)
+      device_name           = ebs_block_device.value.device_name
+      encrypted             = try(ebs_block_device.value.encrypted, null)
+      iops                  = try(ebs_block_device.value.iops, null)
+      kms_key_id            = lookup(ebs_block_device.value, "kms_key_id", null)
+      snapshot_id           = lookup(ebs_block_device.value, "snapshot_id", null)
+      volume_size           = try(ebs_block_device.value.volume_size, null)
+      volume_type           = try(ebs_block_device.value.volume_type, null)
+      throughput            = try(ebs_block_device.value.throughput, null)
+      tags                  = try(ebs_block_device.value.tags, null)
+    }
+  }
+
+  dynamic "ephemeral_block_device" {
+    for_each = var.ephemeral_block_device
+
+    content {
+      device_name  = ephemeral_block_device.value.device_name
+      no_device    = try(ephemeral_block_device.value.no_device, null)
+      virtual_name = try(ephemeral_block_device.value.virtual_name, null)
+    }
+  }
+
+  dynamic "metadata_options" {
+    for_each = length(var.metadata_options) > 0 ? [var.metadata_options] : []
+
+    content {
+      http_endpoint               = try(metadata_options.value.http_endpoint, "enabled")
+      http_tokens                 = try(metadata_options.value.http_tokens, "required")
+      http_put_response_hop_limit = try(metadata_options.value.http_put_response_hop_limit, 1)
+      instance_metadata_tags      = try(metadata_options.value.instance_metadata_tags, null)
+    }
+  }
+
+  dynamic "network_interface" {
+    for_each = var.network_interface
+
+    content {
+      device_index          = network_interface.value.device_index
+      network_interface_id  = lookup(network_interface.value, "network_interface_id", null)
+      delete_on_termination = try(network_interface.value.delete_on_termination, false)
+    }
+  }
+
+  dynamic "launch_template" {
+    for_each = length(var.launch_template) > 0 ? [var.launch_template] : []
+
+    content {
+      id      = lookup(var.launch_template, "id", null)
+      name    = lookup(var.launch_template, "name", null)
+      version = lookup(var.launch_template, "version", null)
+    }
+  }
+
+  enclave_options {
+    enabled = var.enclave_options_enabled
+  }
+
+  source_dest_check                    = length(var.network_interface) > 0 ? null : var.source_dest_check
+  disable_api_termination              = var.disable_api_termination
+  instance_initiated_shutdown_behavior = var.instance_initiated_shutdown_behavior
+  placement_group                      = var.placement_group
+  tenancy                              = var.tenancy
+  host_id                              = var.host_id
+
+  credit_specification {
+    cpu_credits = local.is_t_instance_type ? var.cpu_credits : null
+  }
+
+  timeouts {
+    create = try(var.timeouts.create, null)
+    delete = try(var.timeouts.delete, null)
+  }
+
+  tags        = merge({ "Name" = var.name }, var.instance_tags, var.tags)
+  volume_tags = var.enable_volume_tags ? merge({ "Name" = var.name }, var.volume_tags) : null
+}
+
+################################################################################
+# IAM Role / Instance Profile
+################################################################################
+
+locals {
+  iam_role_name = try(coalesce(var.iam_role_name, var.name), "")
+}
+
+data "aws_iam_policy_document" "assume_role_policy" {
+  count = var.create && var.create_iam_instance_profile ? 1 : 0
+
+  statement {
+    sid     = "EC2AssumeRole"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.${data.aws_partition.current.dns_suffix}"]
+    }
+  }
+}
+
+resource "aws_iam_role" "this" {
+  count = var.create && var.create_iam_instance_profile ? 1 : 0
+
+  name        = var.iam_role_use_name_prefix ? null : local.iam_role_name
+  name_prefix = var.iam_role_use_name_prefix ? "${local.iam_role_name}-" : null
+  path        = var.iam_role_path
+  description = var.iam_role_description
+
+  assume_role_policy    = data.aws_iam_policy_document.assume_role_policy[0].json
+  permissions_boundary  = var.iam_role_permissions_boundary
+  force_detach_policies = true
+
+  tags = merge(var.tags, var.iam_role_tags)
+}
+
+resource "aws_iam_role_policy_attachment" "this" {
+  for_each = { for k, v in var.iam_role_policies : k => v if var.create && var.create_iam_instance_profile }
+
+  policy_arn = each.value
+  role       = aws_iam_role.this[0].name
+}
+
+resource "aws_iam_instance_profile" "this" {
+  count = var.create && var.create_iam_instance_profile ? 1 : 0
+
+  role = aws_iam_role.this[0].name
+
+  name        = var.iam_role_use_name_prefix ? null : local.iam_role_name
+  name_prefix = var.iam_role_use_name_prefix ? "${local.iam_role_name}-" : null
+  path        = var.iam_role_path
+
+  tags = merge(var.tags, var.iam_role_tags)
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+################################################################################
+# Elastic IP
+################################################################################
+
+resource "aws_eip" "this" {
+  count = local.create && var.create_eip && !var.create_spot_instance ? 1 : 0
+
+  instance = try(
+    aws_instance.this[0].id,
+    aws_instance.ignore_ami[0].id,
+  )
+
+  domain = var.eip_domain
+
+  tags = merge(var.tags, var.eip_tags)
+}
+</file>
+
+<file path="resource_modules/compute/ec2_instance/variable.tf">
+variable "create" {
+  description = "Whether to create an instance"
+  type        = bool
+  default     = true
+}
+
+variable "name" {
+  description = "Name to be used on EC2 instance created"
+  type        = string
+  default     = ""
+}
+
+variable "ami_ssm_parameter" {
+  description = "SSM parameter name for the AMI ID. For Amazon Linux AMI SSM parameters see [reference](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html)"
+  type        = string
+  default     = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+}
+
+variable "ami" {
+  description = "ID of AMI to use for the instance"
+  type        = string
+  default     = null
+}
+
+variable "ignore_ami_changes" {
+  description = "Whether changes to the AMI ID changes should be ignored by Terraform. Note - changing this value will result in the replacement of the instance"
+  type        = bool
+  default     = false
+}
+
+variable "associate_public_ip_address" {
+  description = "Whether to associate a public IP address with an instance in a VPC"
+  type        = bool
+  default     = null
+}
+
+variable "maintenance_options" {
+  description = "The maintenance options for the instance"
+  type        = any
+  default     = {}
+}
+
+variable "availability_zone" {
+  description = "AZ to start the instance in"
+  type        = string
+  default     = null
+}
+
+variable "capacity_reservation_specification" {
+  description = "Describes an instance's Capacity Reservation targeting option"
+  type        = any
+  default     = {}
+}
+
+variable "cpu_credits" {
+  description = "The credit option for CPU usage (unlimited or standard)"
+  type        = string
+  default     = null
+}
+
+variable "disable_api_termination" {
+  description = "If true, enables EC2 Instance Termination Protection"
+  type        = bool
+  default     = null
+}
+
+variable "ebs_block_device" {
+  description = "Additional EBS block devices to attach to the instance"
+  type        = list(any)
+  default     = []
+}
+
+variable "ebs_optimized" {
+  description = "If true, the launched EC2 instance will be EBS-optimized"
+  type        = bool
+  default     = null
+}
+
+variable "enclave_options_enabled" {
+  description = "Whether Nitro Enclaves will be enabled on the instance. Defaults to `false`"
+  type        = bool
+  default     = null
+}
+
+variable "ephemeral_block_device" {
+  description = "Customize Ephemeral (also known as Instance Store) volumes on the instance"
+  type        = list(map(string))
+  default     = []
+}
+
+variable "get_password_data" {
+  description = "If true, wait for password data to become available and retrieve it"
+  type        = bool
+  default     = null
+}
+
+variable "hibernation" {
+  description = "If true, the launched EC2 instance will support hibernation"
+  type        = bool
+  default     = null
+}
+
+variable "host_id" {
+  description = "ID of a dedicated host that the instance will be assigned to. Use when an instance is to be launched on a specific dedicated host"
+  type        = string
+  default     = null
+}
+
+variable "iam_instance_profile" {
+  description = "IAM Instance Profile to launch the instance with. Specified as the name of the Instance Profile"
+  type        = string
+  default     = null
+}
+
+variable "instance_initiated_shutdown_behavior" {
+  description = "Shutdown behavior for the instance. Amazon defaults this to stop for EBS-backed instances and terminate for instance-store instances. Cannot be set on instance-store instance" # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/terminating-instances.html#Using_ChangingInstanceInitiatedShutdownBehavior
+  type        = string
+  default     = null
+}
+
+variable "instance_type" {
+  description = "The type of instance to start"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "instance_tags" {
+  description = "Additional tags for the instance"
+  type        = map(string)
+  default     = {}
+}
+
+variable "ipv6_address_count" {
+  description = "A number of IPv6 addresses to associate with the primary network interface. Amazon EC2 chooses the IPv6 addresses from the range of your subnet"
+  type        = number
+  default     = null
+}
+
+variable "ipv6_addresses" {
+  description = "Specify one or more IPv6 addresses from the range of the subnet to associate with the primary network interface"
+  type        = list(string)
+  default     = null
+}
+
+variable "key_name" {
+  description = "Key name of the Key Pair to use for the instance; which can be managed using the `aws_key_pair` resource"
+  type        = string
+  default     = null
+}
+
+variable "launch_template" {
+  description = "Specifies a Launch Template to configure the instance. Parameters configured on this resource will override the corresponding parameters in the Launch Template"
+  type        = map(string)
+  default     = {}
+}
+
+variable "metadata_options" {
+  description = "Customize the metadata options of the instance"
+  type        = map(string)
+  default = {
+    "http_endpoint"               = "enabled"
+    "http_put_response_hop_limit" = 1
+    "http_tokens"                 = "required"
+  }
+}
+
+variable "monitoring" {
+  description = "If true, the launched EC2 instance will have detailed monitoring enabled"
+  type        = bool
+  default     = null
+}
+
+variable "network_interface" {
+  description = "Customize network interfaces to be attached at instance boot time"
+  type        = list(map(string))
+  default     = []
+}
+
+variable "private_dns_name_options" {
+  description = "Customize the private DNS name options of the instance"
+  type        = map(string)
+  default     = {}
+}
+
+variable "placement_group" {
+  description = "The Placement Group to start the instance in"
+  type        = string
+  default     = null
+}
+
+variable "private_ip" {
+  description = "Private IP address to associate with the instance in a VPC"
+  type        = string
+  default     = null
+}
+
+variable "root_block_device" {
+  description = "Customize details about the root block device of the instance. See Block Devices below for details"
+  type        = list(any)
+  default     = []
+}
+
+variable "secondary_private_ips" {
+  description = "A list of secondary private IPv4 addresses to assign to the instance's primary network interface (eth0) in a VPC. Can only be assigned to the primary network interface (eth0) attached at instance creation, not a pre-existing network interface i.e. referenced in a `network_interface block`"
+  type        = list(string)
+  default     = null
+}
+
+variable "source_dest_check" {
+  description = "Controls if traffic is routed to the instance when the destination address does not match the instance. Used for NAT or VPNs"
+  type        = bool
+  default     = null
+}
+
+variable "subnet_id" {
+  description = "The VPC Subnet ID to launch in"
+  type        = string
+  default     = null
+}
+
+variable "tags" {
+  description = "A mapping of tags to assign to the resource"
+  type        = map(string)
+  default     = {}
+}
+
+variable "tenancy" {
+  description = "The tenancy of the instance (if the instance is running in a VPC). Available values: default, dedicated, host"
+  type        = string
+  default     = null
+}
+
+variable "user_data" {
+  description = "The user data to provide when launching the instance. Do not pass gzip-compressed data via this argument; see user_data_base64 instead"
+  type        = string
+  default     = null
+}
+
+variable "user_data_base64" {
+  description = "Can be used instead of user_data to pass base64-encoded binary data directly. Use this instead of user_data whenever the value is not a valid UTF-8 string. For example, gzip-encoded user data must be base64-encoded and passed via this argument to avoid corruption"
+  type        = string
+  default     = null
+}
+
+variable "user_data_replace_on_change" {
+  description = "When used in combination with user_data or user_data_base64 will trigger a destroy and recreate when set to true. Defaults to false if not set"
+  type        = bool
+  default     = null
+}
+
+variable "volume_tags" {
+  description = "Map of tags to assign to the volumes created by the instance"
+  type        = map(string)
+  default     = {}
+}
+
+variable "vpc_security_group_ids" {
+  description = "A list of security group IDs to associate with"
+  type        = list(string)
+  default     = null
+}
+
+variable "timeouts" {
+  description = "Define maximum timeout for creating, updating, and deleting EC2 instance resources"
+  type        = map(string)
+  default     = {}
+}
+
+variable "cpu_options" {
+  description = "Defines CPU options to apply to the instance at launch time."
+  type        = any
+  default     = {}
+}
+
+variable "cpu_core_count" {
+  description = "Sets the number of CPU cores for an instance" # This option is only supported on creation of instance type that support CPU Options https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html#cpu-options-supported-instances-values
+  type        = number
+  default     = null
+}
+
+variable "cpu_threads_per_core" {
+  description = "Sets the number of CPU threads per core for an instance (has no effect unless cpu_core_count is also set)"
+  type        = number
+  default     = null
+}
+
+# Spot instance request
+variable "create_spot_instance" {
+  description = "Depicts if the instance is a spot instance"
+  type        = bool
+  default     = false
+}
+
+variable "spot_price" {
+  description = "The maximum price to request on the spot market. Defaults to on-demand price"
+  type        = string
+  default     = null
+}
+
+variable "spot_wait_for_fulfillment" {
+  description = "If set, Terraform will wait for the Spot Request to be fulfilled, and will throw an error if the timeout of 10m is reached"
+  type        = bool
+  default     = null
+}
+
+variable "spot_type" {
+  description = "If set to one-time, after the instance is terminated, the spot request will be closed. Default `persistent`"
+  type        = string
+  default     = null
+}
+
+variable "spot_launch_group" {
+  description = "A launch group is a group of spot instances that launch together and terminate together. If left empty instances are launched and terminated individually"
+  type        = string
+  default     = null
+}
+
+variable "spot_block_duration_minutes" {
+  description = "The required duration for the Spot instances, in minutes. This value must be a multiple of 60 (60, 120, 180, 240, 300, or 360)"
+  type        = number
+  default     = null
+}
+
+variable "spot_instance_interruption_behavior" {
+  description = "Indicates Spot instance behavior when it is interrupted. Valid values are `terminate`, `stop`, or `hibernate`"
+  type        = string
+  default     = null
+}
+
+variable "spot_valid_until" {
+  description = "The end date and time of the request, in UTC RFC3339 format(for example, YYYY-MM-DDTHH:MM:SSZ)"
+  type        = string
+  default     = null
+}
+
+variable "spot_valid_from" {
+  description = "The start date and time of the request, in UTC RFC3339 format(for example, YYYY-MM-DDTHH:MM:SSZ)"
+  type        = string
+  default     = null
+}
+
+variable "disable_api_stop" {
+  description = "If true, enables EC2 Instance Stop Protection"
+  type        = bool
+  default     = null
+
+}
+
+################################################################################
+# IAM Role / Instance Profile
+################################################################################
+
+variable "create_iam_instance_profile" {
+  description = "Determines whether an IAM instance profile is created or to use an existing IAM instance profile"
+  type        = bool
+  default     = false
+}
+
+variable "iam_role_name" {
+  description = "Name to use on IAM role created"
+  type        = string
+  default     = null
+}
+
+variable "iam_role_use_name_prefix" {
+  description = "Determines whether the IAM role name (`iam_role_name` or `name`) is used as a prefix"
+  type        = bool
+  default     = true
+}
+
+variable "iam_role_path" {
+  description = "IAM role path"
+  type        = string
+  default     = null
+}
+
+variable "iam_role_description" {
+  description = "Description of the role"
+  type        = string
+  default     = null
+}
+
+variable "iam_role_permissions_boundary" {
+  description = "ARN of the policy that is used to set the permissions boundary for the IAM role"
+  type        = string
+  default     = null
+}
+
+variable "iam_role_policies" {
+  description = "Policies attached to the IAM role"
+  type        = map(string)
+  default     = {}
+}
+
+variable "iam_role_tags" {
+  description = "A map of additional tags to add to the IAM role/profile created"
+  type        = map(string)
+  default     = {}
+}
+
+################################################################################
+# Elastic IP
+################################################################################
+
+variable "create_eip" {
+  description = "Determines whether a public EIP will be created and associated with the instance."
+  type        = bool
+  default     = false
+}
+
+variable "eip_domain" {
+  description = "Indicates if this EIP is for use in VPC"
+  type        = string
+  default     = "vpc"
+}
+
+variable "eip_tags" {
+  description = "A map of additional tags to add to the eip"
+  type        = map(string)
+  default     = {}
+}
+
+variable "enable_volume_tags" {
+  description = "Whether to enable volume tags"
+  type        = bool
+  default     = true
+}
 </file>
 
 <file path="resource_modules/network/outputs.tf">
@@ -10298,54 +10343,6 @@ output "name" {
 }
 </file>
 
-<file path="infrastructure_modules/EC2/main.tf">
-#Security Group
-
-module "sg" {
-  source              = "../../resource_modules/compute/security_group"
-  name                = var.sg_name
-  description         = "Security Group for practice EC2 instance allowing HTTP, HTTPS, SSH ingress and all egress."
-  vpc_id              = var.vpc_id
-  ingress_rules       = ["http-80-tcp", "https-443-tcp", "ssh-tcp"]
-  ingress_cidr_blocks = var.ingress_cidr_blocks
-  egress_rules        = ["all-all"]
-  tags                = var.tags
-}
-
-locals {
-  rendered_user_data = templatefile("${path.module}/${var.user_data_template_path}", {
-
-    docker_image_name = var.docker_image_name
-  })
-}
-
-#EC2
-module "ec2_instance" {
-  source                      = "../../resource_modules/compute/ec2_instance"
-  name                        = var.instance_name
-  instance_type               = var.instance_type
-  key_name                    = var.instance_key_name
-  ami_ssm_parameter           = var.ami_ssm_parameter_name
-  subnet_id                   = var.subnet_id
-  vpc_security_group_ids      = [module.sg.security_group_id]
-  associate_public_ip_address = false # EIP を使うため false
-  user_data                   = local.rendered_user_data
-  tags                        = var.tags
-}
-
-data "aws_eip" "existing_eip" {
-  filter {
-    name   = "tag:Name"
-    values = [var.eip_name_tag_filter]
-  }
-}
-
-resource "aws_eip_association" "eip_assoc" {
-  instance_id   = module.ec2_instance.id
-  allocation_id = data.aws_eip.existing_eip.id
-}
-</file>
-
 <file path="infrastructure_modules/EC2/variable.tf">
 # SG
 
@@ -10456,11 +10453,11 @@ module "state_bucket" {
   server_side_encryption_configuration = var.server_side_encryption_configuration
   versioning                           = local.versioning
   control_object_ownership             = var.control_object_ownership
-  #block_public_acls = true
-  #block_public_policy = true
-  #ignore_public_acls = true
-  #restrict_public_buckets = true
-  #object_ownership = "BucketOwnerEnforced"
+  # block_public_acls                  = true
+  # block_public_policy                = true
+  # ignore_public_acls                 = true
+  # restrict_public_buckets            = true
+  # object_ownership                   = "BucketOwnerEnforced"
 }
 
 # --- DynamoDB Table for State Locking ---
@@ -10524,6 +10521,54 @@ module "vpc" {
     Name = "internet-gateway-practice-terraform"
     }
   )
+}
+</file>
+
+<file path="infrastructure_modules/EC2/main.tf">
+#Security Group
+
+module "sg" {
+  source              = "../../resource_modules/compute/security_group"
+  name                = var.sg_name
+  description         = "Security Group for practice EC2 instance allowing HTTP, HTTPS, SSH ingress and all egress."
+  vpc_id              = var.vpc_id
+  ingress_rules       = ["http-80-tcp", "https-443-tcp", "ssh-tcp"]
+  ingress_cidr_blocks = var.ingress_cidr_blocks
+  egress_rules        = ["all-all"]
+  tags                = var.tags
+}
+
+locals {
+  rendered_user_data = templatefile("${path.module}/${var.user_data_template_path}", {
+
+    docker_image_name = var.docker_image_name
+  })
+}
+
+#EC2
+module "ec2_instance" {
+  source                      = "../../resource_modules/compute/ec2_instance"
+  name                        = var.instance_name
+  instance_type               = var.instance_type
+  key_name                    = var.instance_key_name
+  ami_ssm_parameter           = var.ami_ssm_parameter_name
+  subnet_id                   = var.subnet_id
+  vpc_security_group_ids      = [module.sg.security_group_id]
+  associate_public_ip_address = false # EIP を使うため false
+  user_data                   = local.rendered_user_data
+  tags                        = var.tags
+}
+
+resource "aws_eip" "this" {
+  domain = "vpc"
+  tags = merge(var.tags, {
+    Name = var.eip_name_tag_filter
+  })
+}
+
+resource "aws_eip_association" "eip_assoc" {
+  instance_id   = module.ec2_instance.id
+  allocation_id = aws_eip.this.id
 }
 </file>
 

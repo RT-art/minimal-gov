@@ -1,30 +1,33 @@
-# --- S3 Bucket for Terraform State ---
 module "state_bucket" {
-  source                               = "../../resource_modules/storage/s3"
-  bucket                               = local.s3_bucket_name
-  server_side_encryption_configuration = var.server_side_encryption_configuration
-  versioning                           = local.versioning
-  control_object_ownership             = var.control_object_ownership
-  #block_public_acls = true
-  #block_public_policy = true
-  #ignore_public_acls = true
-  #restrict_public_buckets = true
-  #object_ownership = "BucketOwnerEnforced"
-}
+  source = "../../resource_modules/storage/s3"
 
-# --- DynamoDB Table for State Locking ---
-module "lock_table" {
-  source                         = "../../resource_modules/database/dynamodb"
-  name                           = local.dynamodb_table_name
-  server_side_encryption_enabled = var.server_side_encryption_enabled
-  hash_key                       = var.hash_key
-  attributes                     = local.attributes
-  billing_mode                   = var.dynamodb_billing_mode
-  deletion_protection_enabled    = var.dynamodb_deletion_protection
-  point_in_time_recovery_enabled = var.point_in_time_recovery_enabled
-  stream_enabled                 = var.stream_enabled
-  ttl_enabled                    = var.ttl_enabled
-  create_table                   = var.create_table
-  autoscaling_enabled            = var.autoscaling_enabled
-  tags                           = local.common_tags
+  bucket                               = local.s3_bucket_name
+  versioning                           = { enabled = var.versioning_enabled }
+  server_side_encryption_configuration = var.server_side_encryption_configuration
+
+  control_object_ownership = var.control_object_ownership
+  object_ownership         = "BucketOwnerEnforced"
+
+  # Public Access Block
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  # 通信/暗号化関連のポリシー
+  attach_require_latest_tls_policy       = true
+  attach_deny_unencrypted_object_uploads = true
+  attach_deny_insecure_transport_policy  = true
+
+  expected_bucket_owner = var.aws_account_id
+  force_destroy         = false
+  tags                  = var.tags
+
+  lifecycle_rule = [{
+    id      = "noncurrent-cleanup"
+    enabled = true
+    noncurrent_version_expiration = {
+      days = 30 # 自分用のため30日で削除設定。
+    }
+  }]
 }
