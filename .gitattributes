@@ -1,6 +1,0 @@
-# デフォルトですべてのテキストファイルの行末をLFに正規化
-* text=auto eol=lf
-
-# 特定のバイナリファイルは変換しない
-# *.png binary
-# *.jpg binary
