@@ -1,0 +1,6 @@
+# stacks/remote-backend/ap-northeast-1/dev/backend.hcl.example
+bucket         = "<state_bucket_name>"
+key            = "states/dev/ap-northeast-1/terraform.tfstate"
+region         = "ap-northeast-1"
+dynamodb_table = "<lock_table_name>"
+encrypt        = true
