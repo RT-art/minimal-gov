@@ -104,3 +104,8 @@ $RECYCLE.BIN/
 *.tmp
 *.temp
 *.orig
+
+# Terraform backend config (kept out of VCS)
+stacks/**/backend.hcl
+!stacks/**/backend.hcl.example
+
