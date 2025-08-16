@@ -1,5 +1,5 @@
 module "state_bucket" {
-  source = "../../resource_modules/storage/s3"
+  source = "../../_third_party/storage/s3"
 
   bucket                               = local.s3_bucket_name
   versioning                           = { enabled = var.versioning_enabled }

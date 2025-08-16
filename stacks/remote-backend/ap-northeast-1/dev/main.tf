@@ -5,7 +5,7 @@
 data "aws_caller_identity" "current" {}
 
 module "terraform_remote_backend" {
-  source = "../../../../infrastructure_modules/remotebackend"
+  source = "../../../../modules/platform/remote-backend"
 
   env      = var.env
   app_name = var.app_name
