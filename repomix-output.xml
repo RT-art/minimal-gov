@@ -1,3 +1,65 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+modules/_third_party/storage/s3/main.tf
+modules/_third_party/storage/s3/outputs.tf
+modules/_third_party/storage/s3/variable.tf
+modules/platform/remote-backend/local.tf
+modules/platform/remote-backend/main.tf
+modules/platform/remote-backend/outputs.tf
+modules/platform/remote-backend/repomix-output.xml
+modules/platform/remote-backend/variable.tf
+stacks/remote-backend/ap-northeast-1/dev/.terraform.lock.hcl
+stacks/remote-backend/ap-northeast-1/dev/main.tf
+stacks/remote-backend/ap-northeast-1/dev/outputs.tf
+stacks/remote-backend/ap-northeast-1/dev/provider.tf
+stacks/remote-backend/ap-northeast-1/dev/variable.tf
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="modules/_third_party/storage/s3/main.tf">
 data "aws_region" "current" {}
 
 data "aws_canonical_user_id" "this" {
@@ -1159,3 +1221,914 @@ resource "aws_s3_bucket_analytics_configuration" "this" {
     }
   }
 }
+</file>
+
+<file path="modules/_third_party/storage/s3/outputs.tf">
+output "s3_bucket_id" {
+  description = "The name of the bucket."
+  value       = try(aws_s3_bucket_policy.this[0].id, aws_s3_bucket.this[0].id, "")
+}
+
+output "s3_bucket_arn" {
+  description = "The ARN of the bucket. Will be of format arn:aws:s3:::bucketname."
+  value       = try(aws_s3_bucket.this[0].arn, "")
+}
+
+output "s3_bucket_bucket_domain_name" {
+  description = "The bucket domain name. Will be of format bucketname.s3.amazonaws.com."
+  value       = try(aws_s3_bucket.this[0].bucket_domain_name, "")
+}
+
+output "s3_bucket_bucket_regional_domain_name" {
+  description = "The bucket region-specific domain name. The bucket domain name including the region name, please refer here for format. Note: The AWS CloudFront allows specifying S3 region-specific endpoint when creating S3 origin, it will prevent redirect issues from CloudFront to S3 Origin URL."
+  value       = try(aws_s3_bucket.this[0].bucket_regional_domain_name, "")
+}
+
+output "s3_bucket_hosted_zone_id" {
+  description = "The Route 53 Hosted Zone ID for this bucket's region."
+  value       = try(aws_s3_bucket.this[0].hosted_zone_id, "")
+}
+
+output "s3_bucket_lifecycle_configuration_rules" {
+  description = "The lifecycle rules of the bucket, if the bucket is configured with lifecycle rules. If not, this will be an empty string."
+  value       = try(aws_s3_bucket_lifecycle_configuration.this[0].rule, "")
+}
+
+output "s3_bucket_policy" {
+  description = "The policy of the bucket, if the bucket is configured with a policy. If not, this will be an empty string."
+  value       = try(aws_s3_bucket_policy.this[0].policy, "")
+}
+
+output "s3_bucket_region" {
+  description = "The AWS region this bucket resides in."
+  value       = try(aws_s3_bucket.this[0].region, "")
+}
+
+output "s3_bucket_website_endpoint" {
+  description = "The website endpoint, if the bucket is configured with a website. If not, this will be an empty string."
+  value       = try(aws_s3_bucket_website_configuration.this[0].website_endpoint, "")
+}
+
+output "s3_bucket_website_domain" {
+  description = "The domain of the website endpoint, if the bucket is configured with a website. If not, this will be an empty string. This is used to create Route 53 alias records."
+  value       = try(aws_s3_bucket_website_configuration.this[0].website_domain, "")
+}
+
+output "s3_directory_bucket_name" {
+  description = "Name of the directory bucket."
+  value       = try(aws_s3_directory_bucket.this[0].bucket, null)
+}
+
+output "s3_directory_bucket_arn" {
+  description = "ARN of the directory bucket."
+  value       = try(aws_s3_directory_bucket.this[0].arn, null)
+}
+</file>
+
+<file path="modules/_third_party/storage/s3/variable.tf">
+variable "create_bucket" {
+  description = "Controls if S3 bucket should be created"
+  type        = bool
+  default     = true
+}
+
+variable "attach_elb_log_delivery_policy" {
+  description = "Controls if S3 bucket should have ELB log delivery policy attached"
+  type        = bool
+  default     = false
+}
+
+variable "attach_lb_log_delivery_policy" {
+  description = "Controls if S3 bucket should have ALB/NLB log delivery policy attached"
+  type        = bool
+  default     = false
+}
+
+variable "attach_access_log_delivery_policy" {
+  description = "Controls if S3 bucket should have S3 access log delivery policy attached"
+  type        = bool
+  default     = false
+}
+
+variable "attach_deny_insecure_transport_policy" {
+  description = "Controls if S3 bucket should have deny non-SSL transport policy attached"
+  type        = bool
+  default     = false
+}
+
+variable "attach_require_latest_tls_policy" {
+  description = "Controls if S3 bucket should require the latest version of TLS"
+  type        = bool
+  default     = false
+}
+
+variable "attach_policy" {
+  description = "Controls if S3 bucket should have bucket policy attached (set to `true` to use value of `policy` as bucket policy)"
+  type        = bool
+  default     = false
+}
+
+variable "attach_public_policy" {
+  description = "Controls if a user defined public bucket policy will be attached (set to `false` to allow upstream to apply defaults to the bucket)"
+  type        = bool
+  default     = true
+}
+
+variable "attach_inventory_destination_policy" {
+  description = "Controls if S3 bucket should have bucket inventory destination policy attached."
+  type        = bool
+  default     = false
+}
+
+variable "attach_analytics_destination_policy" {
+  description = "Controls if S3 bucket should have bucket analytics destination policy attached."
+  type        = bool
+  default     = false
+}
+
+variable "attach_deny_incorrect_encryption_headers" {
+  description = "Controls if S3 bucket should deny incorrect encryption headers policy attached."
+  type        = bool
+  default     = false
+}
+
+variable "attach_deny_incorrect_kms_key_sse" {
+  description = "Controls if S3 bucket policy should deny usage of incorrect KMS key SSE."
+  type        = bool
+  default     = false
+}
+
+variable "allowed_kms_key_arn" {
+  description = "The ARN of KMS key which should be allowed in PutObject"
+  type        = string
+  default     = null
+}
+
+variable "attach_deny_unencrypted_object_uploads" {
+  description = "Controls if S3 bucket should deny unencrypted object uploads policy attached."
+  type        = bool
+  default     = false
+}
+
+variable "attach_deny_ssec_encrypted_object_uploads" {
+  description = "Controls if S3 bucket should deny SSEC encrypted object uploads."
+  type        = bool
+  default     = false
+}
+
+variable "bucket" {
+  description = "(Optional, Forces new resource) The name of the bucket. If omitted, Terraform will assign a random, unique name."
+  type        = string
+  default     = null
+}
+
+variable "bucket_prefix" {
+  description = "(Optional, Forces new resource) Creates a unique bucket name beginning with the specified prefix. Conflicts with bucket."
+  type        = string
+  default     = null
+}
+
+variable "acl" {
+  description = "(Optional) The canned ACL to apply. Conflicts with `grant`"
+  type        = string
+  default     = null
+}
+
+variable "policy" {
+  description = "(Optional) A valid bucket policy JSON document. Note that if the policy document is not specific enough (but still valid), Terraform may view the policy as constantly changing in a terraform plan. In this case, please make sure you use the verbose/specific version of the policy. For more information about building AWS IAM policy documents with Terraform, see the AWS IAM Policy Document Guide."
+  type        = string
+  default     = null
+}
+
+variable "tags" {
+  description = "(Optional) A mapping of tags to assign to the bucket."
+  type        = map(string)
+  default     = {}
+}
+
+variable "force_destroy" {
+  description = "(Optional, Default:false ) A boolean that indicates all objects should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable."
+  type        = bool
+  default     = false
+}
+
+variable "acceleration_status" {
+  description = "(Optional) Sets the accelerate configuration of an existing bucket. Can be Enabled or Suspended."
+  type        = string
+  default     = null
+}
+
+variable "request_payer" {
+  description = "(Optional) Specifies who should bear the cost of Amazon S3 data transfer. Can be either BucketOwner or Requester. By default, the owner of the S3 bucket would incur the costs of any data transfer. See Requester Pays Buckets developer guide for more information."
+  type        = string
+  default     = null
+}
+
+variable "website" {
+  description = "Map containing static web-site hosting or redirect configuration."
+  type        = any # map(string)
+  default     = {}
+}
+
+variable "cors_rule" {
+  description = "List of maps containing rules for Cross-Origin Resource Sharing."
+  type        = any
+  default     = []
+}
+
+variable "versioning" {
+  description = "Map containing versioning configuration."
+  type        = map(string)
+  default     = {}
+}
+
+variable "logging" {
+  description = "Map containing access bucket logging configuration."
+  type        = any
+  default     = {}
+}
+
+variable "access_log_delivery_policy_source_buckets" {
+  description = "(Optional) List of S3 bucket ARNs which should be allowed to deliver access logs to this bucket."
+  type        = list(string)
+  default     = []
+}
+
+variable "access_log_delivery_policy_source_accounts" {
+  description = "(Optional) List of AWS Account IDs should be allowed to deliver access logs to this bucket."
+  type        = list(string)
+  default     = []
+}
+
+variable "grant" {
+  description = "An ACL policy grant. Conflicts with `acl`"
+  type        = any
+  default     = []
+}
+
+variable "owner" {
+  description = "Bucket owner's display name and ID. Conflicts with `acl`"
+  type        = map(string)
+  default     = {}
+}
+
+variable "expected_bucket_owner" {
+  description = "The account ID of the expected bucket owner"
+  type        = string
+  default     = null
+}
+
+variable "transition_default_minimum_object_size" {
+  description = "The default minimum object size behavior applied to the lifecycle configuration. Valid values: all_storage_classes_128K (default), varies_by_storage_class"
+  type        = string
+  default     = null
+}
+
+variable "lifecycle_rule" {
+  description = "List of maps containing configuration of object lifecycle management."
+  type        = any
+  default     = []
+}
+
+variable "replication_configuration" {
+  description = "Map containing cross-region replication configuration."
+  type        = any
+  default     = {}
+}
+
+variable "server_side_encryption_configuration" {
+  description = "Map containing server-side encryption configuration."
+  type        = any
+  default     = {}
+}
+
+variable "intelligent_tiering" {
+  description = "Map containing intelligent tiering configuration."
+  type        = any
+  default     = {}
+}
+
+variable "object_lock_configuration" {
+  description = "Map containing S3 object locking configuration."
+  type        = any
+  default     = {}
+}
+
+variable "metric_configuration" {
+  description = "Map containing bucket metric configuration."
+  type        = any
+  default     = []
+}
+
+variable "inventory_configuration" {
+  description = "Map containing S3 inventory configuration."
+  type        = any
+  default     = {}
+}
+
+variable "inventory_source_account_id" {
+  description = "The inventory source account id."
+  type        = string
+  default     = null
+}
+
+variable "inventory_source_bucket_arn" {
+  description = "The inventory source bucket ARN."
+  type        = string
+  default     = null
+}
+
+variable "inventory_self_source_destination" {
+  description = "Whether or not the inventory source bucket is also the destination bucket."
+  type        = bool
+  default     = false
+}
+
+variable "analytics_configuration" {
+  description = "Map containing bucket analytics configuration."
+  type        = any
+  default     = {}
+}
+
+variable "analytics_source_account_id" {
+  description = "The analytics source account id."
+  type        = string
+  default     = null
+}
+
+variable "analytics_source_bucket_arn" {
+  description = "The analytics source bucket ARN."
+  type        = string
+  default     = null
+}
+
+variable "analytics_self_source_destination" {
+  description = "Whether or not the analytics source bucket is also the destination bucket."
+  type        = bool
+  default     = false
+}
+
+variable "object_lock_enabled" {
+  description = "Whether S3 bucket should have an Object Lock configuration enabled."
+  type        = bool
+  default     = false
+}
+
+variable "block_public_acls" {
+  description = "Whether Amazon S3 should block public ACLs for this bucket."
+  type        = bool
+  default     = true
+}
+
+variable "block_public_policy" {
+  description = "Whether Amazon S3 should block public bucket policies for this bucket."
+  type        = bool
+  default     = true
+}
+
+variable "ignore_public_acls" {
+  description = "Whether Amazon S3 should ignore public ACLs for this bucket."
+  type        = bool
+  default     = true
+}
+
+variable "restrict_public_buckets" {
+  description = "Whether Amazon S3 should restrict public bucket policies for this bucket."
+  type        = bool
+  default     = true
+}
+
+variable "control_object_ownership" {
+  description = "Whether to manage S3 Bucket Ownership Controls on this bucket."
+  type        = bool
+  default     = false
+}
+
+variable "object_ownership" {
+  description = "Object ownership. Valid values: BucketOwnerEnforced, BucketOwnerPreferred or ObjectWriter. 'BucketOwnerEnforced': ACLs are disabled, and the bucket owner automatically owns and has full control over every object in the bucket. 'BucketOwnerPreferred': Objects uploaded to the bucket change ownership to the bucket owner if the objects are uploaded with the bucket-owner-full-control canned ACL. 'ObjectWriter': The uploading account will own the object if the object is uploaded with the bucket-owner-full-control canned ACL."
+  type        = string
+  default     = "BucketOwnerEnforced"
+}
+
+# Directory Bucket
+variable "is_directory_bucket" {
+  description = "If the s3 bucket created is a directory bucket"
+  type        = bool
+  default     = false
+}
+
+variable "data_redundancy" {
+  description = "Data redundancy. Valid values: `SingleAvailabilityZone`"
+  type        = string
+  default     = null
+}
+
+variable "type" {
+  description = "Bucket type. Valid values: `Directory`"
+  type        = string
+  default     = "Directory"
+}
+
+variable "availability_zone_id" {
+  description = "Availability Zone ID or Local Zone ID"
+  type        = string
+  default     = null
+}
+
+variable "location_type" {
+  description = "Location type. Valid values: `AvailabilityZone` or `LocalZone`"
+  type        = string
+  default     = null
+}
+
+variable "putin_khuylo" {
+  description = "Do you agree that Putin doesn't respect Ukrainian sovereignty and territorial integrity? More info: https://en.wikipedia.org/wiki/Putin_khuylo!"
+  type        = bool
+  default     = true
+}
+</file>
+
+<file path="modules/platform/remote-backend/local.tf">
+locals {
+  s3_bucket_name_raw = lower(replace("${var.app_name}-tfstate-${var.region}-${var.aws_account_id}", "_", "-"))
+  s3_bucket_name_63  = substr(local.s3_bucket_name_raw, 0, 63)
+  s3_bucket_name     = trim(local.s3_bucket_name_63, "-.")
+}
+</file>
+
+<file path="modules/platform/remote-backend/main.tf">
+module "state_bucket" {
+  source = "../../_third_party/storage/s3"
+
+  bucket                               = local.s3_bucket_name
+  versioning                           = { enabled = var.versioning_enabled }
+  server_side_encryption_configuration = var.server_side_encryption_configuration
+
+  control_object_ownership = var.control_object_ownership
+  object_ownership         = "BucketOwnerEnforced"
+
+  # Public Access Block
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  # 通信/暗号化関連のポリシー
+  attach_require_latest_tls_policy       = true
+  attach_deny_unencrypted_object_uploads = true
+  attach_deny_insecure_transport_policy  = true
+
+  expected_bucket_owner = var.aws_account_id
+  force_destroy         = false
+  tags                  = var.tags
+
+  lifecycle_rule = [{
+    id      = "noncurrent-cleanup"
+    enabled = true
+    noncurrent_version_expiration = {
+      days = 30 # 自分用のため30日で削除設定。
+    }
+  }]
+}
+</file>
+
+<file path="modules/platform/remote-backend/outputs.tf">
+output "state_bucket_name" {
+  value = module.state_bucket.s3_bucket_id
+}
+</file>
+
+<file path="modules/platform/remote-backend/repomix-output.xml">
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+local.tf
+main.tf
+outputs.tf
+variable.tf
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="local.tf">
+locals {
+  s3_bucket_name_raw = lower(replace("${var.app_name}-tfstate-${var.region}-${var.aws_account_id}", "_", "-"))
+  s3_bucket_name_63  = substr(local.s3_bucket_name_raw, 0, 63)
+  s3_bucket_name     = trim(local.s3_bucket_name_63, "-.")
+
+  versioning = {
+    enabled = var.versioning_enabled
+  }
+}
+</file>
+
+<file path="main.tf">
+module "state_bucket" {
+  source = "../../resource_modules/storage/s3"
+
+  bucket                               = local.s3_bucket_name
+  versioning                           = { enabled = var.versioning_enabled }
+  server_side_encryption_configuration = var.server_side_encryption_configuration
+
+  control_object_ownership = var.control_object_ownership
+  object_ownership         = "BucketOwnerEnforced"
+
+  # Public Access Block
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  # 通信/暗号化関連のポリシー
+  attach_require_latest_tls_policy       = true
+  attach_deny_unencrypted_object_uploads = true
+  attach_deny_insecure_transport_policy  = true
+
+  expected_bucket_owner = var.aws_account_id
+  force_destroy         = false
+}
+</file>
+
+<file path="outputs.tf">
+output "state_bucket_name" {
+  value = module.state_bucket.s3_bucket_id
+}
+</file>
+
+<file path="variable.tf">
+########################################
+# Metadata
+########################################
+
+variable "env" {
+  description = "The name of the environment."
+  type        = string
+}
+
+variable "app_name" {
+  description = "The name of the application."
+  type        = string
+}
+
+variable "region" {
+  description = "The AWS region this bucket should reside in."
+  type        = string
+}
+
+variable "tags" {
+  description = "Additional tags to merge on top of provider default_tags"
+  type        = map(string)
+  default     = {}
+}
+
+variable "aws_account_id" {
+  description = "AWS Account ID."
+  type        = string
+}
+
+########################################
+## S3
+########################################
+
+variable "versioning_enabled" {
+  description = "Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state."
+  type        = bool
+}
+
+variable "server_side_encryption_configuration" {
+  description = "Map containing server-side encryption configuration."
+  type        = any
+}
+
+variable "control_object_ownership" {
+  description = "Whether to manage S3 Bucket Ownership Controls on this bucket."
+  type        = bool
+}
+</file>
+
+</files>
+</file>
+
+<file path="modules/platform/remote-backend/variable.tf">
+########################################
+# Metadata
+########################################
+
+variable "env" {
+  description = "The name of the environment."
+  type        = string
+}
+
+variable "app_name" {
+  description = "The name of the application."
+  type        = string
+}
+
+variable "region" {
+  description = "The AWS region this bucket should reside in."
+  type        = string
+}
+
+variable "tags" {
+  description = "Additional tags to merge on top of provider default_tags"
+  type        = map(string)
+  default     = {}
+}
+
+variable "aws_account_id" {
+  description = "AWS Account ID."
+  type        = string
+}
+
+########################################
+## S3
+########################################
+
+variable "versioning_enabled" {
+  description = "Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state."
+  type        = bool
+}
+
+variable "server_side_encryption_configuration" {
+  description = "Map containing server-side encryption configuration."
+  type        = any
+}
+
+variable "control_object_ownership" {
+  description = "Whether to manage S3 Bucket Ownership Controls on this bucket."
+  type        = bool
+}
+</file>
+
+<file path="stacks/remote-backend/ap-northeast-1/dev/.terraform.lock.hcl">
+# This file is maintained automatically by "terraform init".
+# Manual edits may be lost in future updates.
+
+provider "registry.terraform.io/hashicorp/aws" {
+  version     = "6.9.0"
+  constraints = ">= 6.5.0"
+  hashes = [
+    "h1:eumhhmQnnGZDLbCULd8s/uw2TdueKIBHwkmGNr5YY9o=",
+    "zh:0121aeca90856ba37d03cff9eed40321cc3ae1c0f77bef3329e17212c48f884a",
+    "zh:4f09e73f948d4545358eed978bc41fd1a825c65b530a532bfaf9aaba93ac6e55",
+    "zh:58604213402b5dba8360367e09b3d3762736980c80a72d6297be7cb71fe8dc8d",
+    "zh:5aa9fe54fc9aba0780cae11becfce698e5093ee002066590599277d5aa71e59e",
+    "zh:7e8546575a80d54b8db7edb53574c2d1f04afbdbafc599d0eb78da9e74e917f7",
+    "zh:846ce59c9f7ec3c92b33fe3a0d98386420bcbb971260da9ff869b219a1125df4",
+    "zh:9b12af85486a96aedd8d7984b0ff811a4b42e3d88dad1a3fb4c0b580d04fa425",
+    "zh:9bd2cb527dcbd76977c18f3f6844638b6d5039f070accc41d064831f98aa7b40",
+    "zh:9df98266de85cf047c9a2e43b892c74479805e0936dbb3583aef314d2fa0f5fc",
+    "zh:a4fc8e9645b147902bcf36f10ea1891ca92661c4ee4135046cc79b8ce6fe1093",
+    "zh:afe3029760f7aa5484e26c80670f86b6b5054126776376ba6aec4aa8a41483ce",
+    "zh:c158cd1790422237ab2a2e10fc02e5522bd7bce39c067ffbc9edda1e6c9ebf3b",
+    "zh:f5408929d5df6f81fcb93a433e0dbc0432b748b400cc41910328b936a7590fd5",
+    "zh:f6331bb27134e288d8c324b2390c610fd924f71af1ec27f79070dfa26f4dd410",
+    "zh:f6b8b429d5fa71f186bda45468bbde230a1697a38480487f41d7172f1e374e2d",
+  ]
+}
+</file>
+
+<file path="stacks/remote-backend/ap-northeast-1/dev/outputs.tf">
+output "tfstate_bucket_name" {
+  value = module.terraform_remote_backend.state_bucket_name
+}
+</file>
+
+<file path="stacks/remote-backend/ap-northeast-1/dev/provider.tf">
+terraform {
+  required_version = ">= 1.5.7"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.9, < 7.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.region
+
+  default_tags {
+    tags = {
+      Application = var.app_name
+      Environment = var.env
+      ManagedBy   = "Terraform"
+      Region      = var.region
+    }
+  }
+}
+</file>
+
+<file path="stacks/remote-backend/ap-northeast-1/dev/variable.tf">
+########################################
+# Metadata
+########################################
+
+variable "env" {
+  description = "The name of the environment."
+  type        = string
+}
+
+variable "app_name" {
+  description = "The name of the application."
+  type        = string
+}
+
+variable "region" {
+  description = "AWS region"
+  type        = string
+}
+
+########################################
+## S3
+########################################
+
+variable "versioning_enabled" {
+  description = "Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state."
+  type        = bool
+}
+
+variable "server_side_encryption_configuration" {
+  description = "Map containing server-side encryption configuration."
+  type        = any
+}
+
+variable "control_object_ownership" {
+  description = "Whether to manage S3 Bucket Ownership Controls on this bucket."
+  type        = bool
+}
+</file>
+
+<file path="stacks/remote-backend/ap-northeast-1/dev/main.tf">
+########################################
+# AWS Terraform backend composition
+########################################
+
+data "aws_caller_identity" "current" {}
+
+module "terraform_remote_backend" {
+  source = "../../../../modules/platform/remote-backend"
+
+  env      = var.env
+  app_name = var.app_name
+  region   = var.region
+
+  #s3 bucket
+  versioning_enabled                   = var.versioning_enabled
+  server_side_encryption_configuration = var.server_side_encryption_configuration
+  control_object_ownership             = var.control_object_ownership
+  aws_account_id                       = data.aws_caller_identity.current.account_id
+}
+</file>
+
+<file path=".gitignore">
+# =========================
+# Terraform
+# =========================
+# Local working dir and downloaded providers/modules
+.terraform/
+
+# State files and backups
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Local-only overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Plans / Graphs / Traces
+*.tfplan
+*.plan
+plan.out
+tfgraph.*
+terraform.trace.log
+
+# Variable files (keep examples)
+*.tfvars
+*.tfvars.json
+# Allow example/template var files to be tracked
+!*.example.tfvars
+!*.tfvars.example
+!*.tfvars.json.example
+!*.template.tfvars
+
+# Terragrunt (if used)
+.terragrunt-cache/
+terragrunt-debug.tfvars.json
+
+# Keep provider lockfile tracked for reproducible builds
+!.terraform.lock.hcl
+
+
+# =========================
+# Secrets / Keys / Env
+# =========================
+# Generic secrets
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer
+*.crt
+*.csr
+*.jks
+*.keystore
+*.secrets.*
+secrets.*.json
+*.age
+*.gpg
+*.asc
+
+# Env files (keep examples)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# direnv
+.envrc
+
+
+# =========================
+# Editors / IDE / Tools
+# =========================
+# VS Code
+.vscode/
+# IntelliJ / JetBrains
+.idea/
+*.iml
+# Others
+*.swp
+*.swo
+*~
+.npmrc
+.yarnrc
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+
+# =========================
+# OS / Misc
+# =========================
+# macOS
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+# Windows
+ehthumbs.db
+$RECYCLE.BIN/
+# Archives / temp
+*.bak
+*.tmp
+*.temp
+*.orig
+</file>
+
+</files>
