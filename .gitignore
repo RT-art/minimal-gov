@@ -32,6 +32,8 @@ terraform.trace.log
 !*.tfvars.json.example
 !*.template.tfvars
 
+repomix-output.xml
+
 # Terragrunt (if used)
 .terragrunt-cache/
 terragrunt-debug.tfvars.json
@@ -108,4 +110,10 @@ $RECYCLE.BIN/
 # Terraform backend config (kept out of VCS)
 stacks/**/backend.hcl
 !stacks/**/backend.hcl.example
+
+# Security/Cost/QA reports
+tfsec.sarif
+checkov*.json
+infracost*.json
+reports/
 
