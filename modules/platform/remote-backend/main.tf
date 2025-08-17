@@ -28,7 +28,7 @@ module "state_bucket" {
     id      = "noncurrent-cleanup"
     enabled = true
     noncurrent_version_expiration = {
-      days = 30 # 自分用のため30日で削除設定。
+      days = 180
     }
   }]
 }
