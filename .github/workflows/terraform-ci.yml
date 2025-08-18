@@ -1,0 +1,111 @@
+name: terraform-ci
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "**/*.tf"
+      - ".github/workflows/terraform-ci.yml"
+  workflow_dispatch:
+    inputs:
+      stack_dir:
+        description: "Terraform stack directory"
+        required: true
+      region:
+        description: "AWS region"
+        required: true
+        default: "ap-northeast-1"
+
+permissions:
+  contents: read
+  id-token: write   
+  actions: read
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ${{ inputs.region || vars.AWS_REGION || 'ap-northeast-1' }}
+
+jobs:
+  fmt_validate:
+    name: fmt & validate (all stacks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.0
+
+      - name: Terraform fmt (check)
+        run: terraform fmt -check -recursive
+
+      - name: Validate all stacks
+        shell: bash
+        run: |
+          set -euo pipefail
+          # main.tf があるスタックを全部拾う
+          mapfile -t STKS < <(find stacks -type f -name main.tf -printf '%h\n' | sort -u)
+          fail=0
+          for d in "${STKS[@]}"; do
+            echo "==== VALIDATE: $d ===="
+            if [[ -f "$d/backend.hcl" ]]; then
+              terraform -chdir="$d" init -backend-config=backend.hcl -upgrade -no-color
+            else
+              terraform -chdir="$d" init -backend=false -upgrade -no-color
+            fi
+            terraform -chdir="$d" validate -no-color || fail=1
+          done
+          exit $fail
+
+  plan:
+    name: plan (manual)
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.0
+
+      # OIDCで一時クレデンシャル取得。
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+
+      - name: Init backend (fallback to local)
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="${{ inputs.stack_dir }}"
+          if [[ -f "$d/backend.hcl" ]]; then
+            terraform -chdir="$d" init -backend-config=backend.hcl -upgrade -no-color
+          else
+            echo "backend.hcl が無いのでローカルバックエンドで初期化します。泣かない。"
+            terraform -chdir="$d" init -backend=false -upgrade -no-color
+          fi
+
+      - name: Terraform plan
+        shell: bash
+        env:
+          # 必要なら Variables に置いた TF_VAR_* が自動で使われる。ここで上書きも可。
+          TF_INPUT: "0"
+        run: |
+          d="${{ inputs.stack_dir }}"
+          terraform -chdir="$d" plan -input=false -lock=false -no-color -out=tfplan.bin
+          terraform -chdir="$d" show -no-color tfplan.bin > plan.txt
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: |
+            ${{ inputs.stack_dir }}/plan.txt
+            ${{ inputs.stack_dir }}/tfplan.bin
