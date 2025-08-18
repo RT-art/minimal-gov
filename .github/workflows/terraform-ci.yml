@@ -40,7 +40,7 @@ jobs:
           terraform_version: 1.11.0
 
       - name: Terraform fmt (check)
-        run: terraform fmt -check -recursive
+        run: terraform fmt -check -diff -recursive
 
       - name: Validate all stacks
         shell: bash

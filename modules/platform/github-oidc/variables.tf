@@ -50,5 +50,5 @@ variable "thumbprints" {
   description = "Thumbprints for the OIDC provider"
   type        = list(string)
   # 注意: 将来変わる可能性はゼロじゃない。変だったらAWSのエラーで気づくやつ
-  default     = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+  default = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }

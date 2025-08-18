@@ -1,5 +1,5 @@
 module "state_bucket" {
-  source = "terraform-aws-modules/s3-bucket/aws"
+  source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 4.0"
 
   bucket                               = local.s3_bucket_name
