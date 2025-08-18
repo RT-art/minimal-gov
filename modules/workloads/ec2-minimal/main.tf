@@ -28,12 +28,7 @@ data "aws_ami" "al2023" {
 
 locals {
   subnet_id = data.aws_subnets.default.ids[0]
-  common_tags = merge(
-    var.tags,
-    {
-      Name = "${var.app_name}-${var.env}-ec2"
-    }
-  )
+  tags = { Name = "${var.app_name}-${var.env}-ec2" }
 }
 
 resource "aws_instance" "this" {
@@ -42,5 +37,5 @@ resource "aws_instance" "this" {
   subnet_id                   = local.subnet_id
   associate_public_ip_address = true
 
-  tags = local.common_tags
+  tags = local.tags
 }

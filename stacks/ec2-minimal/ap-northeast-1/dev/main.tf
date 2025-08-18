@@ -6,5 +6,4 @@ module "ec2" {
   app_name      = var.app_name
   region        = var.region
   instance_type = var.instance_type
-  tags          = {}
 }
