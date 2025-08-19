@@ -7,3 +7,7 @@ module "ec2" {
   region        = var.region
   instance_type = var.instance_type
 }
+
+# DynamoDBステートロックは非推奨
+# https://developer.hashicorp.com/terraform/language/backend/s3
+

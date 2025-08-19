@@ -28,7 +28,7 @@ module "state_bucket" {
         sse_algorithm     = var.use_kms ? "aws:kms" : "AES256"
         kms_master_key_id = var.use_kms ? var.kms_master_key_id : null
       }
-      bucket_key_enabled = true
+      bucket_key_enabled = var.use_kms
     }
   }
 

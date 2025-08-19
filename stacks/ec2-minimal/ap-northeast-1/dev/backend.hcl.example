@@ -1,9 +1,5 @@
-# S3 Locking 有効（推奨）
 bucket        = "<state_bucket_name>"
 key           = "states/dev/ap-northeast-1/ec2-minimal.tfstate"
 region        = "ap-northeast-1"
 encrypt       = true
-use_lockfile  = true
-
-# 併用フェーズで DynamoDB ロックを使いたいなら一時的に有効化して init -reconfigure
-# dynamodb_table = "<lock_table_name>"
+use_lockfile  = true 

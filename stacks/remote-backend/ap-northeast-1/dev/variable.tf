@@ -21,6 +21,11 @@ variable "region" {
     error_message = "region の形式が不正。例: ap-northeast-1"
   }
 }
+variable "tags" {
+  description = "Additional tags to merge on top of provider default_tags"
+  type        = map(string)
+  default     = {}
+}
 
 variable "versioning_enabled" {
   description = "Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state."
