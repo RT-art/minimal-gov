@@ -1,7 +1,3 @@
-########################################
-# Metadata
-########################################
-
 variable "env" {
   type = string
   validation {
@@ -26,31 +22,32 @@ variable "region" {
   }
 }
 
-########################################
-## S3
-########################################
-
 variable "versioning_enabled" {
   description = "Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state."
   type        = bool
   default     = true
 }
 
-variable "server_side_encryption_configuration" {
-  description = "Map containing server-side encryption configuration."
-  type        = any
-  default = {
-    rule = [{
-      apply_server_side_encryption_by_default = {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = true
-    }]
-  }
+variable "use_kms" {
+  description = "Use AWS KMS for server-side encryption instead of AES256"
+  type        = bool
+  default     = false
 }
 
-variable "control_object_ownership" {
-  description = "Whether to manage S3 Bucket Ownership Controls on this bucket."
+variable "kms_master_key_id" {
+  description = "KMS key ID (if use_kms = true)"
+  type        = string
+  default     = null
+}
+
+variable "force_destroy" {
+  description = "Whether to force destroy the bucket even if it contains objects."
   type        = bool
   default     = true
+}
+
+variable "lifecycle_days" {
+  description = "Number of days to keep noncurrent versions of objects"
+  type        = number
+  default     = 180
 }

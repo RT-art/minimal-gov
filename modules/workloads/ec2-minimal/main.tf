@@ -28,7 +28,7 @@ data "aws_ami" "al2023" {
 
 locals {
   subnet_id = data.aws_subnets.default.ids[0]
-  tags = { Name = "${var.app_name}-${var.env}-ec2" }
+  tags      = { Name = "${var.app_name}-${var.env}-ec2" }
 }
 
 resource "aws_instance" "this" {
