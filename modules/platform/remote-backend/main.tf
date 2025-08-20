@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 module "state_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "5.4.0" # 2025年8月の最新バージョン
