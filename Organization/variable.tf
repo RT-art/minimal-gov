@@ -42,7 +42,7 @@ variable "allowed_regions" {
 variable "tags" {
   description = "共通タグ"
   type        = map(string)
-  default     = {
+  default = {
     ManagedBy = "Terraform"
     Project   = "AWS-Organization"
   }

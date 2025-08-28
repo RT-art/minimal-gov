@@ -1,5 +1,5 @@
 variable "allowed_regions" { type = list(string) }
-variable "tags"            { type = map(string) }
+variable "tags" { type = map(string) }
 
 variable "targets" {
   description = "SCPをアタッチする対象のIDマップ"
@@ -25,5 +25,5 @@ variable "attach_map" {
   deny_disable_sec_services = ["prod","dev","sandbox"]
 }
 EOT
-  type = map(list(string))
+  type        = map(list(string))
 }

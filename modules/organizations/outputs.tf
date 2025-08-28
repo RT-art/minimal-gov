@@ -17,3 +17,8 @@ output "ou_ids" {
 output "scp_policy_ids" {
   value = module.scp.policy_ids
 }
+
+output "member_account_ids" {
+  value = { for k, v in aws_organizations_account.members : k => v.id }
+}
+

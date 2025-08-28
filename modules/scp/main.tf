@@ -1,7 +1,3 @@
-locals {
-  tags = var.tags
-}
-
 # --- ポリシー定義 ---
 # 1) ルートユーザ禁止
 resource "aws_organizations_policy" "deny_root" {
@@ -9,7 +5,7 @@ resource "aws_organizations_policy" "deny_root" {
   description = "Deny all actions when using the root user"
   type        = "SERVICE_CONTROL_POLICY"
   content     = file("${path.module}/policies/deny_root.json")
-  tags        = local.tags
+  tags        = var.tags
 }
 
 # 2) 組織離脱禁止
@@ -18,7 +14,7 @@ resource "aws_organizations_policy" "deny_leaving_org" {
   description = "Deny leaving AWS Organization"
   type        = "SERVICE_CONTROL_POLICY"
   content     = file("${path.module}/policies/deny_leaving_org.json")
-  tags        = local.tags
+  tags        = var.tags
 }
 
 # 3) 未承認リージョン禁止
@@ -26,10 +22,10 @@ resource "aws_organizations_policy" "deny_unapproved_regions" {
   name        = "SCP-DenyUnapprovedRegions"
   description = "Deny actions in regions not in the allowed list"
   type        = "SERVICE_CONTROL_POLICY"
-  content     = templatefile("${path.module}/policies/deny_unapproved_regions.json.tftpl", {
+  content = templatefile("${path.module}/policies/deny_unapproved_regions.json.tftpl", {
     allowed_regions = var.allowed_regions
   })
-  tags = local.tags
+  tags = var.tags
 }
 
 # 4) GuardDuty / CloudTrail / Config の無効化禁止（将来の強制に備える）
@@ -38,7 +34,7 @@ resource "aws_organizations_policy" "deny_disable_sec_services" {
   description = "Deny disabling GuardDuty, CloudTrail, AWS Config"
   type        = "SERVICE_CONTROL_POLICY"
   content     = templatefile("${path.module}/policies/deny_disable_security_services.json.tftpl", {})
-  tags        = local.tags
+  tags        = var.tags
 }
 
 # --- アタッチ（attach_mapに従う） ---
@@ -76,7 +72,7 @@ resource "aws_organizations_policy_attachment" "attach_multi" {
   for_each = {
     for k, v in var.attach_map :
     k => {
-      policy_id = lookup(local.policies, k)
+      policy_id  = lookup(local.policies, k)
       target_ids = [for t in v : lookup(var.targets, t)]
     }
   }
