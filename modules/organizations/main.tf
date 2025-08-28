@@ -1,68 +1,152 @@
-########################################
-# 1) Organizations 本体
-########################################
-resource "aws_organizations_organization" "this" {
-  feature_set          = "ALL"
-  enabled_policy_types = ["SERVICE_CONTROL_POLICY"] # 最小限: SCP だけ
-}
-
-# ルートIDを取る（OU/ポリシーの親で使う）
-data "aws_organizations_organization" "current" {
-  depends_on = [aws_organizations_organization.this]
-}
-
 locals {
-  root_id = one(data.aws_organizations_organization.current.roots[*].id)
+  name_prefix = var.org_name_prefix
+  tags        = var.tags
 }
 
-########################################
-# 2) OU（セキュリティ/共有/本番）
-########################################
-resource "aws_organizations_organizational_unit" "ou" {
-  for_each  = toset(var.ous)
-  name      = each.key
+# Organizations 本体
+resource "aws_organizations_organization" "this" {
+  feature_set = "ALL"
+
+  enabled_policy_types = [
+    "SERVICE_CONTROL_POLICY",
+    # 必要なら "TAG_POLICY", "BACKUP_POLICY"
+  ]
+
+  # 将来の委任に備え、組織へのサービスアクセスを許可（必要になったら増やす）
+  aws_service_access_principals = distinct(concat(
+    [
+      "guardduty.amazonaws.com",
+      "config.amazonaws.com",
+      "cloudtrail.amazonaws.com",
+      "securityhub.amazonaws.com"
+    ],
+    var.delegate_admin_for
+  ))
+}
+
+# ルートID
+locals {
+  root_id = aws_organizations_organization.this.roots[0].id
+}
+
+# OU 構成（ベストプラクティスのたたき台）
+# Root
+# ├─ Security
+# ├─ Workloads
+# │   ├─ Prod
+# │   └─ Dev
+# ├─ Sandbox
+# └─ Suspended
+resource "aws_organizations_organizational_unit" "security" {
+  name      = "Security"
   parent_id = local.root_id
+  tags      = local.tags
 }
 
-########################################
-# 3) アカウント（各 OU に1つずつ）
-########################################
-resource "aws_organizations_account" "acct" {
-  for_each  = var.accounts
-  name      = each.key         # 例: "security", "shared", "prod"
-  email     = each.value.email # 実在メール必須
-  parent_id = aws_organizations_organizational_unit.ou[each.value.ou].id
-  role_name = "OrganizationAccountAccessRole" # 作成直後に乗るための既定ロール
-  tags      = merge(var.default_tags, { "ou" = each.value.ou })
+resource "aws_organizations_organizational_unit" "workloads" {
+  name      = "Workloads"
+  parent_id = local.root_id
+  tags      = local.tags
 }
 
-########################################
-# 4) 最小 SCP: 許可リージョン以外を全面 Deny
-#    （東京/大阪 だけを例示。必要に応じて編集）
-########################################
-resource "aws_organizations_policy" "allow_regions_only" {
-  name = "allow-regions-only"
-  type = "SERVICE_CONTROL_POLICY"
-
-  content = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid      = "DenyNotAllowedRegions"
-        Effect   = "Deny"
-        Action   = "*"
-        Resource = "*"
-        Condition = {
-          StringNotEquals = {
-            "aws:RequestedRegion" = var.allowed_regions
-          }
-        }
-      }
-    ]
-  })
+resource "aws_organizations_organizational_unit" "prod" {
+  name      = "Prod"
+  parent_id = aws_organizations_organizational_unit.workloads.id
+  tags      = local.tags
 }
 
-resource "aws_organizations_policy_attachment" "attach_allow_regions" {
-  policy_id = aws_organizations_policy.allow_regions_only.id
-  target_id = local.root_id # ルート配下すべてに適用
+resource "aws_organizations_organizational_unit" "dev" {
+  name      = "Dev"
+  parent_id = aws_organizations_organizational_unit.workloads.id
+  tags      = local.tags
+}
+
+resource "aws_organizations_organizational_unit" "sandbox" {
+  name      = "Sandbox"
+  parent_id = local.root_id
+  tags      = local.tags
+}
+
+resource "aws_organizations_organizational_unit" "suspended" {
+  name      = "Suspended"
+  parent_id = local.root_id
+  tags      = local.tags
+}
+
+# Security アカウント作成（最初に作る）
+resource "aws_organizations_account" "security" {
+  name      = var.security_account_name
+  email     = var.security_account_email
+  role_name = var.org_admin_role_name
+  tags      = merge(local.tags, { AccountType = "Security" })
+}
+
+# Root -> Security OU へ移動
+resource "aws_organizations_move_account" "security_to_ou" {
+  account_id        = aws_organizations_account.security.id
+  source_parent_id  = local.root_id
+  destination_parent_id = aws_organizations_organizational_unit.security.id
+}
+
+# 将来のメンバーアカウント（あとから var.member_accounts に追記でOK）
+resource "aws_organizations_account" "members" {
+  for_each  = var.member_accounts
+  name      = each.key
+  email     = each.value.email
+  role_name = var.org_admin_role_name
+  tags      = merge(local.tags, { AccountType = "Member" })
+}
+
+# アカウントを指定OUへ移動
+resource "aws_organizations_move_account" "members_to_ou" {
+  for_each = var.member_accounts
+
+  account_id       = aws_organizations_account.members[each.key].id
+  source_parent_id = local.root_id
+  destination_parent_id = lookup({
+    "Security"        = aws_organizations_organizational_unit.security.id,
+    "Workloads"       = aws_organizations_organizational_unit.workloads.id,
+    "Workloads/Prod"  = aws_organizations_organizational_unit.prod.id,
+    "Workloads/Dev"   = aws_organizations_organizational_unit.dev.id,
+    "Sandbox"         = aws_organizations_organizational_unit.sandbox.id,
+    "Suspended"       = aws_organizations_organizational_unit.suspended.id
+  }, each.value.ou, aws_organizations_organizational_unit.sandbox.id)
+}
+
+# （任意）Security を各サービスの委任管理者にする
+resource "aws_organizations_delegated_administrator" "security_delegate" {
+  for_each = toset(var.delegate_admin_for)
+
+  account_id        = aws_organizations_account.security.id
+  service_principal = each.value
+
+  depends_on = [aws_organizations_move_account.security_to_ou]
+}
+
+# ベースSCPを作成・アタッチ
+module "scp" {
+  source = "../scp"
+
+  allowed_regions = var.allowed_regions
+  tags            = local.tags
+
+  targets = {
+    root_id     = local.root_id
+    security_ou = aws_organizations_organizational_unit.security.id
+    workloads   = aws_organizations_organizational_unit.workloads.id
+    prod        = aws_organizations_organizational_unit.prod.id
+    dev         = aws_organizations_organizational_unit.dev.id
+    sandbox     = aws_organizations_organizational_unit.sandbox.id
+    suspended   = aws_organizations_organizational_unit.suspended.id
+  }
+
+  # 方針：
+  # - ルート：root全体に「rootユーザ禁止」「組織離脱禁止」「未承認リージョン禁止」
+  # - Workloads系（Prod/Dev/Sandbox）：セキュリティサービス無効化の禁止
+  attach_map = {
+    deny_root                  = ["root_id"]
+    deny_leaving_org           = ["root_id"]
+    deny_unapproved_regions    = ["root_id"]
+    deny_disable_sec_services  = ["prod", "dev", "sandbox"]
+  }
 }

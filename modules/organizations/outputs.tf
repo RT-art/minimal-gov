@@ -1,11 +1,19 @@
-output "root_id" {
-  value = local.root_id
+output "security_account_id" {
+  value = aws_organizations_account.security.id
 }
 
 output "ou_ids" {
-  value = { for k, v in aws_organizations_organizational_unit.ou : k => v.id }
+  value = {
+    root_id   = local.root_id
+    security  = aws_organizations_organizational_unit.security.id
+    workloads = aws_organizations_organizational_unit.workloads.id
+    prod      = aws_organizations_organizational_unit.prod.id
+    dev       = aws_organizations_organizational_unit.dev.id
+    sandbox   = aws_organizations_organizational_unit.sandbox.id
+    suspended = aws_organizations_organizational_unit.suspended.id
+  }
 }
 
-output "account_ids" {
-  value = { for k, v in aws_organizations_account.acct : k => v.id }
+output "scp_policy_ids" {
+  value = module.scp.policy_ids
 }
