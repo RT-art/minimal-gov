@@ -1,16 +1,3 @@
-locals {
-  aws_service_access_principals = setunion(
-    [
-      "guardduty.amazonaws.com",
-      "config.amazonaws.com",
-      "cloudtrail.amazonaws.com",
-      "securityhub.amazonaws.com"
-    ],
-    var.delegate_admin_for
-  )
-  root_id      = aws_organizations_organization.this.roots[0].id
-  really_close = var.close_account_on_destroy && var.close_account_confirmation == "I_UNDERSTAND"
-}
 
 resource "aws_organizations_organization" "this" {
   feature_set                   = "ALL"
@@ -30,48 +17,37 @@ resource "aws_organizations_organization" "this" {
 # ├─ Sandbox
 # └─ Suspended
 
-resource "aws_organizations_organizational_unit" "security" {
-  name      = "Security"
-  parent_id = local.root_id
+resource "aws_organizations_organizational_unit" "ou" {
+  for_each  = local.ous
+  name      = each.value.name
+  parent_id = each.value.parent == "root" ? local.root_id : aws_organizations_organizational_unit.ou[each.value.parent].id
   tags      = var.tags
-}
-
-resource "aws_organizations_organizational_unit" "workloads" {
-  name      = "Workloads"
-  parent_id = local.root_id
-  tags      = var.tags
-}
-
-resource "aws_organizations_organizational_unit" "prod" {
-  name      = "Prod"
-  parent_id = aws_organizations_organizational_unit.workloads.id
-  tags      = var.tags
-}
-
-resource "aws_organizations_organizational_unit" "dev" {
-  name      = "Dev"
-  parent_id = aws_organizations_organizational_unit.workloads.id
-  tags      = var.tags
+  lifecycle { prevent_destroy = true }
 }
 
 resource "aws_organizations_organizational_unit" "sandbox" {
   name      = "Sandbox"
   parent_id = local.root_id
   tags      = var.tags
+
+  lifecycle { prevent_destroy = true }
 }
 
 resource "aws_organizations_organizational_unit" "suspended" {
   name      = "Suspended"
   parent_id = local.root_id
   tags      = var.tags
+
+  lifecycle { prevent_destroy = true }
 }
 
 resource "aws_organizations_account" "security" {
-  name      = var.security_account_name
-  email     = var.security_account_email
-  role_name = var.org_admin_role_name
-  parent_id = aws_organizations_organizational_unit.security.id
-  tags      = merge(var.tags, { AccountType = "Security" })
+  name              = var.security_account_name
+  email             = var.security_account_email
+  role_name         = var.org_admin_role_name
+  parent_id         = aws_organizations_organizational_unit.security.id
+  tags              = merge(var.tags, { AccountType = "Security" })
+  close_on_deletion = var.close_account_on_destroy
 
   lifecycle {
     ignore_changes = var.lock_account_name ? [name] : []
@@ -89,10 +65,11 @@ resource "aws_organizations_account" "security" {
 }
 
 resource "aws_organizations_account" "members" {
-  for_each  = var.member_accounts
-  name      = each.name
-  email     = each.value.email
-  role_name = var.org_admin_role_name
+  for_each          = var.member_accounts
+  name              = each.value.name
+  email             = each.value.email
+  role_name         = var.org_admin_role_name
+  close_on_deletion = var.close_account_on_destroy
   parent_id = lookup({
     "Security"       = aws_organizations_organizational_unit.security.id,
     "Workloads"      = aws_organizations_organizational_unit.workloads.id,
@@ -120,7 +97,7 @@ resource "aws_organizations_account" "members" {
 }
 
 resource "aws_organizations_delegated_administrator" "security_delegate" {
-  for_each = local.aws_service_access_principals
+  for_each = local.delegate_targets
 
   account_id        = aws_organizations_account.security.id
   service_principal = each.value

@@ -1,5 +1,4 @@
-# --- ポリシー定義 ---
-# 1) ルートユーザ禁止
+# ルートユーザ禁止
 resource "aws_organizations_policy" "deny_root" {
   name        = "SCP-DenyRootUser"
   description = "Deny all actions when using the root user"
@@ -8,7 +7,7 @@ resource "aws_organizations_policy" "deny_root" {
   tags        = var.tags
 }
 
-# 2) 組織離脱禁止
+# 組織離脱禁止
 resource "aws_organizations_policy" "deny_leaving_org" {
   name        = "SCP-DenyLeavingOrganization"
   description = "Deny leaving AWS Organization"
@@ -17,7 +16,7 @@ resource "aws_organizations_policy" "deny_leaving_org" {
   tags        = var.tags
 }
 
-# 3) 未承認リージョン禁止
+# 未承認リージョン禁止
 resource "aws_organizations_policy" "deny_unapproved_regions" {
   name        = "SCP-DenyUnapprovedRegions"
   description = "Deny actions in regions not in the allowed list"
@@ -28,7 +27,7 @@ resource "aws_organizations_policy" "deny_unapproved_regions" {
   tags = var.tags
 }
 
-# 4) GuardDuty / CloudTrail / Config の無効化禁止（将来の強制に備える）
+# GuardDuty / CloudTrail / Config / SecurityHubの無効化禁止
 resource "aws_organizations_policy" "deny_disable_sec_services" {
   name        = "SCP-DenyDisablingSecurityServices"
   description = "Deny disabling GuardDuty, CloudTrail, AWS Config"
@@ -37,8 +36,25 @@ resource "aws_organizations_policy" "deny_disable_sec_services" {
   tags        = var.tags
 }
 
-# --- アタッチ（attach_mapに従う） ---
+resource "aws_organizations_policy" "deny_all_suspended" {
+  name        = "SCP-DenyAllSuspended"
+  description = "Deny all actions in suspended accounts"
+  type        = "SERVICE_CONTROL_POLICY"
+  content     = file("${path.module}/policies/deny_all_suspended.json")
+  tags        = var.tags
+}
+
 locals {
+  attach_pairs = flatten([
+    for policy_key, targets in var.attach_map : [
+      for t in targets : {
+        key       = "${policy_key}:${t}"
+        policy_id = lookup(local.policies, policy_key)
+        target_id = lookup(var.targets, t)
+      }
+    ]
+  ])
+
   policies = {
     deny_root                 = aws_organizations_policy.deny_root.id
     deny_leaving_org          = aws_organizations_policy.deny_leaving_org.id
@@ -47,40 +63,10 @@ locals {
   }
 }
 
-# 動的にターゲットへ貼り付け
-resource "aws_organizations_policy_attachment" "attach" {
-  for_each = {
-    for k, v in var.attach_map : k => {
-      policy_id = lookup(local.policies, k)
-      targets   = v
-    }
-  }
-
+resource "aws_organizations_policy_attachment" "this" {
+  for_each  = { for p in local.attach_pairs : p.key => p }
   policy_id = each.value.policy_id
-  target_id = element([
-    for t in each.value.targets : lookup(var.targets, t)
-  ], 0)
-
-  # 1つの定義で複数ターゲットへ貼るため、count式に変更
-  count = length(each.value.targets) > 0 ? length(each.value.targets) : 0
-  # 上の target_id を count.index 化
-  lifecycle { create_before_destroy = true }
-}
-
-# 上の count を成立させるための再定義（Terraformの制約回避）
-resource "aws_organizations_policy_attachment" "attach_multi" {
-  for_each = {
-    for k, v in var.attach_map :
-    k => {
-      policy_id  = lookup(local.policies, k)
-      target_ids = [for t in v : lookup(var.targets, t)]
-    }
-  }
-
-  policy_id = each.value.policy_id
-  target_id = each.value.target_ids[count.index]
-
-  count = length(each.value.target_ids)
+  target_id = each.value.target_id
 }
 
 output "policy_ids" {

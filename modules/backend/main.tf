@@ -58,6 +58,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
     }
   }
 
+  rule {
+    id     = "abort-incomplete-mpu"
+    status = "Enabled"
+    filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+
+
   # versioning 設定が先に入っていると安全
   depends_on = [aws_s3_bucket_versioning.this]
 }
@@ -123,7 +133,7 @@ data "aws_iam_policy_document" "bucket_policy" {
     ]
     condition {
       test     = "NumericLessThan"
-      variable = "s3:TlsVersion"
+      variable = "s3:TLSVersion"
       values   = ["1.2"]
     }
   }
