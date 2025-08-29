@@ -32,14 +32,15 @@
       "Resource": "*"
     },
     {
-     "Sid": "DenyDisablingSecurityHub",
-     "Effect": "Deny",
-     "Action": [
-      "securityhub:DisableSecurityHub",
-      "securityhub:DeleteMembers",
-      "securityhub:DisassociateFromAdministratorAccount",
-      "securityhub:DisassociateMembers"
-    ],
-    "Resource": "*"
-}
+      "Sid": "DenyDisablingSecurityHub",
+      "Effect": "Deny",
+      "Action": [
+        "securityhub:DisableSecurityHub",
+        "securityhub:DeleteMembers",
+        "securityhub:DisassociateFromAdministratorAccount",
+        "securityhub:DisassociateMembers"
+      ],
+      "Resource": "*"
+    }
+  ]
 }

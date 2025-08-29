@@ -60,6 +60,7 @@ locals {
     deny_leaving_org          = aws_organizations_policy.deny_leaving_org.id
     deny_unapproved_regions   = aws_organizations_policy.deny_unapproved_regions.id
     deny_disable_sec_services = aws_organizations_policy.deny_disable_sec_services.id
+    deny_all_suspended        = aws_organizations_policy.deny_all_suspended.id
   }
 }
 
@@ -70,10 +71,6 @@ resource "aws_organizations_policy_attachment" "this" {
 }
 
 output "policy_ids" {
-  value = {
-    deny_root                 = aws_organizations_policy.deny_root.id
-    deny_leaving_org          = aws_organizations_policy.deny_leaving_org.id
-    deny_unapproved_regions   = aws_organizations_policy.deny_unapproved_regions.id
-    deny_disable_sec_services = aws_organizations_policy.deny_disable_sec_services.id
-  }
+  value = local.policies
 }
+

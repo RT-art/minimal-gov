@@ -1,9 +1,11 @@
 variable "security_account_name" { type = string }
 variable "security_account_email" { type = string }
+
 variable "org_admin_role_name" {
   type    = string
   default = "OrganizationAccountAccessRole"
 }
+
 variable "allowed_regions" { type = list(string) }
 variable "tags" { type = map(string) }
 
@@ -19,18 +21,6 @@ variable "lock_account_name" {
   default     = true
 }
 
-variable "close_account_on_destroy" {
-  description = "destroy 時にアカウントを閉鎖するか（危険）"
-  type        = bool
-  default     = false
-}
-
-variable "close_account_confirmation" {
-  description = "本当に閉鎖する場合のみ 'I_UNDERSTAND' を入れる"
-  type        = string
-  default     = ""
-
-}
 variable "enabled_policy_types" {
   type    = set(string)
   default = ["SERVICE_CONTROL_POLICY"]
@@ -43,6 +33,7 @@ variable "member_accounts" {
     ou    = string
   }))
   default = {}
+
   validation {
     condition     = alltrue([for v in values(var.member_accounts) : contains(["Security", "Workloads", "Workloads/Prod", "Workloads/Dev", "Sandbox", "Suspended"], v.ou)])
     error_message = "member_accounts[*].ou は定義済みの OU いずれかを指定してください。"
@@ -64,10 +55,3 @@ variable "delegated_admin_allowlist" {
     # 必要に応じて追加
   ]
 }
-
-variable "manage_organization" {
-  description = "true なら Organization を新規作成。false なら既存を参照。"
-  type        = bool
-  default     = true
-}
-
