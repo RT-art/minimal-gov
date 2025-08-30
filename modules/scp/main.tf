@@ -45,7 +45,6 @@ resource "aws_organizations_policy" "deny_all_suspended" {
   tags        = var.tags
 }
 
-# 
 locals {
   attach_pairs = flatten([
     for policy_key, targets in var.attach_map : [

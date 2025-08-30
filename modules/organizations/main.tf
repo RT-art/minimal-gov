@@ -113,4 +113,6 @@ module "scp" {
     deny_disable_sec_services = ["prod", "dev", "sandbox"]
     deny_all_suspended        = ["suspended"]
   }
+
+depends_on = [aws_organizations_organization.this]
 }

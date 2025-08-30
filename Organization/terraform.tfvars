@@ -1,14 +1,13 @@
-# Provider 表示用リージョン（任意）
 region = "ap-northeast-1"
 
-# 共通タグ
 app_name = "aws-org-bootstrap"
 env      = "prod"
 
-# 任意（追加タグを付けたい場合）
+# 追加タグ
 tags = {
   Project = "minimal-gov"
 }
+
 # SCP で許可するリージョン
 allowed_regions = [
   "ap-northeast-1",
