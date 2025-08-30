@@ -1,8 +1,9 @@
 resource "aws_organizations_organization" "this" {
   feature_set                   = "ALL"
-  enabled_policy_types          = tolist(var.enabled_policy_types)
-  aws_service_access_principals = local.aws_service_access_principals
+  enabled_policy_types          = tolist(var.enabled_policy_types)    # なんのポリシーを有効化するか
+  aws_service_access_principals = local.aws_service_access_principals # サービスアクセスを有効化するリソース指定
 
+  # Organizations の削除は必ず手動
   lifecycle {
     prevent_destroy = true
   }
@@ -16,26 +17,34 @@ resource "aws_organizations_organization" "this" {
 # ├─ Sandbox
 # └─ Suspended
 
-resource "aws_organizations_organizational_unit" "ou" {
-  for_each  = local.ous
-  name      = each.value.name
-  parent_id = each.value.parent == "root" ? local.org_root_id : aws_organizations_organizational_unit.ou[each.value.parent].id
+resource "aws_organizations_organizational_unit" "ou_root" {
+  for_each  = local.ou_root
+  name      = each.value
+  parent_id = local.org_root_id
   tags      = var.tags
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  lifecycle { prevent_destroy = true }
 }
+
+resource "aws_organizations_organizational_unit" "ou_nested" {
+  for_each  = local.ou_nested
+  name      = each.value
+  parent_id = aws_organizations_organizational_unit.ou_root["workloads"].id
+  tags      = var.tags
+
+  lifecycle { prevent_destroy = true }
+}
+
 
 resource "aws_organizations_account" "security" {
   name      = var.security_account_name
   email     = var.security_account_email
   role_name = var.org_admin_role_name
-  parent_id = aws_organizations_organizational_unit.ou["security"].id
+  # セキュリティOUのidを指定
+  parent_id = local.ou_ids["security"]
   tags      = merge(var.tags, { AccountType = "Security" })
 
   lifecycle {
-    ignore_changes  = var.lock_account_name ? [name] : []
     prevent_destroy = true
   }
 
@@ -49,19 +58,20 @@ resource "aws_organizations_account" "members" {
   name      = each.value.name
   email     = each.value.email
   role_name = var.org_admin_role_name
+  # 入力のOU名とfor_eachのkeyを確実に合わせるため、少し冗長だがlookupで取得
+  # 指定がなければSandboxに入れる
   parent_id = lookup({
-    "Security"       = aws_organizations_organizational_unit.ou["security"].id
-    "Workloads"      = aws_organizations_organizational_unit.ou["workloads"].id
-    "Workloads/Prod" = aws_organizations_organizational_unit.ou["prod"].id
-    "Workloads/Dev"  = aws_organizations_organizational_unit.ou["dev"].id
-    "Sandbox"        = aws_organizations_organizational_unit.ou["sandbox"].id
-    "Suspended"      = aws_organizations_organizational_unit.ou["suspended"].id
-  }, each.value.ou, aws_organizations_organizational_unit.ou["sandbox"].id)
+    "Security"       = local.ou_ids["security"]
+    "Workloads"      = local.ou_ids["workloads"]
+    "Workloads/Prod" = local.ou_ids["prod"]
+    "Workloads/Dev"  = local.ou_ids["dev"]
+    "Sandbox"        = local.ou_ids["sandbox"]
+    "Suspended"      = local.ou_ids["suspended"]
+  }, each.value.ou, local.ou_ids["sandbox"])
 
   tags = merge(var.tags, { AccountType = "Member" })
 
   lifecycle {
-    ignore_changes  = var.lock_account_name ? [name] : []
     prevent_destroy = true
   }
 
@@ -70,11 +80,14 @@ resource "aws_organizations_account" "members" {
   }
 }
 
+# Securityアカウントを委任管理者に登録
+# guardduty, config, cloudtrail, securityhub は Organizations 作成時に自動登録
+# 追加で登録したいサービスがあれば変数で指定
 resource "aws_organizations_delegated_administrator" "security_delegate" {
   for_each          = local.delegate_targets
   account_id        = aws_organizations_account.security.id
   service_principal = each.value
-  depends_on        = [aws_organizations_account.security,aws_organizations_organization.this]
+  depends_on        = [aws_organizations_account.security, aws_organizations_organization.this]
 }
 
 module "scp" {
@@ -85,12 +98,12 @@ module "scp" {
 
   targets = {
     root_id     = local.org_root_id
-    security_ou = aws_organizations_organizational_unit.ou["security"].id
-    workloads   = aws_organizations_organizational_unit.ou["workloads"].id
-    prod        = aws_organizations_organizational_unit.ou["prod"].id
-    dev         = aws_organizations_organizational_unit.ou["dev"].id
-    sandbox     = aws_organizations_organizational_unit.ou["sandbox"].id
-    suspended   = aws_organizations_organizational_unit.ou["suspended"].id
+    security_ou = local.ou_ids["security"]
+    workloads   = local.ou_ids["workloads"]
+    prod        = local.ou_ids["prod"]
+    dev         = local.ou_ids["dev"]
+    sandbox     = local.ou_ids["sandbox"]
+    suspended   = local.ou_ids["suspended"]
   }
 
   attach_map = {

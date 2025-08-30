@@ -3,15 +3,8 @@ output "security_account_id" {
 }
 
 output "ou_ids" {
-  value = {
-    root_id   = local.org_root_id
-    security  = aws_organizations_organizational_unit.ou["security"].id
-    workloads = aws_organizations_organizational_unit.ou["workloads"].id
-    prod      = aws_organizations_organizational_unit.ou["prod"].id
-    dev       = aws_organizations_organizational_unit.ou["dev"].id
-    sandbox   = aws_organizations_organizational_unit.ou["sandbox"].id
-    suspended = aws_organizations_organizational_unit.ou["suspended"].id
-  }
+  description = "OU IDs keyed by logical name"
+  value       = local.ou_ids
 }
 
 output "scp_policy_ids" {

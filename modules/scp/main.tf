@@ -36,6 +36,7 @@ resource "aws_organizations_policy" "deny_disable_sec_services" {
   tags        = var.tags
 }
 
+# suspendedアカウントでの全アクション禁止
 resource "aws_organizations_policy" "deny_all_suspended" {
   name        = "SCP-DenyAllSuspended"
   description = "Deny all actions in suspended accounts"
@@ -44,6 +45,7 @@ resource "aws_organizations_policy" "deny_all_suspended" {
   tags        = var.tags
 }
 
+# 
 locals {
   attach_pairs = flatten([
     for policy_key, targets in var.attach_map : [

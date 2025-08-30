@@ -1,24 +1,29 @@
-variable "security_account_name" { type = string }
-variable "security_account_email" { type = string }
+variable "security_account_name" {
+  type    = string
+  default = "Security"
+}
+
+variable "security_account_email" {
+  type = string
+}
 
 variable "org_admin_role_name" {
   type    = string
   default = "OrganizationAccountAccessRole"
 }
 
-variable "allowed_regions" { type = list(string) }
-variable "tags" { type = map(string) }
+variable "allowed_regions" {
+  type = list(string)
+}
+
+variable "tags" {
+  type = map(string)
+}
 
 variable "delegate_admin_for" {
   description = "Securityアカウントを委任管理者に登録するサービスプリンシパル一覧"
   type        = set(string) # for_each使用の為set
   default     = []
-}
-
-variable "lock_account_name" {
-  description = "true なら name の変更を無視（推奨）"
-  type        = bool
-  default     = true
 }
 
 variable "enabled_policy_types" {
@@ -55,3 +60,4 @@ variable "delegated_admin_allowlist" {
     # 必要に応じて追加
   ]
 }
+

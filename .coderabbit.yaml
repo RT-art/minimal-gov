@@ -1,0 +1,5 @@
+# .coderabbit.yaml の基本設定例
+review:
+  auto_review: true
+  auto_summarize: true
+  language: 'ja'  # 日本語でのレビューを希望する場合
