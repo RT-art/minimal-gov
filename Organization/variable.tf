@@ -9,7 +9,7 @@ variable "env" {
 variable "app_name" {
   type = string
   validation {
-    condition     = can(regex("^[a-zA-Z0-9-_]{3,32}$", var.app_name))
+    condition     = can(regex("^[A-Za-z0-9_-]{3,32}$", var.app_name))
     error_message = "app_name は 3–32 文字の英数/ハイフン/アンダースコア。"
   }
 }
