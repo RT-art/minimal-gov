@@ -11,7 +11,6 @@ tags = {
 # SCP で許可するリージョン
 allowed_regions = [
   "ap-northeast-1",
-  "us-east-1",
 ]
 
 security_account_email = "rt.aws0+sec@gmail.com"
