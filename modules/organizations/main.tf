@@ -113,5 +113,5 @@ module "scp" {
     deny_all_suspended        = ["suspended"]
   }
 
-depends_on = [aws_organizations_organization.this]
+  depends_on = [aws_organizations_organization.this]
 }

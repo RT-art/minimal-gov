@@ -2,10 +2,10 @@ data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
 locals {
-  use_kms       = var.enable_kms_encryption
-  create_kms    = var.enable_kms_encryption && var.kms_key_arn == null
-  bucket_arn    = "arn:${data.aws_partition.current.partition}:s3:::${var.s3_bucket_name}"
-  putobj_arn    = var.is_organization_trail ? "${local.bucket_arn}/AWSLogs/*" :"${local.bucket_arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+  use_kms    = var.enable_kms_encryption
+  create_kms = var.enable_kms_encryption && var.kms_key_arn == null
+  bucket_arn = "arn:${data.aws_partition.current.partition}:s3:::${var.s3_bucket_name}"
+  putobj_arn = var.is_organization_trail ? "${local.bucket_arn}/AWSLogs/*" : "${local.bucket_arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
 }
 
 # ------------------------------------------------------------
@@ -91,21 +91,21 @@ resource "aws_kms_key" "trail" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "EnableRootPermissions"
-        Effect   = "Allow"
+        Sid       = "EnableRootPermissions"
+        Effect    = "Allow"
         Principal = { AWS = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root" }
-        Action   = "kms:*"
-        Resource = "*"
+        Action    = "kms:*"
+        Resource  = "*"
       },
       {
-        Sid    = "AllowCloudTrail"
-        Effect = "Allow"
+        Sid       = "AllowCloudTrail"
+        Effect    = "Allow"
         Principal = { Service = "cloudtrail.amazonaws.com" }
         Action = [
           "kms:GenerateDataKey*",
           "kms:Decrypt"
         ]
-        Resource  = "*"
+        Resource = "*"
         Condition = {
           StringLike = {
             "kms:EncryptionContext:aws:cloudtrail:arn" = "arn:${data.aws_partition.current.partition}:cloudtrail:*:${data.aws_caller_identity.current.account_id}:trail/*"

@@ -13,7 +13,6 @@ crash.*.log
  # password, private keys, and other secrets. These should not be part of version
  # control as they are data points which are potentially sensitive and subject
  # to change depending on the environment.
- *.tfvars
  *.tfvars.json
  *.auto.tfvars
  *.auto.tfvars.json
@@ -44,7 +43,4 @@ terraform.rc
 # Uncomment the line below if you want to ignore planout files.
 # planout
 
-backend.tf
 .terraform.lock.hcl
-terraform.tfvars
-.coderabbit.yaml

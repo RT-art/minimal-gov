@@ -1,17 +1,13 @@
-output "security_account_id" {
-  value = aws_organizations_account.security.id
-}
+# modules/organizations/outputs.tf
 
 output "ou_ids" {
-  description = "OU IDs keyed by logical name"
-  value       = local.ou_ids
+  value = local.ou_ids
 }
 
-output "scp_policy_ids" {
-  value = module.scp.policy_ids
+output "security_account_id" {
+  value = aws_organizations_account.security.id
 }
 
 output "member_account_ids" {
   value = { for k, v in aws_organizations_account.members : k => v.id }
 }
-

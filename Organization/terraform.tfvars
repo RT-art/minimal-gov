@@ -1,11 +1,11 @@
 region = "ap-northeast-1"
 
-app_name = ""
-env      = ""
+app_name = "minimal-gov-org"
+env      = "prod"
 
 # 追加タグ
 tags = {
-  Project = ""
+  Project = "minimal-gov"
 }
 
 # SCP で許可するリージョン
@@ -13,7 +13,7 @@ allowed_regions = [
   "ap-northeast-1",
 ]
 
-security_account_email = ""
+security_account_email = "rt.aws0+sec@gmail.com"
 
 delegate_admin_for = [
   "guardduty.amazonaws.com",
@@ -26,12 +26,12 @@ delegate_admin_for = [
 member_accounts = {
   dev = {
     name  = "Dev"
-    email = ""
+    email = "rt.aws0+test@gmail.com"
     ou    = "Workloads/Dev"
   }
   network = {
     name  = "Network"
-    email = ""
+    email = "rt.aws0+network@gmail.com"
     ou    = "Workloads"
   }
 }

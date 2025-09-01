@@ -76,9 +76,9 @@ module "org_cloudtrail" {
 
   trail_name            = "org-security-trail"
   s3_bucket_name        = "central-cloudtrail-logs-${data.aws_caller_identity.this.account_id}"
-  is_organization_trail = true      # Org集約の中央トレイル
-  multi_region_trail    = true      # 全リージョン
-  enable_kms_encryption = false     # SSE-S3
+  is_organization_trail = true  # Org集約の中央トレイル
+  multi_region_trail    = true  # 全リージョン
+  enable_kms_encryption = false # SSE-S3
   enable_logging        = true
 
   tags = {
