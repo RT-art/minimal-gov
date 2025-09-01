@@ -1,5 +1,0 @@
-language: 'ja'  # 日本語でのレビュー
-reviews:
-  high_level_summary: true
-  auto_review:
-    enabled: true
