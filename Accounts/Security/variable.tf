@@ -79,10 +79,6 @@ variable "enable_logging" {
 }
 
 
-variable "tags" {
-  description = "共通タグ"
-  type        = map(string)
-  default     = {}
-}
+
 
 

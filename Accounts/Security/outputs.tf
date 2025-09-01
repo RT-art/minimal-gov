@@ -20,17 +20,17 @@ output "cloudtrail_trail_arn" {
 
 output "trail_name" {
   description = "CloudTrail 名"
-  value       = aws_cloudtrail.this.name
+  value       = module.org_cloudtrail.trail_name
 }
 
 
 output "trail_arn" {
   description = "CloudTrail ARN"
-  value       = aws_cloudtrail.this.arn
+  value       = module.org_cloudtrail.trail_arn
 }
 
 
 output "s3_bucket_name" {
   description = "ログ保存先 S3 バケット名"
-  value       = aws_s3_bucket.logs.id
+  value       = module.org_cloudtrail.s3_bucket_name
 }

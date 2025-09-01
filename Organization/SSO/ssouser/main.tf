@@ -59,7 +59,7 @@ resource "aws_identitystore_user" "this" {
   dynamic "phone_numbers" {
     for_each = try(var.user.phone, null) != null ? [var.user.phone] : []
     content {
-      value = each.value
+      value = phone_numbers.value
       type  = "mobile"
     }
   }

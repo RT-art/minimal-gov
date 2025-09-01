@@ -43,4 +43,5 @@ terraform.rc
 # Uncomment the line below if you want to ignore planout files.
 # planout
 
-.terraform.lock.hcl
+# Commit the dependency lock file to pin provider versions
+# .terraform.lock.hcl
