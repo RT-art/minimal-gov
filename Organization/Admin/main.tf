@@ -1,3 +1,8 @@
+import {
+  to = aws_cloudtrail_organization_delegated_admin_account.this
+  id = "454842420215" 
+}
+
 # org 側 state の参照（org 側の bucket/key/region に合わせて）
 data "terraform_remote_state" "org" {
   backend = "s3"
@@ -26,5 +31,6 @@ resource "aws_securityhub_organization_admin_account" "tokyo" {
 
 # CloudTrail 委任（グローバル扱い・1回）
 resource "aws_cloudtrail_organization_delegated_admin_account" "this" {
+  provider   = aws.tokyo
   account_id = local.security_account_id
 }

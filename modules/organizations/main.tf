@@ -35,7 +35,6 @@ resource "aws_organizations_organizational_unit" "ou_nested" {
   lifecycle { prevent_destroy = true }
 }
 
-
 resource "aws_organizations_account" "security" {
   name      = var.security_account_name
   email     = var.security_account_email

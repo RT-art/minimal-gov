@@ -30,8 +30,11 @@
 >     Project = "minimal-gov"
 >   }
 >
->   cloudtrail_bucket_name = "my-org-cloudtrail-logs-<security-acct-id>"
-> }
+  tags = {
+    Project = "minimal-gov"
+  }
+
+}
 > ```
 >
 > ※ Security Hub のスタンダードやコントロールを OU/アカウント単位で一元管理したい場合は、Central Config + **Configuration Policy** の適用（別途）を推奨。
