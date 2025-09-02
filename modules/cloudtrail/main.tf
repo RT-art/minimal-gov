@@ -141,11 +141,7 @@ resource "aws_cloudtrail" "this" {
   is_organization_trail         = var.is_organization_trail
   enable_logging                = var.enable_logging
 
-  # kmsを作る場合cloudtrailにkmsを渡す
-  dynamic "kms_key_id" {
-    for_each = local.kms_key_arn_effective == null ? [] : [1]
-    content  = local.kms_key_arn_effective
-  }
+  kms_key_id = local.kms_key_arn_effective
 
   tags = var.tags
 }

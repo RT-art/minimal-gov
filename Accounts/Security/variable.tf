@@ -37,13 +37,6 @@ variable "trail_name" {
   type        = string
 }
 
-
-variable "s3_bucket_name" {
-  description = "CloudTrail ログ保存先 S3 バケット名（このモジュールで作成）"
-  type        = string
-}
-
-
 variable "is_organization_trail" {
   description = "組織トレイルにするか（管理アカウント or 委任管理から作成が必要）"
   type        = bool

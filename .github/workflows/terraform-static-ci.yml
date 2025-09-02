@@ -1,59 +1,7 @@
-name: Terraform static checks
-
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch: {}
-
-# 新しい push が来たら古い実行は打ち切る
-concurrency:
-  group: terraform-static-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
-
-env:
-  TF_IN_AUTOMATION: "1"
-  TF_PLUGIN_CACHE_DIR: $RUNNER_TEMP/tf-plugin-cache
-
 jobs:
-  discover-target-dirs:
-    name: Discover target dirs
-    runs-on: ubuntu-latest
-    outputs:
-      dirs: ${{ steps.set-matrix.outputs.dirs }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: set-matrix
-        name: Find Accounts/** and Organization/** that have .tf
-        run: |
-          set -euo pipefail
-          # 対象: Accounts/**, Organization/** のうち直下に .tf が1つ以上あるフォルダ
-          # 除外: modules/**, image/**
-          mapfile -t dirs < <(find Accounts Organization \
-            -type f -name '*.tf' \
-            -not -path '*/modules/*' \
-            -not -path '*/image/*' \
-            -printf '%h\n' | sort -u)
-
-          if [ "${#dirs[@]}" -eq 0 ]; then
-            echo "dirs=[]" >> "$GITHUB_OUTPUT"
-            echo "No target directories."
-            exit 0
-          fi
-
-          # JSON 配列にして出力
-          printf '%s\n' "${dirs[@]}" | jq -R -s -c 'split("\n")|map(select(length>0))' > dirs.json
-          echo "Found target directories:"
-          cat dirs.json | jq -r '.[]'
-          echo "dirs=$(cat dirs.json)" >> "$GITHUB_OUTPUT"
-
   lint:
     name: "Lint: ${{ matrix.dir }}"
     needs: [discover-target-dirs]
-    if: ${{ needs.discover-target-dirs.outputs.dirs && needs.discover-target-dirs.outputs.dirs != '[]' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -74,17 +22,21 @@ jobs:
         with:
           terraform_version: 1.9.5
 
-      # TFLint のインストール（core ルールのみ利用）
+      # TFLint のインストール
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
         with:
           tflint_version: v0.59.1
 
-      # プロバイダプラグインのキャッシュ（init -backend=false で使う）
+      # プラグインキャッシュ用ディレクトリを作成
+      - name: Create Terraform plugin cache dir
+        run: mkdir -p $RUNNER_TEMP/tf-plugin-cache
+
+      # プラグインキャッシュの設定
       - name: Cache Terraform plugin dir
         uses: actions/cache@v4
         with:
-          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          path: $RUNNER_TEMP/tf-plugin-cache
           key: ${{ runner.os }}-tf-plugins-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: |
             ${{ runner.os }}-tf-plugins-
@@ -101,6 +53,6 @@ jobs:
       - name: terraform validate
         run: terraform validate -no-color
 
-      # 4) tflint（ERROR以上のみで失敗、WARNINGは許容）
+      # 4) tflint
       - name: tflint (errors fail, warnings allowed)
         run: tflint --minimum-failure-severity=error --format=compact

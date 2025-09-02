@@ -42,7 +42,7 @@ resource "aws_securityhub_organization_configuration" "central" {
 }
 
 resource "aws_securityhub_standards_subscription" "fsbp" {
-  standards_arn = "arn:aws:securityhub:${data.aws_region.current.name}::standards/aws-foundational-security-best-practices/v/1.0.0"
+  standards_arn = "arn:aws:securityhub:${data.aws_region.current.id}::standards/aws-foundational-security-best-practices/v/1.0.0"
   depends_on    = [aws_securityhub_account.this]
 }
 resource "aws_securityhub_standards_subscription" "cis" {
@@ -75,7 +75,6 @@ module "org_cloudtrail" {
   source = "../../modules/cloudtrail"
 
   trail_name            = "org-security-trail"
-  s3_bucket_name        = "central-cloudtrail-logs-${data.aws_caller_identity.this.account_id}"
   is_organization_trail = true  # Org集約の中央トレイル
   multi_region_trail    = true  # 全リージョン
   enable_kms_encryption = false # SSE-S3
