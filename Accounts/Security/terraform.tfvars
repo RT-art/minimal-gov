@@ -1,7 +1,13 @@
-env                       = "prod"
-app_name                  = "security-central"
-region                    = "ap-northeast-1"
-org_management_account_id = "123456789012"
-
-# CloudTrail の名前
 trail_name = "org-security-trail"
+
+enable_kms_encryption = false
+enable_logging        = true
+
+config_aggregator_name      = "org-aggregator"
+config_aggregator_role_name = "AWSConfigAggregatorRole"
+
+tags = {
+  Project   = "security-central"
+  ManagedBy = "terraform"
+  Purpose   = "cloudtrail-org"
+}

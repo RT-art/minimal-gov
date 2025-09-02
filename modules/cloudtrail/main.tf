@@ -43,6 +43,11 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_ownership_controls" "logs" {
+  bucket = aws_s3_bucket.logs.id
+  rule { object_ownership = "BucketOwnerEnforced" }
+}
+
 # CloudTrail 書き込み用の最小バケットポリシー
 # バケットを覗く許可（GetBucketAcl）
 # ログを書き込む許可（PutObject
@@ -51,34 +56,55 @@ data "aws_iam_policy_document" "trail_bucket" {
     sid     = "AWSCloudTrailAclCheck"
     actions = ["s3:GetBucketAcl"]
     effect  = "Allow"
+
     principals {
       type        = "Service"
       identifiers = ["cloudtrail.amazonaws.com"]
     }
+
     resources = [local.bucket_arn]
   }
-
+}
+data "aws_iam_policy_document" "logs_combined" {
   statement {
     sid     = "AWSCloudTrailWrite"
     actions = ["s3:PutObject"]
     effect  = "Allow"
+
     principals {
       type        = "Service"
       identifiers = ["cloudtrail.amazonaws.com"]
     }
-    resources = [local.putobj_arn]
 
+    resources = [local.putobj_arn]
+  }
+}
+data "aws_iam_policy_document" "logs_combined" {
+  source_json = data.aws_iam_policy_document.trail_bucket.json
+
+  statement {
+    sid    = "AllowSSLRequestsOnly"
+    effect = "Deny"
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    actions   = ["s3:*"]
+    resources = [local.bucket_arn, "${local.bucket_arn}/*"]
     condition {
-      test     = "StringEquals"
-      variable = "s3:x-amz-acl"
-      values   = ["bucket-owner-full-control"]
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
     }
   }
 }
 
 resource "aws_s3_bucket_policy" "logs" {
-  bucket = aws_s3_bucket.logs.id
-  policy = data.aws_iam_policy_document.trail_bucket.json
+  bucket     = aws_s3_bucket.logs.id
+  policy     = data.aws_iam_policy_document.logs_combined.json
+  depends_on = [aws_s3_bucket_ownership_controls.logs]
 }
 
 # ------------------------------------------------------------
@@ -106,7 +132,9 @@ resource "aws_kms_key" "trail" {
         Principal = { Service = "cloudtrail.amazonaws.com" }
         Action = [
           "kms:GenerateDataKey*",
-          "kms:Decrypt"
+          "kms:Decrypt",
+          "kms:DescribeKey"
+
         ]
         Resource = "*"
         Condition = {
@@ -140,8 +168,11 @@ resource "aws_cloudtrail" "this" {
   is_multi_region_trail         = var.multi_region_trail
   is_organization_trail         = var.is_organization_trail
   enable_logging                = var.enable_logging
+  insight_selector { insight_type = "ApiCallRateInsight" }
+  insight_selector { insight_type = "ApiErrorRateInsight" }
 
   kms_key_id = local.kms_key_arn_effective
+  depends_on = [aws_s3_bucket_policy.logs]
 
   tags = var.tags
 }
