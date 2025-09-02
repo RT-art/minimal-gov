@@ -1,14 +1,12 @@
-region = "ap-northeast-1"
-
+# Metadata
+region   = "ap-northeast-1"
 app_name = "minimal-gov-org"
 env      = "prod"
-
-# 追加タグ
 tags = {
   Project = "minimal-gov"
 }
 
-# SCP で許可するリージョン
+# Organization
 allowed_regions = [
   "ap-northeast-1",
 ]

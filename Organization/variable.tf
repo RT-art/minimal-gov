@@ -1,3 +1,4 @@
+# Metadata
 variable "env" {
   type = string
   validation {
@@ -28,8 +29,9 @@ variable "tags" {
   default     = {}
 }
 
+# Organization
 variable "security_account_email" {
-  description = "Security アカウントのメール（未使用ドメイン/メールを必ず指定）"
+  description = "Security アカウントのメール（未使用メールアドレスを必ず指定）"
   type        = string
 }
 
@@ -65,9 +67,15 @@ variable "org_admin_role_name" {
 }
 
 variable "delegate_admin_for" {
-  description = "Security アカウントを委任管理者に登録するサービスプリンシパル（任意）"
+  description = "Security アカウントを委任管理者に登録するサービスプリンシパル"
   type        = set(string)
-  default     = []
+  default = [
+    "guardduty.amazonaws.com",
+    "config.amazonaws.com",
+    "config-multiaccountsetup.amazonaws.com",
+    "cloudtrail.amazonaws.com",
+    "securityhub.amazonaws.com",
+  ]
 }
 
 variable "enabled_policy_types" {
@@ -75,17 +83,3 @@ variable "enabled_policy_types" {
   type        = set(string)
   default     = ["SERVICE_CONTROL_POLICY"]
 }
-
-/*
-# 必要な場合のみ有効化して main.tf から渡してください
-variable "delegated_admin_allowlist" {
-  description = "委任管理者に登録可能と確認済みのサービスプリンシパルの許可リスト"
-  type        = set(string)
-  default = [
-    "guardduty.amazonaws.com",
-    "config.amazonaws.com",
-    "cloudtrail.amazonaws.com",
-    "securityhub.amazonaws.com",
-  ]
-}
-*/
