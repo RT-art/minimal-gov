@@ -45,3 +45,4 @@ terraform.rc
 
 # Commit the dependency lock file to pin provider versions
 # .terraform.lock.hcl
+.venv
