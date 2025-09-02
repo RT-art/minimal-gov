@@ -1,14 +1,10 @@
 name: Terraform Static CI
 
-on:
-  pull_request:
-  push:
+on: [pull_request, push]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-    env:
-      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tf-plugin-cache
     steps:
       - uses: actions/checkout@v4
 
@@ -21,9 +17,6 @@ jobs:
         uses: terraform-linters/setup-tflint@v4
         with:
           tflint_version: v0.59.1
-
-      - name: Prepare plugin cache dir
-        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       # 1) fmt（全ディレクトリを対象）
       - name: terraform fmt -check -recursive
