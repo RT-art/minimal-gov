@@ -134,7 +134,7 @@ locals {
 # ------------------------------------------------------------
 resource "aws_cloudtrail" "this" {
   name                          = var.trail_name
-  s3_bucket_name                = aws_s3_bucket.logs.id
+  s3_bucket_name                = local.s3_bucket_name
   include_global_service_events = true
   enable_log_file_validation    = true
   is_multi_region_trail         = var.multi_region_trail
