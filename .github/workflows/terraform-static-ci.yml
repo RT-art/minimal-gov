@@ -15,7 +15,7 @@ permissions:
 
 env:
   TF_IN_AUTOMATION: "1"
-  TF_PLUGIN_CACHE_DIR: ${{ env.RUNNER_TEMP }}/tf-plugin-cache
+  TF_PLUGIN_CACHE_DIR: $RUNNER_TEMP/tf-plugin-cache
 
 jobs:
   discover-target-dirs:
