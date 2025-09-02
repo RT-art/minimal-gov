@@ -1,58 +1,51 @@
+name: Terraform Static CI
+
+on:
+  pull_request:
+  push:
+
 jobs:
   lint:
-    name: "Lint: ${{ matrix.dir }}"
-    needs: [discover-target-dirs]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dir: ${{ fromJSON(needs.discover-target-dirs.outputs.dirs) }}
-
-    defaults:
-      run:
-        working-directory: ${{ matrix.dir }}
-        shell: bash
-
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tf-plugin-cache
     steps:
       - uses: actions/checkout@v4
 
-      # Terraform のインストール
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.5
 
-      # TFLint のインストール
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
         with:
           tflint_version: v0.59.1
 
-      # プラグインキャッシュ用ディレクトリを作成
-      - name: Create Terraform plugin cache dir
-        run: mkdir -p $RUNNER_TEMP/tf-plugin-cache
+      - name: Prepare plugin cache dir
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
-      # プラグインキャッシュの設定
-      - name: Cache Terraform plugin dir
-        uses: actions/cache@v4
-        with:
-          path: $RUNNER_TEMP/tf-plugin-cache
-          key: ${{ runner.os }}-tf-plugins-${{ hashFiles('**/.terraform.lock.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-tf-plugins-
+      # 1) fmt（全ディレクトリを対象）
+      - name: terraform fmt -check -recursive
+        run: terraform fmt -check -recursive
 
-      # 1) fmt
-      - name: terraform fmt -check
-        run: terraform fmt -check
-
-      # 2) init（Stateに触れない）
-      - name: terraform init -backend=false
-        run: terraform init -backend=false -input=false
-
-      # 3) validate
-      - name: terraform validate
-        run: terraform validate -no-color
-
-      # 4) tflint
-      - name: tflint (errors fail, warnings allowed)
-        run: tflint --minimum-failure-severity=error --format=compact
+      # 2) 各ディレクトリで init/validate/tflint を実行
+      - name: init / validate / tflint per directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t DIRS < <(find . -type f -name '*.tf' -not -path '*/.terraform/*' -print0 \
+            | xargs -0 -n1 dirname | sort -u)
+          if [ ${#DIRS[@]} -eq 0 ]; then
+            echo "No Terraform directories found."
+            exit 0
+          fi
+          for d in "${DIRS[@]}"; do
+            echo "===> ${d}"
+            (
+              cd "${d}"
+              terraform init -backend=false -input=false >/dev/null
+              terraform validate -no-color
+              tflint --minimum-failure-severity=error --format=compact
+            )
+          done
