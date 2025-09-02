@@ -5,10 +5,10 @@ data "aws_region" "current" {}
 locals {
   use_kms    = var.enable_kms_encryption
   create_kms = var.enable_kms_encryption && var.kms_key_arn == null
-  bucket_arn = "arn:${data.aws_partition.current.partition}:s3:::${var.s3_bucket_name}"
+  bucket_arn = "arn:${data.aws_partition.current.partition}:s3:::${local.s3_bucket_name}"
   putobj_arn = var.is_organization_trail ? "${local.bucket_arn}/AWSLogs/*" : "${local.bucket_arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
 
-  s3_bucket_name = "cloudtrail-logs-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+  s3_bucket_name = "cloudtrail-logs-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.id}"
 }
 
 # ------------------------------------------------------------
