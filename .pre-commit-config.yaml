@@ -3,6 +3,10 @@ repos:
     rev: v1.100.0
     hooks:
       - id: terraform_fmt
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+          - --args=--minimum-failure-severity=error
 
 
 # python3 -m venv .venv

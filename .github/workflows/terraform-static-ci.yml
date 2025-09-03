@@ -39,6 +39,6 @@ jobs:
               cd "${d}"
               terraform init -backend=false -input=false >/dev/null
               terraform validate -no-color
-              tflint --minimum-failure-severity=error --format=compact
+              tflint --config="$(git rev-parse --show-toplevel)/.tflint.hcl" --minimum-failure-severity=error --format=compact
             )
           done
