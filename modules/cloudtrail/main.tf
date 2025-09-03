@@ -65,7 +65,7 @@ data "aws_iam_policy_document" "trail_bucket" {
     resources = [local.bucket_arn]
   }
 }
-data "aws_iam_policy_document" "logs_combined" {
+data "aws_iam_policy_document" "trail_write" {
   statement {
     sid     = "AWSCloudTrailWrite"
     actions = ["s3:PutObject"]
@@ -80,7 +80,8 @@ data "aws_iam_policy_document" "logs_combined" {
   }
 }
 data "aws_iam_policy_document" "logs_combined" {
-  source_json = data.aws_iam_policy_document.trail_bucket.json
+  source_json   = data.aws_iam_policy_document.trail_bucket.json
+  override_json = data.aws_iam_policy_document.trail_write.json
 
   statement {
     sid    = "AllowSSLRequestsOnly"
