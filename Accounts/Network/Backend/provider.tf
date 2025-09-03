@@ -11,7 +11,7 @@ terraform {
 
 provider "aws" {
   profile = "security"
-  region = var.region
+  region  = var.region
 
   default_tags {
     tags = {
