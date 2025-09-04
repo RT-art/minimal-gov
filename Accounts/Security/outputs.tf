@@ -15,10 +15,8 @@ output "securityhub_account_id" {
 }
 
 output "securityhub_finding_aggregator_arn" {
-  description = "The ARN of the Security Hub finding aggregator"
-  value       = aws_securityhub_finding_aggregator.this.arn
+  value = aws_securityhub_finding_aggregator.this.id
 }
-
 ########################
 # AWS Config Aggregator
 ########################

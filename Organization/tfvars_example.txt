@@ -1,0 +1,60 @@
+# ===== Example tfvars for Organization =====
+
+# Metadata
+region   = "ap-northeast-1"
+app_name = "minimal-gov-org"
+env      = "prod" # dev|stg|prod|sandbox
+
+tags = {
+  Project = "minimal-gov"
+}
+
+# Organization
+allowed_regions = [
+  "ap-northeast-1",
+]
+
+# Security アカウント（未使用のメールを指定してください）
+security_account_email = "example+security@example.com"
+
+# 委任管理者に登録するサービス（必要に応じて調整）
+delegate_admin_for = [
+  "guardduty.amazonaws.com",
+  "config.amazonaws.com",
+  "cloudtrail.amazonaws.com",
+  "securityhub.amazonaws.com",
+]
+
+# OU 構成（root と子 OU を直感的に定義）
+ou_root = ["Security", "Workloads", "Sandbox", "Suspended"]
+
+ou_children = {
+  Workloads = ["Prod", "Dev"]
+}
+
+# 重要 OU 名（表示名を変えたい場合のみ上書き）
+# security_ou_name  = "Security"
+# workloads_ou_name = "Workloads"
+# prod_ou_name      = "Prod"
+# dev_ou_name       = "Dev"
+# sandbox_ou_name   = "Sandbox"
+# suspended_ou_name = "Suspended"
+
+# メンバーアカウント（OU は root 名 or "親/子" 形式で指定）
+member_accounts = {
+  dev = {
+    name  = "Dev"
+    email = "example+dev@example.com"
+    ou    = "Workloads/Dev"
+  }
+  network = {
+    name  = "Network"
+    email = "example+network@example.com"
+    ou    = "Workloads"
+  }
+}
+
+# 任意: アカウント名/管理ロール名の上書き例
+# security_account_name = "Security"
+# org_admin_role_name   = "OrganizationAccountAccessRole"
+# enabled_policy_types  = ["SERVICE_CONTROL_POLICY"]

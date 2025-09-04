@@ -83,3 +83,46 @@ variable "enabled_policy_types" {
   type        = set(string)
   default     = ["SERVICE_CONTROL_POLICY"]
 }
+
+# -----------------------------
+# OU structure (tfvars から直感的に指定)
+# -----------------------------
+variable "ou_root" {
+  description = "Root OU 名の一覧"
+  type        = list(string)
+  default     = ["Security", "Workloads", "Sandbox", "Suspended"]
+}
+
+variable "ou_children" {
+  description = "親 OU 名 => 子 OU 名リスト のマップ"
+  type        = map(list(string))
+  default     = {
+    Workloads = ["Prod", "Dev"]
+  }
+}
+
+# 重要OUの名前（SCP やアカウント配置に利用）
+variable "security_ou_name"  {
+  type    = string
+  default = "Security"
+}
+variable "workloads_ou_name" {
+  type    = string
+  default = "Workloads"
+}
+variable "prod_ou_name"      {
+  type    = string
+  default = "Prod"
+}
+variable "dev_ou_name"       {
+  type    = string
+  default = "Dev"
+}
+variable "sandbox_ou_name"   {
+  type    = string
+  default = "Sandbox"
+}
+variable "suspended_ou_name" {
+  type    = string
+  default = "Suspended"
+}

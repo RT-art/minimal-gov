@@ -80,8 +80,8 @@ data "aws_iam_policy_document" "trail_write" {
   }
 }
 data "aws_iam_policy_document" "logs_combined" {
-  source_json   = data.aws_iam_policy_document.trail_bucket.json
-  override_json = data.aws_iam_policy_document.trail_write.json
+  source_policy_documents   = [data.aws_iam_policy_document.trail_bucket.json]
+  override_policy_documents = [data.aws_iam_policy_document.trail_write.json]
 
   statement {
     sid    = "AllowSSLRequestsOnly"

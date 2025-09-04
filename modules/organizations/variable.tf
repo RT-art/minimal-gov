@@ -40,8 +40,18 @@ variable "member_accounts" {
   default = {}
 
   validation {
-    condition     = alltrue([for v in values(var.member_accounts) : contains(["Security", "Workloads", "Workloads/Prod", "Workloads/Dev", "Sandbox", "Suspended"], v.ou)])
-    error_message = "member_accounts[*].ou は定義済みの OU いずれかを指定してください。"
+    condition = alltrue([
+      for v in values(var.member_accounts) : contains(
+        concat(
+          var.ou_root,
+          flatten([
+            for parent, children in var.ou_children : [for c in children : "${parent}/${c}"]
+          ])
+        ),
+        v.ou
+      )
+    ])
+    error_message = "member_accounts[*].ou は定義済みの OU（root または parent/child）を指定してください。"
   }
   validation {
     condition     = length(distinct([for v in values(var.member_accounts) : v.email])) == length(values(var.member_accounts))
@@ -61,3 +71,45 @@ variable "delegated_admin_allowlist" {
   ]
 }
 
+# -----------------------------
+# Organizational Units (tfvars で直感的に定義)
+# -----------------------------
+variable "ou_root" {
+  description = "Root OU 名の一覧"
+  type        = list(string)
+  default     = ["Security", "Workloads", "Sandbox", "Suspended"]
+}
+
+variable "ou_children" {
+  description = "親 OU 名 => 子 OU 名リスト のマップ"
+  type        = map(list(string))
+  default     = {
+    Workloads = ["Prod", "Dev"]
+  }
+}
+
+# 重要OUの名前（SCP やアカウント配置に利用）
+variable "security_ou_name"  {
+  type    = string
+  default = "Security"
+}
+variable "workloads_ou_name" {
+  type    = string
+  default = "Workloads"
+}
+variable "prod_ou_name"      {
+  type    = string
+  default = "Prod"
+}
+variable "dev_ou_name"       {
+  type    = string
+  default = "Dev"
+}
+variable "sandbox_ou_name"   {
+  type    = string
+  default = "Sandbox"
+}
+variable "suspended_ou_name" {
+  type    = string
+  default = "Suspended"
+}

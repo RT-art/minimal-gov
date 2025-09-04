@@ -28,8 +28,8 @@ resource "aws_organizations_organizational_unit" "ou_root" {
 
 resource "aws_organizations_organizational_unit" "ou_nested" {
   for_each  = local.ou_nested
-  name      = each.value
-  parent_id = aws_organizations_organizational_unit.ou_root["workloads"].id
+  name      = each.value.name
+  parent_id = aws_organizations_organizational_unit.ou_root[each.value.parent].id
   tags      = var.tags
 
   lifecycle { prevent_destroy = true }
@@ -40,7 +40,7 @@ resource "aws_organizations_account" "security" {
   email     = var.security_account_email
   role_name = var.org_admin_role_name
   # セキュリティOUのidを指定
-  parent_id = local.ou_ids["security"]
+  parent_id = local.ou_ids[lower(var.security_ou_name)]
   tags      = merge(var.tags, { AccountType = "Security" })
 
   lifecycle {
@@ -57,16 +57,21 @@ resource "aws_organizations_account" "members" {
   name      = each.value.name
   email     = each.value.email
   role_name = var.org_admin_role_name
-  # 入力のOU名とfor_eachのkeyを確実に合わせるため、少し冗長だがlookupで取得
-  # 指定がなければSandboxに入れる
-  parent_id = lookup({
-    "Security"       = local.ou_ids["security"]
-    "Workloads"      = local.ou_ids["workloads"]
-    "Workloads/Prod" = local.ou_ids["prod"]
-    "Workloads/Dev"  = local.ou_ids["dev"]
-    "Sandbox"        = local.ou_ids["sandbox"]
-    "Suspended"      = local.ou_ids["suspended"]
-  }, each.value.ou, local.ou_ids["sandbox"])
+  # 入力のOU名に対応するIDへ解決（未指定は Sandbox 相当へ）
+  parent_id = lookup(
+    merge(
+      # ルートOU: 各名前 => そのID
+      { for n in var.ou_root : n => local.ou_ids[lower(n)] },
+      # 子OU: "親/子" 形式 => 子OUのID
+      merge([
+        for parent, children in var.ou_children : {
+          for c in children : "${parent}/${c}" => local.ou_ids[lower(c)]
+        }
+      ]...)
+    ),
+    each.value.ou,
+    local.ou_ids[lower(var.sandbox_ou_name)]
+  )
 
   tags = merge(var.tags, { AccountType = "Member" })
 
@@ -97,12 +102,12 @@ module "scp" {
 
   targets = {
     root_id     = local.org_root_id
-    security_ou = local.ou_ids["security"]
-    workloads   = local.ou_ids["workloads"]
-    prod        = local.ou_ids["prod"]
-    dev         = local.ou_ids["dev"]
-    sandbox     = local.ou_ids["sandbox"]
-    suspended   = local.ou_ids["suspended"]
+    security_ou = local.ou_ids[lower(var.security_ou_name)]
+    workloads   = local.ou_ids[lower(var.workloads_ou_name)]
+    prod        = local.ou_ids[lower(var.prod_ou_name)]
+    dev         = local.ou_ids[lower(var.dev_ou_name)]
+    sandbox     = local.ou_ids[lower(var.sandbox_ou_name)]
+    suspended   = local.ou_ids[lower(var.suspended_ou_name)]
   }
 
   attach_map = {

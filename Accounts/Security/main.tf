@@ -1,14 +1,11 @@
-data "aws_securityhub_standards" "available" {}
+data "aws_partition" "current" {}
 
 locals {
-  securityhub_fsbp_arn = one([
-    for s in data.aws_securityhub_standards.available.standards :
-    s.arn if strcontains(s.arn, "aws-foundational-security-best-practices")
-  ])
-  securityhub_cis_arn = one([
-    for s in data.aws_securityhub_standards.available.standards :
-    s.arn if strcontains(s.arn, "cis-aws-foundations-benchmark")
-  ])
+  # AWS Foundational Security Best Practices v1.0.0
+  securityhub_fsbp_arn = "arn:${data.aws_partition.current.partition}:securityhub:${var.region}::standards/aws-foundational-security-best-practices/v/1.0.0"
+
+  # CIS AWS Foundations Benchmark v1.4.0
+  securityhub_cis_arn = "arn:${data.aws_partition.current.partition}:securityhub:${var.region}::standards/cis-aws-foundations-benchmark/v/1.4.0"
 }
 ########################
 # GuardDuty
@@ -76,8 +73,9 @@ resource "aws_config_configuration_aggregator" "org" {
   organization_aggregation_source {
     role_arn    = aws_iam_role.config_aggregator_role.arn
     all_regions = true
-    depends_on  = [aws_iam_role_policy_attachment.config_aggregator_attach]
   }
+      depends_on  = [aws_iam_role_policy_attachment.config_aggregator_attach]
+
 }
 resource "aws_iam_role" "config_aggregator_role" {
   name = var.config_aggregator_role_name

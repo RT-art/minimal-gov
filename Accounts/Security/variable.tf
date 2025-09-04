@@ -62,7 +62,7 @@ variable "guardduty_features" {
   type        = list(string)
   description = "List of GuardDuty features to enable and auto-enable for the organization."
   default = [
-    "S3_PROTECTION",
+    "S3_DATA_EVENTS",
     "RDS_LOGIN_EVENTS",
     "EKS_AUDIT_LOGS",
     "EKS_RUNTIME_MONITORING",

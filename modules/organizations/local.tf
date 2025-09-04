@@ -12,16 +12,18 @@ locals {
   delegate_targets = setintersection(var.delegate_admin_for, var.delegated_admin_allowlist)
 
 
-  ou_root = {
-    security  = "Security"
-    workloads = "Workloads"
-    sandbox   = "Sandbox"
-    suspended = "Suspended"
-  }
-  ou_nested = {
-    prod = "Prod"
-    dev  = "Dev"
-  }
+  # Root OU map: key = lowercase name, value = display name
+  ou_root = { for n in var.ou_root : lower(n) => n }
+
+  # Nested OU map: key = lowercase child name, value = object(name, parent)
+  ou_nested = merge([
+    for parent, children in var.ou_children : {
+      for c in children : lower(c) => {
+        name   = c
+        parent = lower(parent)
+      }
+    }
+  ]...)
 
   org_root_id = aws_organizations_organization.this.roots[0].id
 
