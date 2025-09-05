@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
-    bucket       = "minimal-gov-sec-backend-tfstate-ap-northeast-1-454842420215"
-    key          = "state/security/terraform.tfstate"
+    bucket       = "minimal-gov-dev-backend-tfstate-ap-northeast-1-351277498040"
+    key          = "state/dev/terraform.tfstate"
     region       = "ap-northeast-1"
     encrypt      = true
     use_lockfile = true

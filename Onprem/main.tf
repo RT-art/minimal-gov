@@ -71,7 +71,7 @@ resource "aws_instance" "vpn" {
   instance_type               = "t3.micro"
   subnet_id                   = aws_subnet.onprem_public.id
   vpc_security_group_ids      = [aws_security_group.vpn.id]
-  associate_public_ip_address = true # Public IP を自動で付与
+  associate_public_ip_address = false
   source_dest_check           = false
 
   # 実際の値をハードコードする。
@@ -79,7 +79,6 @@ resource "aws_instance" "vpn" {
     #!/bin/bash
     yum update -y
     yum install -y strongswan
-    # （StrongSwan の設定は省略）
   EOF
 
   tags = {
@@ -87,7 +86,6 @@ resource "aws_instance" "vpn" {
   }
 }
 
-# Elastic IP を明示的に割り当てる場合（省略可）
 resource "aws_eip" "vpn_eip" {
   vpc      = true
   instance = aws_instance.vpn.id
