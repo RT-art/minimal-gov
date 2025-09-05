@@ -1,67 +1,16 @@
-variable "security_account_name" {
-  type    = string
-  default = "Security"
-}
-
-variable "security_account_email" {
-  type = string
-}
-
-variable "org_admin_role_name" {
-  type    = string
-  default = "OrganizationAccountAccessRole"
-}
-
-variable "allowed_regions" {
-  type = list(string)
-}
-
-variable "tags" {
-  type = map(string)
-}
-
-variable "delegate_admin_for" {
-  description = "Securityアカウントを委任管理者に登録するサービスプリンシパル一覧"
-  type        = set(string) # for_each使用の為set
-  default     = []
-}
-
+# AWS Organization本体作成
 variable "enabled_policy_types" {
-  type    = set(string)
-  default = ["SERVICE_CONTROL_POLICY"]
+  description = "なんのポリシー(scp、tagポリシー等)を有効化するか"
+  type    = list(string)
+  default = [
+    "SERVICE_CONTROL_POLICY",
+    "TAG_POLICY"
+  ]
 }
 
-variable "member_accounts" {
-  type = map(object({
-    name  = string
-    email = string
-    ou    = string
-  }))
-  default = {}
-
-  validation {
-    condition = alltrue([
-      for v in values(var.member_accounts) : contains(
-        concat(
-          var.ou_root,
-          flatten([
-            for parent, children in var.ou_children : [for c in children : "${parent}/${c}"]
-          ])
-        ),
-        v.ou
-      )
-    ])
-    error_message = "member_accounts[*].ou は定義済みの OU（root または parent/child）を指定してください。"
-  }
-  validation {
-    condition     = length(distinct([for v in values(var.member_accounts) : v.email])) == length(values(var.member_accounts))
-    error_message = "member_accounts[*].email は一意である必要があります。"
-  }
-}
-
-variable "delegated_admin_allowlist" {
-  description = "Organizations の Delegated Admin に登録可能と確認済みのサービスプリンシパル"
-  type        = set(string)
+variable "aws_service_access_principals" {
+  description = "サービスアクセスを有効化するリソース指定（guardduty,configなど、組織内で一元管理したいリソース）"
+  type        = list(string)
   default = [
     "guardduty.amazonaws.com",
     "config.amazonaws.com",
@@ -71,45 +20,34 @@ variable "delegated_admin_allowlist" {
   ]
 }
 
-# -----------------------------
-# Organizational Units (tfvars で直感的に定義)
-# -----------------------------
-variable "ou_root" {
-  description = "Root OU 名の一覧"
-  type        = list(string)
-  default     = ["Security", "Workloads", "Sandbox", "Suspended"]
+# OU作成
+variable "tags" {
+  type = map(string)
 }
 
-variable "ou_children" {
-  description = "親 OU 名 => 子 OU 名リスト のマップ"
-  type        = map(list(string))
-  default     = {
-    Workloads = ["Prod", "Dev"]
-  }
-}
-
-# 重要OUの名前（SCP やアカウント配置に利用）
-variable "security_ou_name"  {
+# Securityアカウント作成
+variable "security_account_name" {
   type    = string
   default = "Security"
 }
-variable "workloads_ou_name" {
-  type    = string
-  default = "Workloads"
+
+variable "security_account_email" {
+  type = string
 }
-variable "prod_ou_name"      {
-  type    = string
-  default = "Prod"
+
+# メンバーアカウント作成
+variable "member_accounts" {
+  type    = map(object({
+    name  = string
+    email = string
+    ou    = string
+    tags  = string 
+  }))
 }
-variable "dev_ou_name"       {
-  type    = string
-  default = "Dev"
+
+# Securityアカウントを委任管理者に登録
+variable "delegated_services" {
+  description = "Securityアカウントを委任管理者に登録するサービス"
+  type        = set(string)
 }
-variable "sandbox_ou_name"   {
-  type    = string
-  default = "Sandbox"
-}
-variable "suspended_ou_name" {
-  type    = string
-  default = "Suspended"
-}
+

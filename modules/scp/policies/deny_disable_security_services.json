@@ -2,39 +2,20 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "DenyDisablingCloudTrail",
+      "Sid": "DenyDisablingSecurityAndAuditServices",
       "Effect": "Deny",
       "Action": [
         "cloudtrail:StopLogging",
-        "cloudtrail:DeleteTrail"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "DenyDisablingConfig",
-      "Effect": "Deny",
-      "Action": [
+        "cloudtrail:DeleteTrail",
         "config:StopConfigurationRecorder",
         "config:DeleteConfigurationRecorder",
-        "config:DeleteDeliveryChannel"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "DenyDisablingGuardDuty",
-      "Effect": "Deny",
-      "Action": [
+        "config:DeleteDeliveryChannel",
+        "config:DeleteConfigRule",
         "guardduty:DeleteDetector",
         "guardduty:DisassociateFromAdministratorAccount",
         "guardduty:DeleteMembers",
-        "guardduty:DisassociateMembers"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "DenyDisablingSecurityHub",
-      "Effect": "Deny",
-      "Action": [
+        "guardduty:DisassociateMembers",
+        "guardduty:UpdateDetector",
         "securityhub:DisableSecurityHub",
         "securityhub:DeleteMembers",
         "securityhub:DisassociateFromAdministratorAccount",
