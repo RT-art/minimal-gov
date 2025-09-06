@@ -38,6 +38,15 @@ variable "aws_service_access_principals" {
   ]
 }
 
+# OU作成
+variable "additional_ous" {
+  description = "追加で作成したいOUのマップ。keyがOU名、valueが親OU名"
+  type = map(object({
+    parent_ou = string # 親OU名。指定されなければrootにぶら下げる
+  }))
+  default = {}
+}
+
 # Securityアカウント作成
 variable "security_account_name" {
   type    = string

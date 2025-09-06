@@ -1,6 +1,6 @@
 # Metadata
 env      = "prod"
-app_name = "minimal-gov"
+app_name = "minimal-gov-org"
 region   = "ap-northeast-1"
 tags = {
   Project = "minimal-gov"
@@ -18,6 +18,12 @@ aws_service_access_principals = [
   "cloudtrail.amazonaws.com",
   "securityhub.amazonaws.com",
 ]
+# OU作成
+additional_ous = {
+  "billing" = {
+    parent_ou = "workloads"
+  }
+}
 
 # Securityアカウント作成
 security_account_name  = "Security"

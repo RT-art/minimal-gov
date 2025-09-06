@@ -69,6 +69,15 @@ resource "aws_organizations_organizational_unit" "suspended" {
   lifecycle { prevent_destroy = true }
 }
 
+# 追加作成用OU
+resource "aws_organizations_organizational_unit" "additional_ou" {
+  for_each  = var.additional_ous
+  name      = each.key
+  parent_id = lookup(local.ou_ids, lower(each.value.parent_ou), local.root_id) # 親OUが指定されていればそこに、なければrootにぶら下げる
+  tags      = var.tags
+  lifecycle { prevent_destroy = true }
+}
+
 # Securityアカウントを作成
 resource "aws_organizations_account" "security" {
   name      = var.security_account_name
