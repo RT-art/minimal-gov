@@ -12,4 +12,13 @@ locals {
   }
 
   member_tags = merge(var.tags, { AccountType = "Member" })
+
+  # Delegated Admin を登録するサービスは、事前に Service Access を有効化が必要。
+  # ユーザー指定の aws_service_access_principals に delegated_services を自動的に合流して漏れを防ぐ。
+  service_access_principals = tolist(
+    setunion(
+      toset(var.aws_service_access_principals),
+      var.delegated_services
+    )
+  )
 }

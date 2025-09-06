@@ -1,8 +1,8 @@
 # AWS Organization本体作成
 resource "aws_organizations_organization" "this" {
-  feature_set                   = "ALL"                             # 組織の全機能を有効化（おまじない・とりあえずALLで良い）
-  enabled_policy_types          = tolist(var.enabled_policy_types)  # なんのポリシー(scp、tagポリシー等)を有効化するか
-  aws_service_access_principals = var.aws_service_access_principals # サービスアクセスを有効化するリソース指定（guardduty,configなど、組織内で一元管理したいリソース）
+  feature_set                   = "ALL"                            # 組織の全機能を有効化（おまじない・とりあえずALLで良い）
+  enabled_policy_types          = tolist(var.enabled_policy_types) # なんのポリシー(scp、tagポリシー等)を有効化するか
+  aws_service_access_principals = local.service_access_principals  # delegated_services を含めた有効化対象（漏れ防止）
 
   # Organizationの削除はterraformでは行えないようにする
   lifecycle {
@@ -115,4 +115,6 @@ resource "aws_organizations_delegated_administrator" "security_delegate" {
   for_each          = var.delegated_services
   account_id        = aws_organizations_account.security.id
   service_principal = each.key # set(string)なのでkeyは値そのもの
+  # Service Access の有効化（aws_organizations_organization.this の適用）完了を待ってから登録
+  depends_on = [aws_organizations_organization.this]
 }
