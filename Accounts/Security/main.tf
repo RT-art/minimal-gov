@@ -74,7 +74,7 @@ resource "aws_config_configuration_aggregator" "org" {
     role_arn    = aws_iam_role.config_aggregator_role.arn
     all_regions = true
   }
-      depends_on  = [aws_iam_role_policy_attachment.config_aggregator_attach]
+  depends_on = [aws_iam_role_policy_attachment.config_aggregator_attach]
 
 }
 resource "aws_iam_role" "config_aggregator_role" {

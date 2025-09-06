@@ -1,7 +1,7 @@
 # AWS Organization本体作成
 resource "aws_organizations_organization" "this" {
-  feature_set                   = "ALL" # 組織の全機能を有効化（おまじない・とりあえずALLで良い）
-  enabled_policy_types          = tolist(var.enabled_policy_types)    # なんのポリシー(scp、tagポリシー等)を有効化するか
+  feature_set                   = "ALL"                             # 組織の全機能を有効化（おまじない・とりあえずALLで良い）
+  enabled_policy_types          = tolist(var.enabled_policy_types)  # なんのポリシー(scp、tagポリシー等)を有効化するか
   aws_service_access_principals = var.aws_service_access_principals # サービスアクセスを有効化するリソース指定（guardduty,configなど、組織内で一元管理したいリソース）
 
   # Organizationの削除はterraformでは行えないようにする
@@ -73,9 +73,9 @@ resource "aws_organizations_organizational_unit" "suspended" {
 resource "aws_organizations_account" "security" {
   name      = var.security_account_name
   email     = var.security_account_email
-  role_name = OrganizationAccountAccessRole # 作られたアカウントに管理アカウントがアクセスするためのロール名 標準ではOrganizationAccountAccessRole
+  role_name = "OrganizationAccountAccessRole"                   # 作られたアカウントに管理アカウントがアクセスするためのロール名 標準ではOrganizationAccountAccessRole
   parent_id = aws_organizations_organizational_unit.security.id # どこのouに所属させるかを指定
-  tags      = merge(var.tags, { AccountType = "Security" }) # 固定タグ群にAccountType=Securityを追加
+  tags      = merge(var.tags, { AccountType = "Security" })     # 固定タグ群にAccountType=Securityを追加
 
   lifecycle { prevent_destroy = true }
 
@@ -88,16 +88,16 @@ resource "aws_organizations_account" "members" {
   for_each  = var.member_accounts
   name      = each.value.name
   email     = each.value.email
-  role_name = OrganizationAccountAccessRole
+  role_name = "OrganizationAccountAccessRole"
   parent_id = local.ou_ids[lower(each.value.ou)] # mapからou名を取得
-  
+
   tags = merge(
     var.tags,
     { AccountType = each.value.tags } # 固定タグ群にアカウント固有のtagを追加
   )
 
   lifecycle { prevent_destroy = true }
-  timeouts  { create = "2h" }
+  timeouts { create = "2h" }
 }
 
 # Securityアカウントを委任管理者に登録
@@ -106,31 +106,4 @@ resource "aws_organizations_delegated_administrator" "security_delegate" {
   for_each          = var.delegated_services
   account_id        = aws_organizations_account.security.id
   service_principal = each.key # set(string)なのでkeyは値そのもの
-}
-
-module "scp" {
-  source = "../scp"
-
-  allowed_regions = var.allowed_regions
-  tags            = var.tags
-
-  targets = {
-    root_id     = local.org_root_id
-    security_ou = local.ou_ids[lower(var.security_ou_name)]
-    workloads   = local.ou_ids[lower(var.workloads_ou_name)]
-    prod        = local.ou_ids[lower(var.prod_ou_name)]
-    dev         = local.ou_ids[lower(var.dev_ou_name)]
-    sandbox     = local.ou_ids[lower(var.sandbox_ou_name)]
-    suspended   = local.ou_ids[lower(var.suspended_ou_name)]
-  }
-
-  attach_map = {
-    deny_root                 = ["root_id"]
-    deny_leaving_org          = ["root_id"]
-    deny_unapproved_regions   = ["root_id"]
-    deny_disable_sec_services = ["prod", "dev", "sandbox"]
-    deny_all_suspended        = ["suspended"]
-  }
-
-  depends_on = [aws_organizations_organization.this]
 }

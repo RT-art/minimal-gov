@@ -1,7 +1,7 @@
 # AWS Organization本体作成
 variable "enabled_policy_types" {
   description = "なんのポリシー(scp、tagポリシー等)を有効化するか"
-  type    = list(string)
+  type        = list(string)
   default = [
     "SERVICE_CONTROL_POLICY",
     "TAG_POLICY"
@@ -37,11 +37,11 @@ variable "security_account_email" {
 
 # メンバーアカウント作成
 variable "member_accounts" {
-  type    = map(object({
+  type = map(object({
     name  = string
     email = string
     ou    = string
-    tags  = string 
+    tags  = string
   }))
 }
 

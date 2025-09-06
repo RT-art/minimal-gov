@@ -1,19 +1,46 @@
 # Metadata
-region   = "ap-northeast-1"
-app_name = "minimal-gov-org"
 env      = "prod"
+app_name = "minimal-gov"
+region   = "ap-northeast-1"
 tags = {
   Project = "minimal-gov"
 }
 
 # Organization
-allowed_regions = [
-  "ap-northeast-1",
+enabled_policy_types = [
+  "SERVICE_CONTROL_POLICY",
+  "TAG_POLICY"
 ]
 
+aws_service_access_principals = [
+  "guardduty.amazonaws.com",
+  "config.amazonaws.com",
+  "cloudtrail.amazonaws.com",
+  "securityhub.amazonaws.com",
+]
+
+# Securityアカウント作成
+security_account_name  = "Security"
 security_account_email = "rt.aws0+sec@gmail.com"
 
-delegate_admin_for = [
+# メンバーアカウント作成
+member_accounts = {
+  dev = {
+    name  = "Dev"
+    email = "rt.aws0+test@gmail.com"
+    ou    = "dev"
+    tags  = "Dev"
+  }
+  network = {
+    name  = "Network"
+    email = "rt.aws0+network@gmail.com"
+    ou    = "workloads"
+    tags  = "Network"
+  }
+}
+
+# Securityアカウントを委任管理者に登録
+delegated_services = [
   "guardduty.amazonaws.com",
   "config.amazonaws.com",
   "config-multiaccountsetup.amazonaws.com",
@@ -21,16 +48,10 @@ delegate_admin_for = [
   "securityhub.amazonaws.com",
 ]
 
-member_accounts = {
-  dev = {
-    name  = "Dev"
-    email = "rt.aws0+test@gmail.com"
-    ou    = "Workloads/Dev"
-  }
-  network = {
-    name  = "Network"
-    email = "rt.aws0+network@gmail.com"
-    ou    = "Workloads"
+add_scps = {
+  "SCP-DenyDisableCloudTrail" = {
+    description = "CloudTrailの停止・削除を禁止"
+    file        = "deny_disable_cloudtrail.json"
+    target_id   = "ou-7kvv-z300jxp7"
   }
 }
-

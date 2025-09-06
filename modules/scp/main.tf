@@ -1,5 +1,22 @@
- # scp module
- # ベースラインSCPとして、AWSが推奨する代表的な制御内容を実装
+# scp module
+# ベースラインSCPとして、AWSが推奨する代表的な制御内容を実装
+
+# AWS Organizations の情報を取得
+data "aws_organizations_organization" "this" {}
+
+
+# ルート直下の OU 一覧を取得
+data "aws_organizations_organizational_units" "root_ous" {
+  parent_id = data.aws_organizations_organization.this.roots[0].id
+}
+
+# Suspended OU の ID を抽出
+locals {
+  suspended_ou_id = one([
+    for ou in data.aws_organizations_organizational_units.root_ous.children : ou.id
+    if ou.name == "Suspended"
+  ])
+}
 
 # 1.ルートユーザ禁止
 resource "aws_organizations_policy" "deny_root" {
@@ -10,6 +27,12 @@ resource "aws_organizations_policy" "deny_root" {
   tags        = var.tags
 }
 
+resource "aws_organizations_policy_attachment" "deny_root" {
+  policy_id = aws_organizations_policy.deny_root.id
+  target_id = data.aws_organizations_organization.this.roots[0].id
+}
+
+
 # 2.組織離脱禁止
 resource "aws_organizations_policy" "deny_leaving_org" {
   name        = "SCP-DenyLeavingOrganization"
@@ -17,6 +40,11 @@ resource "aws_organizations_policy" "deny_leaving_org" {
   type        = "SERVICE_CONTROL_POLICY"
   content     = file("${path.module}/policies/deny_leaving_org.json")
   tags        = var.tags
+}
+
+resource "aws_organizations_policy_attachment" "deny_leaving_org" {
+  policy_id = aws_organizations_policy.deny_leaving_org.id
+  target_id = data.aws_organizations_organization.this.roots[0].id
 }
 
 # 3.  未承認リージョン禁止
@@ -29,6 +57,11 @@ resource "aws_organizations_policy" "deny_unapproved_regions" {
   tags        = var.tags
 }
 
+resource "aws_organizations_policy_attachment" "deny_unapproved_regions" {
+  policy_id = aws_organizations_policy.deny_unapproved_regions.id
+  target_id = data.aws_organizations_organization.this.roots[0].id
+}
+
 # 4.主要セキュリティサービスを止めたり削除する操作を全面的に禁止するSCP
 resource "aws_organizations_policy" "deny_disable_sec_services" {
   name        = "SCP-DenyDisablingSecurityServices"
@@ -38,7 +71,12 @@ resource "aws_organizations_policy" "deny_disable_sec_services" {
   tags        = var.tags
 }
 
-# suspendedアカウントでの全アクション禁止
+resource "aws_organizations_policy_attachment" "deny_disable_sec_services" {
+  policy_id = aws_organizations_policy.deny_disable_sec_services.id
+  target_id = data.aws_organizations_organization.this.roots[0].id
+}
+
+# 5.suspendedアカウントでの全アクション禁止
 resource "aws_organizations_policy" "deny_all_suspended" {
   name        = "SCP-DenyAllSuspended"
   description = "suspendedアカウントでの全アクションを拒否する"
@@ -47,43 +85,24 @@ resource "aws_organizations_policy" "deny_all_suspended" {
   tags        = var.tags
 }
 
-locals {
-  # 管理するポリシーIDをわかりやすくまとめる
-  policies = {
-    deny_root                 = aws_organizations_policy.deny_root.id
-    deny_leaving_org          = aws_organizations_policy.deny_leaving_org.id
-    deny_unapproved_regions   = aws_organizations_policy.deny_unapproved_regions.id
-    deny_disable_sec_services = aws_organizations_policy.deny_disable_sec_services.id
-    deny_all_suspended        = aws_organizations_policy.deny_all_suspended.id
-  }
-
-  # ポリシーとターゲットの対応表をシンプルに記述
-  attach_map = {
-    deny_root                 = [var.account_root]
-    deny_leaving_org          = [var.org_id]
-    deny_unapproved_regions   = var.security_accounts
-    deny_disable_sec_services = var.security_accounts
-    deny_all_suspended        = var.suspended_accounts
-  }
+resource "aws_organizations_policy_attachment" "deny_all_suspended" {
+  policy_id = aws_organizations_policy.deny_all_suspended.id
+  target_id = local.suspended_ou_id
 }
 
- # 各ポリシーをターゲットに付与
-resource "aws_organizations_policy_attachment" "this" {
-  for_each = {
-    for policy_key, targets in local.attach_map :
-    policy_key => {
-      policy_id = local.policies[policy_key]
-      targets   = targets
-    }
-  }
-
-  # それぞれのターゲットにアタッチ
-  policy_id = each.value.policy_id
-  target_id = each.value.targets[0]
+# 6.カスタムSCPの作成・アタッチ
+resource "aws_organizations_policy" "addpolicy" {
+  for_each    = var.add_scps
+  name        = each.key
+  description = each.value.description
+  type        = "SERVICE_CONTROL_POLICY"
+  content     = file("${path.root}/policies/${each.value.file}") # applyした時の/policies/以下のファイル名
+  tags        = var.tags
 }
 
-output "policy_ids" {
-  description = "Managed SCP policy IDs"
-  value       = local.policies
+resource "aws_organizations_policy_attachment" "addpolicy" {
+  for_each  = aws_organizations_policy.addpolicy
+  policy_id = each.value.id
+  target_id = var.add_scps[each.key].target_id
 }
 
