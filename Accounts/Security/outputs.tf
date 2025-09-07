@@ -9,13 +9,9 @@ output "guardduty_detector_id" {
 ########################
 # Security Hub
 ########################
-output "securityhub_account_id" {
-  description = "The AWS SecurityHub account ID"
-  value       = aws_securityhub_account.this.id
-}
-
 output "securityhub_finding_aggregator_arn" {
-  value = aws_securityhub_finding_aggregator.this.id
+  description = "ARN of Security Hub finding aggregator (home region)"
+  value       = aws_securityhub_finding_aggregator.this.id
 }
 ########################
 # AWS Config Aggregator
@@ -35,15 +31,15 @@ output "config_aggregator_arn" {
 ########################
 output "cloudtrail_trail_name" {
   description = "The name of the CloudTrail trail created by the module"
-  value       = module.org_cloudtrail.trail_name
+  value       = aws_cloudtrail.org.name
 }
 
 output "cloudtrail_trail_arn" {
   description = "The ARN of the CloudTrail trail created by the module"
-  value       = module.org_cloudtrail.trail_arn
+  value       = aws_cloudtrail.org.arn
 }
 
 output "cloudtrail_s3_bucket" {
   description = "The S3 bucket name used by the CloudTrail trail"
-  value       = module.org_cloudtrail.s3_bucket_name
+  value       = aws_s3_bucket.cloudtrail.bucket
 }
