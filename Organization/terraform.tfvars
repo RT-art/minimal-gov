@@ -44,6 +44,18 @@ member_accounts = {
     ou    = "workloads"
     tags  = "Network"
   }
+  onprem = {
+    name  = "Onprem"
+    email = "rt.aws0+onprem@gmail.com"
+    ou    = "workloads"
+    tags  = "Onprem"
+  }
+  ops = {
+    name  = "Ops"
+    email = "rt.aws0+ops@gmail.com"
+    ou    = "workloads"
+    tags  = "Ops"
+  }
 }
 
 # Securityアカウントを委任管理者に登録

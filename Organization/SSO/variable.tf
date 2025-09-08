@@ -1,3 +1,4 @@
+# metadata
 variable "env" {
   type = string
   validation {
@@ -28,6 +29,7 @@ variable "tags" {
   default     = {}
 }
 
+# SSO
 variable "org_state_bucket" {
   description = "Organizationのtfstateが保存されているバケット名"
   type        = string
@@ -46,4 +48,9 @@ variable "org_state_region" {
 variable "user_id" {
   description = "Identity Center ユーザーID"
   type        = string
+}
+
+variable "assigned_accounts" {
+  type        = set(string)
+  description = "管理権限セットを付与する論理アカウント名（例: dev, network, security）"
 }
