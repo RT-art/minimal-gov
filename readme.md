@@ -4,44 +4,43 @@
 
 ## 仕様
 
-・ユーザ（市役所職員と模擬）site-to-siteVPN→ネットワークアカウントのtgw→prod/devアカウントのecsアプリケーションへ、albを通じてアクセス。
+ユーザ（市役所職員と模擬）site-to-siteVPN→ネットワークアカウントのtgw→prod/devアカウントのecsアプリケーションへ、albを通じてアクセス。
 
-・運用保守の人→site-to-siteVPN→OPSアカウントVGWでOpsアカウントに到達→PrivatelinkでNetworkアカウント内NLBに通信→Networkアカウント内NLBからEC2に送信→TGWアタッチメントにより、NetworkアカウントのTGWに到達→prod,devの環境に到達し、操作
+運用保守→site-to-siteVPN→Networkアカウント内EC2→TGWアタッチメント＋ポートフォワーディング→prod,devの環境に到達し、操作
 
-運用保守拠点はデータセンターで、AWS環境とIP重複が発生していると仮定し、Plivatelinkで重複を無視した通信をデモする。
+運用保守拠点はデータセンターで、AWS環境とIP重複が発生していると仮定。ssm接続し、ポートフォワーディングによってecs内部、rds内部に接続。
 
-運用保守拠点内に、バックアップサーバを設置してあると想定。prod環境のrdsからトランスファーファミリーでdmpファイルをバックアップサーバに持ち込み、リストアをかけて、オンプレバックアップ可能。
+運用保守拠点内に、バックアップサーバを設置してあると想定。
+prod環境のrdsからs3へ論理dmp出力→トランスファーファミリーでs3からdmpファイルをバックアップサーバに持ち込む→バックアップサーバでリストア。
 
-prod/dev環境は、エンドポイントでawsサービスと通信。
+aws環境は、エンドポイントでawsサービスと通信。
 
 organizationで、セキュリティアカウントでセキュリティリソースを中央集権。
 
-DNSリゾルバにより、すべてのアカウントでプライベートホストゾーン名前解決可能。
+Route53はプライベートホストゾーン使用。
+DNSリゾルバにより、オンプレ環境-AWS環境名前解決可能。
+RAM共有で、すべてのVPCで名前解決可能。
 
-## 詳細設計
+## 全体像
 
-・ネットワークアカウント
-vpc　192.168.0.0/16
-subnet×3
-EC2subnet 192.168.0.0/24
-NLBsubnet 192.168.32.0/24
-Endpointsubnet 192.168.224.0/24
+3 アカウント（Security / Network / Prod+Dev）
 
-TGW 
-TGWアタッチメント→EC2subnetに紐づけ(endpointsubnetでもいいかも)
-TGWルートテーブル 
-ユーザ環境 172.0.0.0/16
-prod/dev環境 10.0.0.0/16
-Ops通信用endpoint
+Network VPC：踏み台 / TGW-Attach×2 / Resolver×2、SSM/EIC、必要最小限の VPCE（ssm 系＋logs/kms）
 
-EC2
-通信用のため、無料利用枠のamazonlinux
+TGW：VGW, Network, Prod, Dev の 4 アタッチメント。専用 RT を 3 枚（VGW 用 / Network→Spoke 用 / Spoke→Network 用）
 
-NLB
-Opsからのprivatelink通信の受け手
+DNS：PHZ を Prod と Dev に作成し RAM 共有、Resolver In/Out でオンプレと疎通
 
-Route53
-InboundEndpoint
-OutboundEndpoint
-→ローカルホストゾーンはどこに置くか？（prod/dev環境？）
+ALB（Internal）＋ECS：ユーザ拠点 CIDR で ALB を制限、WAF 有効
+
+RDS：論理ダンプを ECS タスク or Systems Manager Run Command で取得→S3
+
+Transfer Family（VPC Hosted）→ オンプレ Backup サーバ
+
+ログ：VPC/TGW/ALB/WAF/Trail を Security アカウント S3（KMS）へ
+
+## 各アカウント設計
+
+### ネットワークアカウント
+
 
