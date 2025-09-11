@@ -1,17 +1,6 @@
-###############################################
-# Variables
-# すべての変数に詳細説明を付与します。
-###############################################
-
-variable "name_prefix" {
+variable "vpc_name" {
   type        = string
-  default     = null
-  description = <<-EOT
-  リソースの論理名や Name タグに付与するプレフィックス。
-  未指定（null/空文字）の場合は "spoke" を用います。
-
-  例: "dev" を指定した場合、VPC 名は "dev-vpc" のようになります。
-  EOT
+  default     = "spoke"
 }
 
 variable "vpc_cidr" {
