@@ -11,16 +11,16 @@ resource "aws_ec2_transit_gateway" "this" {
   vpn_ecmp_support                = "enable"
 
   tags = var.tags
-
+}
 ###############################################
 # Transit Gateway Route Tables
 ###############################################
 resource "aws_ec2_transit_gateway_route_table" "this" {
-  for_each = var.route_tables
+  for_each           = var.route_tables
   transit_gateway_id = aws_ec2_transit_gateway.this.id
   tags = merge(
     {
-      Name = each.value.name
+      Name  = each.value.name
       scope = each.value.scope
     },
     var.tags,

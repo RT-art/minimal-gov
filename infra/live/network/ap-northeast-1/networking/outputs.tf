@@ -73,3 +73,22 @@ output "interface_endpoint_dns_entries" {
   value       = module.vpc_endpoints.interface_endpoint_dns_entries
 }
 
+output "customer_gateway_id" {
+  description = "Customer Gateway ID"
+  value       = module.vpn.customer_gateway_id
+}
+
+output "vpn_connection_id" {
+  description = "VPN Connection ID"
+  value       = module.vpn.vpn_connection_id
+}
+
+output "vpn_connection_tunnel1_address" {
+  description = "VPN Tunnel 1 IP"
+  value       = module.vpn.vpn_connection_tunnel1_address
+}
+
+output "vpn_connection_tunnel2_address" {
+  description = "VPN Tunnel 2 IP"
+  value       = module.vpn.vpn_connection_tunnel2_address
+}

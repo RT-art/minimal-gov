@@ -12,7 +12,7 @@ module "tgw" {
   tags                            = var.tags
 
   # Transit Gateway Route Tables
-  route_tables            = var.route_tables
+  route_tables             = var.route_tables
   route_table_associations = var.route_table_associations
   route_table_propagations = var.route_table_propagations
 
@@ -50,8 +50,8 @@ module "tgw_attachment" {
   transit_gateway_id = module.tgw.tgw_id
   vpc_id             = module.vpc.vpc_id
   subnet_ids         = local.tgw_attachment_subnet_ids
-  attachment_name = local.attachment_name
-  tags            = var.tags
+  attachment_name    = local.attachment_name
+  tags               = var.tags
 }
 
 ###############################################
@@ -66,6 +66,20 @@ module "endpoints" {
   subnets        = module.vpc.subnets
   route_table_id = module.vpc.route_table_id
   tags           = var.tags
-  
+
   endpoints = var.endpoints
+}
+
+###############################################
+# VPN (ユーザ拠点)
+###############################################
+module "vpn" {
+  source = "../../../../modules/vpn"
+
+  env                 = var.env
+  app_name            = var.app_name
+  tags                = var.tags
+  transit_gateway_id  = module.tgw.tgw_id
+  customer_gateway_ip = var.customer_gateway_ip
+  bgp_asn             = var.customer_gateway_bgp_asn
 }

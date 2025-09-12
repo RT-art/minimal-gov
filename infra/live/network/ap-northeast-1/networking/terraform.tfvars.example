@@ -1,11 +1,14 @@
 ###############################################
 # Metadata
 ###############################################
-env      = "prod"
-app_name = "minimal-gov-org"
+env      = "dev"
+app_name = "network"
 region   = "ap-northeast-1"
+
 tags = {
-  Project = "minimal-gov"
+  Environment = "dev"
+  Project     = "portfolio"
+  Owner       = "yourname"
 }
 
 ###############################################
@@ -85,14 +88,9 @@ endpoints = [
     type         = "Interface"
     subnet_names = ["ops-a", "ops-c"]
   },
-
+  {
+    name         = "s3"
+    service_name = "com.amazonaws.ap-northeast-1.s3"
+    type         = "Gateway"
+  }
 ]
-
-###############################################
-# VPN (ユーザ拠点)
-###############################################
-# オンプレ側の固定グローバル IP
-customer_gateway_ip = "203.0.113.25"
-
-# オンプレ側の ASN
-customer_gateway_bgp_asn = 65010

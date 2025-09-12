@@ -174,8 +174,19 @@ EOT
   type = list(object({
     name                = string
     service_name        = string
-    type                = string         # "Interface" or "Gateway"
+    type                = string # "Interface" or "Gateway"
     subnet_names        = optional(list(string), [])
     private_dns_enabled = optional(bool, true)
   }))
+}
+
+variable "customer_gateway_ip" {
+  description = "On-premises customer gateway public IP"
+  type        = string
+}
+
+variable "customer_gateway_bgp_asn" {
+  description = "BGP ASN for the on-premises customer gateway"
+  type        = number
+  default     = 65000
 }

@@ -17,7 +17,7 @@ resource "aws_cloudwatch_log_group" "this" {
 }
 
 resource "aws_cloudwatch_log_resource_policy" "flowlogs" {
-  policy_name     = "Allow-VPC-FlowLogs"
+  policy_name = "Allow-VPC-FlowLogs"
   policy_document = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -26,7 +26,7 @@ resource "aws_cloudwatch_log_resource_policy" "flowlogs" {
         Principal = {
           Service = "vpc-flow-logs.amazonaws.com"
         },
-        Action   = [
+        Action = [
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],

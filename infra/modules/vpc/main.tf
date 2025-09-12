@@ -22,13 +22,17 @@ resource "aws_iam_role" "flowlogs" {
     Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow",
+        Effect    = "Allow",
         Principal = { Service = "vpc-flow-logs.amazonaws.com" },
         Action    = "sts:AssumeRole"
       }
     ]
   })
 }
+
+  tags = {
+    LogType = "VPCFlow"
+  }
 
 resource "aws_iam_role_policy_attachment" "flowlogs_attach" {
   role       = aws_iam_role.flowlogs.name
@@ -54,12 +58,9 @@ resource "aws_subnet" "private" {
   availability_zone       = each.value.az
   map_public_ip_on_launch = false
 
-  tags = merge(
-    {
-      Name = "${each.value.name}"
-    },
-    var.tags,
-  )
+  tags = {
+    Name = var.vpc_name
+  }
 }
 ###############################################
 # rtb
@@ -77,8 +78,8 @@ resource "aws_route_table" "private" {
 # rtb association
 ###############################################
 resource "aws_route_table_association" "private" {
-  for_each      = aws_subnet.private
-  subnet_id     = each.value.id
+  for_each       = aws_subnet.private
+  subnet_id      = each.value.id
   route_table_id = aws_route_table.private.id
 }
 

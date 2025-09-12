@@ -1,4 +1,6 @@
+###############################################
 # Metadata
+###############################################
 env      = "prod"
 app_name = "minimal-gov-org"
 region   = "ap-northeast-1"
@@ -6,7 +8,9 @@ tags = {
   Project = "minimal-gov"
 }
 
+###############################################
 # Organization
+###############################################
 enabled_policy_types = [
   "SERVICE_CONTROL_POLICY",
   "TAG_POLICY"

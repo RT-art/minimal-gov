@@ -21,9 +21,9 @@ output "gateway_endpoint_ids" {
 
 output "all_endpoint_ids" {
   description = "全VPCエンドポイントのID (name→id)"
-  value       = merge(
+  value = merge(
     { for k, v in aws_vpc_endpoint.interface : k => v.id },
-    { for k, v in aws_vpc_endpoint.gateway   : k => v.id }
+    { for k, v in aws_vpc_endpoint.gateway : k => v.id }
   )
 }
 
