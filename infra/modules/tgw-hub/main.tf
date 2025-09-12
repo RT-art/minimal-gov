@@ -81,3 +81,40 @@ resource "aws_ec2_transit_gateway_route_table" "network_to_spoke" {
   )
 }
 
+###############################################
+# Optional: AWS RAM share for TGW
+###############################################
+resource "aws_ram_resource_share" "this" {
+  count                     = length(var.ram_principals) > 0 ? 1 : 0
+  name                      = var.ram_share_name
+  allow_external_principals = var.ram_allow_external_principals
+  tags                      = var.tags
+}
+
+resource "aws_ram_principal_association" "this" {
+  for_each           = length(var.ram_principals) > 0 ? { for idx, principal in var.ram_principals : idx => principal } : {}
+  principal          = each.value
+  resource_share_arn = aws_ram_resource_share.this[0].arn
+}
+
+resource "aws_ram_resource_association" "this" {
+  count              = length(var.ram_principals) > 0 ? 1 : 0
+  resource_arn       = aws_ec2_transit_gateway.this.arn
+  resource_share_arn = aws_ram_resource_share.this[0].arn
+}
+
+###############################################
+# Optional: TGW route table association/propagation
+###############################################
+resource "aws_ec2_transit_gateway_route_table_association" "this" {
+  for_each                       = { for idx, assoc in var.route_table_associations : idx => assoc }
+  transit_gateway_attachment_id  = each.value.transit_gateway_attachment_id
+  transit_gateway_route_table_id = each.value.transit_gateway_route_table_id
+}
+
+resource "aws_ec2_transit_gateway_route_table_propagation" "this" {
+  for_each                       = { for idx, prop in var.route_table_propagations : idx => prop }
+  transit_gateway_attachment_id  = each.value.transit_gateway_attachment_id
+  transit_gateway_route_table_id = each.value.transit_gateway_route_table_id
+}
+

@@ -1,13 +1,3 @@
-module "network_vpc" {
-  source                      = "../../../../modules/vpc-spoke"
-  name_prefix                 = "network"
-  vpc_cidr                    = var.vpc_cidr
-  azs                         = var.azs
-  private_subnet_count_per_az = var.private_subnet_count_per_az
-  subnet_newbits              = var.subnet_newbits
-  tags                        = var.tags
-}
-
 module "tgw" {
   source                          = "../../../../modules/tgw-hub"
   description                     = var.tgw_description
@@ -18,6 +8,19 @@ module "tgw" {
   dns_support                     = "enable"
   vpn_ecmp_support                = "enable"
   tags                            = var.tags
+  ram_principals                  = var.tgw_ram_principals
+}
+
+module "network_vpc" {
+  source                      = "../../../../modules/vpc-spoke"
+  vpc_name                    = "network"
+  vpc_cidr                    = var.vpc_cidr
+  azs                         = var.azs
+  private_subnet_count_per_az = var.private_subnet_count_per_az
+  subnet_newbits              = var.subnet_newbits
+  tags                        = var.tags
+  transit_gateway_id          = module.tgw.tgw_id
+  tgw_destination_cidrs       = var.tgw_destination_cidrs
 }
 
 module "tgw_attachment" {
@@ -31,6 +34,19 @@ module "tgw_attachment" {
   transit_gateway_default_route_table_association = "disable"
   transit_gateway_default_route_table_propagation = "disable"
   tags                                            = var.tags
+}
+
+###############################################
+# TGW route table association and propagation
+###############################################
+resource "aws_ec2_transit_gateway_route_table_association" "network" {
+  transit_gateway_attachment_id  = module.tgw_attachment.attachment_id
+  transit_gateway_route_table_id = module.tgw.rt_network_to_spoke_id
+}
+
+resource "aws_ec2_transit_gateway_route_table_propagation" "network" {
+  transit_gateway_attachment_id  = module.tgw_attachment.attachment_id
+  transit_gateway_route_table_id = module.tgw.rt_spoke_to_network_id
 }
 
 module "vpc_endpoints" {
