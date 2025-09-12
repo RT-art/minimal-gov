@@ -72,3 +72,17 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }
+
+###############################################
+# Optional: routes to Transit Gateway
+###############################################
+resource "aws_route" "tgw" {
+  for_each = var.transit_gateway_id != null ? { for pair in setproduct(aws_route_table.private[*].id, var.tgw_destination_cidrs) : "${pair[0]}-${pair[1]}" => {
+    rt_id = pair[0]
+    cidr  = pair[1]
+  } } : {}
+
+  route_table_id         = each.value.rt_id
+  destination_cidr_block = each.value.cidr
+  transit_gateway_id     = var.transit_gateway_id
+}

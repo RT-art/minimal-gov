@@ -73,3 +73,17 @@ variable "gateway_endpoints" {
   type        = list(string)
   default     = []
 }
+
+# TGW RAM share principals
+variable "tgw_ram_principals" {
+  description = "List of AWS account IDs to share the TGW with"
+  type        = list(string)
+  default     = []
+}
+
+# CIDRs to route via TGW from VPC
+variable "tgw_destination_cidrs" {
+  description = "CIDR blocks routed to the TGW from the VPC"
+  type        = list(string)
+  default     = []
+}

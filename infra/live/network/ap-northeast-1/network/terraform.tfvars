@@ -14,6 +14,18 @@ subnet_newbits              = 4
 tgw_amazon_side_asn = 64512
 tgw_description     = "minimaru-gov-tgw"
 
+tgw_ram_principals = [
+  "111111111111",
+  "222222222222",
+  "333333333333",
+]
+
+tgw_destination_cidrs = [
+  "10.0.0.0/16",
+  "10.1.0.0/16",
+  "10.2.0.0/16",
+]
+
 vpce_allowed_cidrs = ["192.168.0.0/16"]
 interface_endpoints = [
   "ssm",

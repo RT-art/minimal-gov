@@ -136,3 +136,57 @@ variable "tags" {
   EOT
 }
 
+###############################################
+# Optional: AWS RAM share settings
+###############################################
+variable "ram_share_name" {
+  type        = string
+  default     = "tgw-share"
+  description = <<-EOT
+  AWS Resource Access Manager で TGW を共有する際のリソースシェア名。
+  EOT
+}
+
+variable "ram_principals" {
+  type        = list(string)
+  default     = []
+  description = <<-EOT
+  TGW を共有する AWS アカウント ID のリスト。空の場合は共有を行いません。
+  EOT
+}
+
+variable "ram_allow_external_principals" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+  他アカウントへの共有を許可する場合は true。
+  EOT
+}
+
+###############################################
+# Optional: TGW route table association/propagation
+###############################################
+variable "route_table_associations" {
+  type = list(object({
+    transit_gateway_attachment_id  = string
+    transit_gateway_route_table_id = string
+  }))
+  default     = []
+  description = <<-EOT
+  TGW ルートテーブルへ関連付けるアタッチメントの一覧。
+  空の場合は関連付けを行いません。
+  EOT
+}
+
+variable "route_table_propagations" {
+  type = list(object({
+    transit_gateway_attachment_id  = string
+    transit_gateway_route_table_id = string
+  }))
+  default     = []
+  description = <<-EOT
+  TGW ルートテーブルへ経路伝播させるアタッチメントの一覧。
+  空の場合は伝播を行いません。
+  EOT
+}
+

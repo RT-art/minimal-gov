@@ -1,6 +1,6 @@
 variable "vpc_name" {
-  type        = string
-  default     = "spoke"
+  type    = string
+  default = "spoke"
 }
 
 variable "vpc_cidr" {
@@ -68,6 +68,26 @@ variable "tags" {
   description = <<-EOT
   リソースに付与する共通タグ。コンプライアンスやコスト配賦の観点で、
   最低限 Project/Env/Owner などのタグ付与を推奨します。
+  EOT
+}
+
+###############################################
+# Optional: TGW route settings
+###############################################
+variable "transit_gateway_id" {
+  type        = string
+  default     = null
+  description = <<-EOT
+  ルートテーブルへ経路を追加する対象の Transit Gateway ID。
+  指定しない場合、TGW 宛てルートは作成されません。
+  EOT
+}
+
+variable "tgw_destination_cidrs" {
+  type        = list(string)
+  default     = []
+  description = <<-EOT
+  Transit Gateway へ向けた経路を追加する宛先 CIDR の一覧。
   EOT
 }
 
