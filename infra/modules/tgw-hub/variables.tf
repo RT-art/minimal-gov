@@ -1,192 +1,110 @@
 ###############################################
-# Variables
-# すべての変数に詳細説明を付与します。
+# Transit Gateway
 ###############################################
-
-variable "name" {
-  type        = string
-  default     = null
-  description = <<-EOT
-  TGW（および関連タグ）に付与する論理名。未指定の場合は "tgw-hub" を使用します。
-
-  例: "net" を指定すると、TGW の Name タグが "net" となります。
-  EOT
-}
-
 variable "description" {
   type        = string
-  default     = "Minimal Gov TGW Hub"
-  description = <<-EOT
-  Transit Gateway の説明。変更は動作に影響しませんが、運用時の識別に役立ちます。
-  EOT
+  description = "Description of the Transit Gateway"
+  default     = "Transit Gateway"
 }
 
 variable "amazon_side_asn" {
   type        = number
+  description = "BGP ASN for the Amazon side of the TGW"
   default     = 64512
-  description = <<-EOT
-  TGW の Amazon 側 ASN。Site-to-Site VPN や Direct Connect の BGP と組み合わせる際に使用します。
-  一般的には 64512～65534 のプライベート ASN を用います。
-  EOT
-
-  validation {
-    condition     = var.amazon_side_asn >= 64512 && var.amazon_side_asn <= 65534
-    error_message = "amazon_side_asn は 64512～65534 の範囲で指定してください。"
-  }
 }
 
 variable "auto_accept_shared_attachments" {
   type        = string
+  description = "Whether resource attachments are automatically accepted (enable/disable)"
   default     = "disable"
-  description = <<-EOT
-  AWS RAM 共有などで他アカウントからのアタッチ要求を自動承認するか（enable/disable）。
-  セキュアなデフォルトのため disable を推奨します。
-  EOT
-
-  validation {
-    condition     = contains(["enable", "disable"], var.auto_accept_shared_attachments)
-    error_message = "auto_accept_shared_attachments は 'enable' または 'disable' を指定してください。"
-  }
 }
 
 variable "default_route_table_association" {
   type        = string
+  description = "Whether to associate attachments to default TGW route table (enable/disable)"
   default     = "disable"
-  description = <<-EOT
-  新しいアタッチメントを既定の RT に自動関連付けするか（enable/disable）。
-  意図せぬ経路流入を防ぐため disable を推奨します。
-  EOT
-
-  validation {
-    condition     = contains(["enable", "disable"], var.default_route_table_association)
-    error_message = "default_route_table_association は 'enable' または 'disable' を指定してください。"
-  }
 }
 
 variable "default_route_table_propagation" {
   type        = string
+  description = "Whether to propagate attachments to default TGW route table (enable/disable)"
   default     = "disable"
-  description = <<-EOT
-  新しいアタッチメントの経路伝播を既定の RT に自動有効化するか（enable/disable）。
-  経路制御の明確化のため disable を推奨します。
-  EOT
-
-  validation {
-    condition     = contains(["enable", "disable"], var.default_route_table_propagation)
-    error_message = "default_route_table_propagation は 'enable' または 'disable' を指定してください。"
-  }
-}
-
-variable "dns_support" {
-  type        = string
-  default     = "enable"
-  description = <<-EOT
-  DNS サポートを有効化するか（enable/disable）。TGW 経由の多くのユースケースで有効化が推奨です。
-  EOT
-
-  validation {
-    condition     = contains(["enable", "disable"], var.dns_support)
-    error_message = "dns_support は 'enable' または 'disable' を指定してください。"
-  }
-}
-
-variable "vpn_ecmp_support" {
-  type        = string
-  default     = "enable"
-  description = <<-EOT
-  Site-to-Site VPN で ECMP（Equal-Cost Multi-Path）を有効化するか（enable/disable）。
-  通常は可用性向上のため enable を推奨します。
-  EOT
-
-  validation {
-    condition     = contains(["enable", "disable"], var.vpn_ecmp_support)
-    error_message = "vpn_ecmp_support は 'enable' または 'disable' を指定してください。"
-  }
-}
-
-variable "rt_name_user" {
-  type        = string
-  default     = "tgw-rt-user"
-  description = <<-EOT
-  ユーザ向けルートテーブルの Name タグ。例: ユーザ拠点 VPN → Prod/Dev のみ許可する用途を想定。
-  EOT
-}
-
-variable "rt_name_spoke_to_network" {
-  type        = string
-  default     = "tgw-rt-spoke-to-network"
-  description = <<-EOT
-  Spoke（Prod/Dev）から Network への復路用ルートテーブルの Name タグ。
-  EOT
-}
-
-variable "rt_name_network_to_spoke" {
-  type        = string
-  default     = "tgw-rt-network-to-spoke"
-  description = <<-EOT
-  Network（踏み台等）から Spoke への往路用ルートテーブルの Name タグ。
-  EOT
 }
 
 variable "tags" {
   type        = map(string)
+  description = "Additional tags to apply to TGW resources"
   default     = {}
-  description = <<-EOT
-  共通タグ。コンプライアンス/コスト配賦の観点で Project/Env/Owner などの付与を推奨します。
-  EOT
 }
 
 ###############################################
-# Optional: AWS RAM share settings
+# Transit Gateway Route Tables
 ###############################################
-variable "ram_share_name" {
-  type        = string
-  default     = "tgw-share"
-  description = <<-EOT
-  AWS Resource Access Manager で TGW を共有する際のリソースシェア名。
-  EOT
+variable "route_tables" {
+  type = map(object({
+    name  = string
+    scope = string
+  }))
+  description = "Map of TGW route tables (key=logical name, value={name,scope})"
+  default     = {}
 }
 
-variable "ram_principals" {
-  type        = list(string)
-  default     = []
-  description = <<-EOT
-  TGW を共有する AWS アカウント ID のリスト。空の場合は共有を行いません。
-  EOT
-}
-
-variable "ram_allow_external_principals" {
-  type        = bool
-  default     = false
-  description = <<-EOT
-  他アカウントへの共有を許可する場合は true。
-  EOT
-}
-
-###############################################
-# Optional: TGW route table association/propagation
-###############################################
 variable "route_table_associations" {
   type = list(object({
-    transit_gateway_attachment_id  = string
-    transit_gateway_route_table_id = string
+    vpc         = string # VPC 論理名 (remote_state outputs のキーに対応)
+    route_table = string # TGW route table の論理名
   }))
+  description = "List of route table associations (VPC logical name -> TGW route table logical name)"
   default     = []
-  description = <<-EOT
-  TGW ルートテーブルへ関連付けるアタッチメントの一覧。
-  空の場合は関連付けを行いません。
-  EOT
 }
 
 variable "route_table_propagations" {
   type = list(object({
-    transit_gateway_attachment_id  = string
-    transit_gateway_route_table_id = string
+    vpc         = string
+    route_table = string
   }))
+  description = "List of route table propagations (VPC logical name -> TGW route table logical name)"
   default     = []
-  description = <<-EOT
-  TGW ルートテーブルへ経路伝播させるアタッチメントの一覧。
-  空の場合は伝播を行いません。
-  EOT
 }
 
+###############################################
+#  Route Table Association / Propagation 
+###############################################
+variable "tgw_state" {
+  type = object({
+    bucket = string
+    key    = string
+    region = string
+  })
+  description = "Remote state location for TGW (to fetch TGW route table IDs)"
+}
+
+variable "vpc_state" {
+  type = object({
+    bucket = string
+    key    = string
+    region = string
+  })
+  description = "Remote state location for VPC (to fetch TGW attachment IDs)"
+}
+
+###############################################
+# AWS RAM
+###############################################
+variable "ram_principals" {
+  type        = set(string)
+  description = "List of principals (AWS account IDs or Org ARNs) to share the TGW with"
+  default     = []
+}
+
+variable "ram_share_name" {
+  type        = string
+  description = "Name of the RAM share"
+  default     = "tgw-hub-share"
+}
+
+variable "ram_allow_external_principals" {
+  type        = bool
+  description = "Whether to allow sharing with external accounts outside of the organization"
+  default     = false
+}
