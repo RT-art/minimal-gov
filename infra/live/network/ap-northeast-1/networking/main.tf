@@ -45,7 +45,7 @@ module "vpc" {
 # TGW Attachment
 ###############################################
 module "tgw_attachment" {
-  source = "../../../../modules/tgw-attachment"
+  source = "../../../../modules/tgw-vpc-attachment"
 
   transit_gateway_id = module.tgw.tgw_id
   vpc_id             = module.vpc.vpc_id

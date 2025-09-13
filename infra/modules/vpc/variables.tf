@@ -28,7 +28,7 @@ variable "security_account_id" {
 variable "log_format" {
   description = "VPC Flow Logs の出力フォーマット"
   type        = string
-  default     = "${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status}"
+  default     = "$${version} $${account-id} $${interface-id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${start} $${end} $${action} $${log-status}"
 }
 
 ###############################################

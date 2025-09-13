@@ -28,11 +28,11 @@ resource "aws_iam_role" "flowlogs" {
       }
     ]
   })
-}
 
   tags = {
     LogType = "VPCFlow"
   }
+}
 
 resource "aws_iam_role_policy_attachment" "flowlogs_attach" {
   role       = aws_iam_role.flowlogs.name
