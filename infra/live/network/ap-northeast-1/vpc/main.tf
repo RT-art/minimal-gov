@@ -1,3 +1,4 @@
+
 ###############################################
 # VPC
 ###############################################
@@ -14,37 +15,7 @@ module "vpc" {
 }
 
 ###############################################
-# TGW Attachment
-###############################################
-module "tgw_attachment" {
-  source = "../../../../modules/tgw-attachment"
-
-  # Transit Gateway
-  transit_gateway_id = var.transit_gateway_id
-
-  # VPC
-  vpc_id     = module.vpc.vpc_id
-  vpc_name   = module.vpc.vpc_name
-  subnet_ids = module.vpc.subnet_ids
-
-  # Feature flags
-  dns_support                       = 
-  ipv6_support                      = false
-  appliance_mode_support            = false
-  transit_gateway_default_route_table_association = false
-  transit_gateway_default_route_table_propagation = false
-
-  # Metadata
-  name_prefix = "prod"
-  tags = {
-    Environment = "prod"
-    Application = "network"
-    Owner       = "platform-team"
-  }
-}
-
-###############################################
-# Endpoints
+# Endpoint
 ###############################################
 module "endpoints" {
   source = "../../../../modules/endpoint"
@@ -54,6 +25,7 @@ module "endpoints" {
   vpc_cidr       = module.vpc.vpc_cidr
   subnets        = module.vpc.subnets
   route_table_id = module.vpc.route_table_id
-  endpoints      = var.endpoints
   tags           = var.tags
+
+  endpoints = var.endpoints
 }
