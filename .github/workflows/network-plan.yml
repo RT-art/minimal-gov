@@ -1,0 +1,44 @@
+name: terraform-network
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_dir:
+        description: 'Terraform 実行対象ディレクトリ (例: infra/network)'
+        required: true
+        default: 'infra/network'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # OIDC 必須
+      contents: read
+    steps:
+      # ソースコード取得
+      - uses: actions/checkout@v4
+
+      # Terraform をセットアップ
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      # AWS 認証（OIDC で AssumeRole）
+      - name: Configure AWS credentials (Network Account)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<NETWORK_ACCOUNT_ID>:role/GitHubTerraformDeploy
+          aws-region: ap-northeast-1
+
+      # Terraform init (backend を S3 + DynamoDB に設定)
+      - name: Terraform Init
+        run: |
+          terraform -chdir=${{ github.event.inputs.target_dir }} init \
+            -backend-config="bucket=minimal-gov-network-backend-tfstate-ap-northeast-1-854669817093" \
+            -backend-config="key=state/network/github/terraform.tfstate" \
+            -backend-config="region=ap-northeast-1" \
+
+      # Terraform Plan
+      - name: Terraform Plan
+        run: terraform -chdir=${{ github.event.inputs.target_dir }} plan
