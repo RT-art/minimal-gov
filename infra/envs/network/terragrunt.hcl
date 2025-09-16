@@ -1,13 +1,13 @@
 generate "provider" {
   path      = "_provider.tf"
   if_exists = "overwrite_terragrunt"
-  contents  = file("../../../shared/provider.tf")
+  contents  = file("../../shared/provider.tf")
 }
 
 generate "variable" {
 path = "_variable.tf"
 if_exists = "overwrite_terragrunt"
-contents  = file("../../../shared/variable.tf")
+contents  = file("../../shared/variable.tf")
 }
 
 remote_state {
