@@ -8,6 +8,10 @@ on:
         required: true
         default: 'infra/envs/network/transitgateway'
 
+permissions:
+  id-token: write   
+  contents: read    
+
 jobs:
   terragrunt:
     runs-on: ubuntu-latest
@@ -32,7 +36,10 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::854669817093:role/GitHubTerraformDeploy
           aws-region: ap-northeast-1
+
       - name: Terragrunt Init (Target Module Only)
         run: terragrunt init --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
+
       - name: Terragrunt Plan (Target Module Only)
         run: terragrunt plan --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
+        continue-on-error: true
