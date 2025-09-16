@@ -1,0 +1,68 @@
+name: dev account plan,apply,destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: '実行する Terragrunt アクションを選択 (plan / apply / destroy)'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+      target_dir:
+        description: 'Terragrunt 実行対象ディレクトリ'
+        required: true
+        default: 'infra/'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terragrunt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v3
+        with:
+          terragrunt-version: 0.87.3
+
+      - name: Run Terragrunt
+        run: terragrunt --version
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::351277498040:role/GitHubTerraformDeploy
+          aws-region: ap-northeast-1
+
+      - name: Terragrunt Init
+        run: terragrunt init --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
+        env:
+          TERRAGRUNT_NON_INTERACTIVE: true
+
+      - name: Terragrunt Execute
+        run: |
+          case "${{ github.event.inputs.action }}" in
+            plan)
+              terragrunt plan --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
+              ;;
+            apply)
+              terragrunt apply --terragrunt-working-dir ${{ github.event.inputs.target_dir }} -auto-approve
+              ;;
+            destroy)
+              terragrunt destroy --terragrunt-working-dir ${{ github.event.inputs.target_dir }} -auto-approve
+              ;;
+          esac
+        env:
+          TERRAGRUNT_NON_INTERACTIVE: true

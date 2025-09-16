@@ -3,14 +3,14 @@ generate "provider" {
   if_exists = "overwrite_terragrunt"
   contents  = <<EOF
 provider "aws" {
-  region = "ap-northeast-1"
+  region = var.region
 
   default_tags {
     tags = {
-      Application = "workload"
-      Environment = "dev"
+      Application = var.app_name
+      Environment = var.env
       ManagedBy   = "Terraform"
-      Region      = "ap-northeast-1"
+      Region      = var.region
     }
   }
 }
@@ -26,7 +26,7 @@ remote_state {
   }
 
   config = {
-    bucket       = "minimal-gov-network-backend-tfstate-ap-northeast-1-854669817093"
+    bucket       = "minimal-gov-network-tfstate-ap-northeast-1-351277498040"
     key          = "${path_relative_to_include()}/terraform.tfstate"
     region       = "ap-northeast-1"
     encrypt      = true

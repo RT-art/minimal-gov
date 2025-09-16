@@ -8,12 +8,12 @@ terraform {
 
 inputs = {
   # Metadata
-  env      = "dev"
+  env      = "prod"
   app_name = "minimal-gov-network"
   region   = "ap-northeast-1"
   tags = {
     Project     = "minimal-gov"
-    Environment = "dev"
+    Environment = "prod"
     ManagedBy   = "Terraform"
   }
 
