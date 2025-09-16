@@ -1,4 +1,4 @@
-name: terraform-network-account-apply
+name: terraform-dev-account-apply
 
 on:
   workflow_dispatch:

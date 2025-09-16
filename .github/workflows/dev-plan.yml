@@ -1,4 +1,4 @@
-name: terraform-network-account-plan
+name: terraform-dev-account-plan
 
 on:
   workflow_dispatch:

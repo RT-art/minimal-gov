@@ -1,4 +1,4 @@
-name: terraform-network-account-destroy
+name: terraform-dev-account-destroy
 
 on:
   workflow_dispatch:
