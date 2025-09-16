@@ -1,27 +1,67 @@
-generate "provider" {
-  path      = "_provider.tf"
-  if_exists = "overwrite_terragrunt"
-  contents  = file("../../../shared/provider.tf")
+include {
+  path = find_in_parent_folders()
 }
 
-generate "variable" {
-path = "_variable.tf"
-if_exists = "overwrite_terragrunt"
-contents  = file("../../../shared/variable.tf")
+terraform {
+  source = "../../../../modules/tgw-hub"
 }
 
-remote_state {
-  backend = "s3"
-
-  generate = {
-    path      = "backend.tf"
-    if_exists = "overwrite"
+inputs = {
+  ###############################################
+  # Metadata
+  ###############################################
+  env      = "dev"
+  app_name = "minimal-gov-network"
+  region   = "ap-northeast-1"
+  tags = {
+    Project     = "minimal-gov"
+    Environment = "dev"
+    ManagedBy   = "Terraform"
   }
 
-  config = {
-    bucket       = "minimal-gov-network-backend-tfstate-ap-northeast-1-854669817093"
-    key          = "${path_relative_to_include()}/terraform.tfstate"
-    region       = "ap-northeast-1"
-    encrypt      = true
-  }
+  ###############################################
+  # Transit Gateway
+  ###############################################
+  description                     = "Transit Gateway"
+  amazon_side_asn                 = 64512
+  auto_accept_shared_attachments  = false
+  default_route_table_association = false
+  default_route_table_propagation = false
+
+  ###############################################
+  # AWS RAM
+  ###############################################
+  ram_share_name = "global-tgw-ram"
+
+  # route_tables = {
+  #   dev = {
+  #     name = "dev-tgw-rtb"
+  #   }
+  # }
+  #
+  # route_table_associations = {
+  #   vpc1 = {
+  #     vpc         = "vpc1"
+  #     route_table = "dev"
+  #   }
+  # }
+  #
+  # route_table_propagations = {
+  #   vpc1-to-spoke = {
+  #     vpc         = "vpc1"
+  #     route_table = "spoke"
+  #   }
+  #   vpc2-to-core = {
+  #     vpc         = "vpc2"
+  #     route_table = "core"
+  #   }
+  # }
+  #
+  # tgw_attachment_ids = {
+  #   dev = "tgw-attach-xxxxxxxxxxxxxx"
+  # }
+  #
+  # tgw_route_table_ids = {
+  #   dev = "tgw-rtb-xxxxxxxxxxxxxx"
+  # }
 }
