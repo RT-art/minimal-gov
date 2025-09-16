@@ -2,7 +2,7 @@
 # Transit Gateway
 ###############################################
 module "tgw" {
-  source = "../../../../modules/tgw-hub"
+  source = "../../../modules/tgw-hub"
 
   # Transit Gateway 
   description                     = var.description
