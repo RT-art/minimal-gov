@@ -25,7 +25,5 @@ module "tgw" {
   tgw_route_table_ids = var.tgw_route_table_ids
 
   # AWS RAM 
-  ram_principals                = var.ram_principals
   ram_share_name                = var.ram_share_name
-  ram_allow_external_principals = var.ram_allow_external_principals
 }
