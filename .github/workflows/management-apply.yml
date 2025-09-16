@@ -2,7 +2,7 @@ name: terraform-management-account-apply
 
 on:
   workflow_dispatch:
-    inputs:
+    inputs: 
       target_dir:
         description: 'Terraform 実行対象ディレクトリ'
         required: true

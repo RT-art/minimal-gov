@@ -1,4 +1,4 @@
-name: terragrunt-network-transitgateway-plan
+name: network-transitgateway-plan
 
 on:
   workflow_dispatch:
@@ -39,6 +39,8 @@ jobs:
 
       - name: Terragrunt Init (Target Module Only)
         run: terragrunt init --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
+        env:
+          TERRAGRUNT_NON_INTERACTIVE: true
 
       - name: Terragrunt Plan (Target Module Only)
         run: terragrunt plan --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
