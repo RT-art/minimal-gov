@@ -58,9 +58,7 @@ resource "aws_ram_resource_share" "this" {
   )
 }
 
-resource "aws_ram_sharing_with_organization" "enable" {
-  enable_sharing_with_aws_organization = true
-}
+resource "aws_ram_sharing_with_organization" "enable" {}
 
 resource "aws_ram_principal_association" "this" {
   for_each           = var.ram_principals
