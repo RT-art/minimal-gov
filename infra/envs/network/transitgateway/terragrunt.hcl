@@ -17,7 +17,6 @@ remote_state {
     path      = "backend.tf"
     if_exists = "overwrite"
   }
-  disable_bucket_update = true
 
   config = {
     bucket       = "minimal-gov-network-backend-tfstate-ap-northeast-1-854669817093"
