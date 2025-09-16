@@ -1,13 +1,20 @@
 generate "provider" {
   path      = "_provider.tf"
   if_exists = "overwrite_terragrunt"
-  contents  = file("../../shared/provider.tf")
-}
+  contents  = <<EOF
+provider "aws" {
+  region = var.region
 
-generate "variable" {
-path = "_variable.tf"
-if_exists = "overwrite_terragrunt"
-contents  = file("../../shared/variable.tf")
+  default_tags {
+    tags = {
+      Application = var.app_name
+      Environment = var.env
+      ManagedBy   = "Terraform"
+      Region      = var.region
+    }
+  }
+}
+EOF
 }
 
 remote_state {
