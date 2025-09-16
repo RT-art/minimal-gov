@@ -22,13 +22,13 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.7.5
+          terraform_version: 1.9.0
 
       # AWS 認証（OIDC で AssumeRole）
       - name: Configure AWS credentials (Network Account)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::<NETWORK_ACCOUNT_ID>:role/GitHubTerraformDeploy
+          role-to-assume: arn:aws:iam:854669817093:role/GitHubTerraformDeploy
           aws-region: ap-northeast-1
 
       # Terraform init (backend を S3 + DynamoDB に設定)
