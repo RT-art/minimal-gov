@@ -10,7 +10,6 @@ terraform {
 }
 
 provider "aws" {
-  profile = "network"
   region  = var.region
 
   default_tags {
