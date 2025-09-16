@@ -53,6 +53,9 @@ default_route_table_propagation = false
 # }
 
 # AWS RAM
-ram_principals                = ["351277498040"]
-ram_share_name                = "tgw-ram"
+ram_principals = [
+  "o-abcd1234"
+]
+
+ram_share_name = "global-tgw-share"
 ram_allow_external_principals = false

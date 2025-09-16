@@ -83,8 +83,9 @@ variable "tgw_route_table_ids" {
 # AWS RAM
 ###############################################
 variable "ram_principals" {
-  type    = set(string)
-  default = []
+  type        = set(string)
+  description = "List of principals (must be Organization ID or OU ARN for TGW)"
+  default     = []
 }
 
 variable "ram_share_name" {

@@ -44,23 +44,30 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "this" {
   transit_gateway_route_table_id = var.tgw_route_table_ids[each.value.route_table]
 }
 
+
 ###############################################
-# AWS RAM 
+# AWS RAM
 ###############################################
 resource "aws_ram_resource_share" "this" {
   count                     = length(var.ram_principals) > 0 ? 1 : 0
   name                      = var.ram_share_name
-  allow_external_principals = var.ram_allow_external_principals
+  allow_external_principals = false # TGW は外部アカウント不可
   tags = merge(
     var.tags,
     { Name = "${var.name_prefix}-tgw-ram" }
   )
 }
 
+resource "aws_ram_sharing_with_organization" "enable" {
+  enable_sharing_with_aws_organization = true
+}
+
 resource "aws_ram_principal_association" "this" {
   for_each           = var.ram_principals
   principal          = each.value
   resource_share_arn = aws_ram_resource_share.this[0].arn
+
+  depends_on = [aws_ram_sharing_with_organization.enable]
 }
 
 resource "aws_ram_resource_association" "this" {
@@ -68,5 +75,3 @@ resource "aws_ram_resource_association" "this" {
   resource_arn       = aws_ec2_transit_gateway.this.arn
   resource_share_arn = aws_ram_resource_share.this[0].arn
 }
-
-
