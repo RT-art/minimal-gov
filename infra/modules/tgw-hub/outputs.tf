@@ -21,8 +21,7 @@ output "tgw_route_table_arns" {
     for k, rt in aws_ec2_transit_gateway_route_table.this : k => rt.arn
   }
 }
-
 output "ram_share_arn" {
-  description = "ARN of the RAM share (if created)"
-  value       = try(aws_ram_resource_share.this[0].arn, null)
+  value       = try(aws_ram_resource_share.this.arn, null)
+  description = "The ARN of the RAM resource share"
 }
