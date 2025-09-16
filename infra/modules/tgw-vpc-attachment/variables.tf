@@ -63,3 +63,11 @@ variable "ipv6_support" {
   type    = bool
   default = false
 }
+
+###############################################
+# Transit Gateway
+###############################################
+# variable "transit_gateway_id" {
+#   description = "接続する Transit Gateway の ID"
+#   type        = string
+# }

@@ -58,3 +58,11 @@ variable "subnets" {
     az   = string
   }))
 }
+
+###############################################
+# Transit Gateway
+###############################################
+# variable "transit_gateway_id" {
+#   description = "接続する Transit Gateway の ID"
+#   type        = string
+# }

@@ -6,9 +6,9 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
   vpc_id             = var.vpc_id
   subnet_ids         = var.subnet_ids
 
-  dns_support                       = var.dns_support  ? "enable" : "disable"
-  ipv6_support                      = var.ipv6_support ? "enable" : "disable"
-  appliance_mode_support            = var.appliance_mode_support ? "enable" : "disable"
+  dns_support                                     = var.dns_support ? "enable" : "disable"
+  ipv6_support                                    = var.ipv6_support ? "enable" : "disable"
+  appliance_mode_support                          = var.appliance_mode_support ? "enable" : "disable"
   transit_gateway_default_route_table_association = var.default_route_table_association ? "enable" : "disable"
   transit_gateway_default_route_table_propagation = var.default_route_table_propagation ? "enable" : "disable"
 
@@ -17,3 +17,13 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
     { Name = "tgw-att-${var.vpc_name}" }
   )
 }
+
+###############################################
+# routes to Transit Gateway
+###############################################
+# resource "aws_route" "to_tgw" {
+#   route_table_id         = aws_route_table.private.id
+#   destination_cidr_block = "0.0.0.0/0"
+#   transit_gateway_id     = var.transit_gateway_id
+# }
+

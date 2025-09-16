@@ -49,7 +49,7 @@ jobs:
       - name: Terragrunt Init
         run: terragrunt init --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
         env:
-          TERRAGRUNT_NON_INTERACTIVE: true
+          TG_NON_INTERACTIVE: true
 
       - name: Terragrunt Execute
         run: |
@@ -65,4 +65,4 @@ jobs:
               ;;
           esac
         env:
-          TERRAGRUNT_NON_INTERACTIVE: true
+          TG_NON_INTERACTIVE: true

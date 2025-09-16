@@ -32,3 +32,15 @@ remote_state {
     encrypt      = true
   }
 }
+
+inputs = {
+  # Metadata
+  env      = "prod"
+  app_name = "minimal-gov-network"
+  region   = "ap-northeast-1"
+  tags = {
+    Project     = "minimal-gov"
+    Environment = "prod"
+    ManagedBy   = "Terraform"
+  }
+}

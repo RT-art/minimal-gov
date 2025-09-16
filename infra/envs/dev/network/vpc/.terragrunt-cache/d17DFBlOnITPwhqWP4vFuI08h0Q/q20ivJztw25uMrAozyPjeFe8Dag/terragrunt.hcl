@@ -7,6 +7,16 @@ terraform {
 }
 
 inputs = {
+      # Metadata
+  env      = "dev"
+  app_name = "minimal-gov-network"
+  region   = "ap-northeast-1"
+  tags = {
+    Project     = "minimal-gov"
+    Environment = "dev"
+    ManagedBy   = "Terraform"
+  }
+
   vpc_cidr = "10.0.0.0/16"
   vpc_name = "minimal-gov-dev-vpc"
 

@@ -1,9 +1,9 @@
 include {
-  path = find_in_parent_folders()
+  path =  find_in_parent_folders("root.hcl")
 }
 
 terraform {
-  source = "../../../../modules/vpc"
+  source = "../../../modules/vpc"
 }
 
 inputs = {
@@ -16,5 +16,4 @@ inputs = {
     { name = "ecs-network-a", cidr = "192.168.10.0/24", az = "ap-northeast-1c" },
     { name = "ecs-network-c", cidr = "192.168.11.0/24", az = "ap-northeast-1c" },
   ]  
-  # tgwアタッチメントは作らない
 }

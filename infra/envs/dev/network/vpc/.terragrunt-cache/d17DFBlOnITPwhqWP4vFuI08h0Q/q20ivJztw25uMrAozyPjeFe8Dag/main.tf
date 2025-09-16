@@ -82,3 +82,12 @@ resource "aws_route_table_association" "private" {
   subnet_id      = each.value.id
   route_table_id = aws_route_table.private.id
 }
+
+###############################################
+# routes to Transit Gateway
+###############################################
+# resource "aws_route" "to_tgw" {
+#   route_table_id         = aws_route_table.private.id
+#   destination_cidr_block = "0.0.0.0/0"
+#   transit_gateway_id     = var.transit_gateway_id
+# }
