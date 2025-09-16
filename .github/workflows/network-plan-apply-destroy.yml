@@ -1,16 +1,25 @@
-name: network-transitgateway-plan
+name: network account plan,apply,destroy
 
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: '実行する Terragrunt アクションを選択 (plan / apply / destroy)'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
       target_dir:
         description: 'Terragrunt 実行対象ディレクトリ'
         required: true
         default: 'infra/envs/network/transitgateway'
 
 permissions:
-  id-token: write   
-  contents: read    
+  id-token: write
+  contents: read
 
 jobs:
   terragrunt:
@@ -37,11 +46,23 @@ jobs:
           role-to-assume: arn:aws:iam::854669817093:role/GitHubTerraformDeploy
           aws-region: ap-northeast-1
 
-      - name: Terragrunt Init (Target Module Only)
+      - name: Terragrunt Init
         run: terragrunt init --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
         env:
           TERRAGRUNT_NON_INTERACTIVE: true
 
-      - name: Terragrunt Plan (Target Module Only)
-        run: terragrunt plan --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
-        continue-on-error: true
+      - name: Terragrunt Execute
+        run: |
+          case "${{ github.event.inputs.action }}" in
+            plan)
+              terragrunt plan --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
+              ;;
+            apply)
+              terragrunt apply --terragrunt-working-dir ${{ github.event.inputs.target_dir }} -auto-approve
+              ;;
+            destroy)
+              terragrunt destroy --terragrunt-working-dir ${{ github.event.inputs.target_dir }} -auto-approve
+              ;;
+          esac
+        env:
+          TERRAGRUNT_NON_INTERACTIVE: true

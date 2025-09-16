@@ -7,9 +7,7 @@ terraform {
 }
 
 inputs = {
-  ###############################################
   # Metadata
-  ###############################################
   env      = "dev"
   app_name = "minimal-gov-network"
   region   = "ap-northeast-1"
@@ -19,18 +17,14 @@ inputs = {
     ManagedBy   = "Terraform"
   }
 
-  ###############################################
   # Transit Gateway
-  ###############################################
   description                     = "Transit Gateway"
   amazon_side_asn                 = 64512
   auto_accept_shared_attachments  = false
   default_route_table_association = false
   default_route_table_propagation = false
 
-  ###############################################
   # AWS RAM
-  ###############################################
   ram_share_name = "global-tgw-ram"
 
   # route_tables = {
