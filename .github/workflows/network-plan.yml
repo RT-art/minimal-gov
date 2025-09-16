@@ -11,24 +11,28 @@ on:
 jobs:
   terragrunt:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Terraform & Terragrunt
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      - name: Setup Terragrunt
         uses: autero1/action-terragrunt@v3
         with:
-          terragrunt_version: 0.55.0
-          terraform_version: 1.9.0
+          terragrunt-version: 0.55.0
+
+      - name: Run Terragrunt
+        run: terragrunt --version
 
       - name: Configure AWS credentials (Network Account)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::854669817093:role/GitHubTerraformDeploy
           aws-region: ap-northeast-1
-
+      - name: Terragrunt Init (Target Module Only)
+        run: terragrunt init --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
       - name: Terragrunt Plan (Target Module Only)
         run: terragrunt plan --terragrunt-working-dir ${{ github.event.inputs.target_dir }}
