@@ -1,4 +1,4 @@
-name: terraform-network-account-plan
+name: terraform-network-account-apply
 
 on:
   workflow_dispatch:
@@ -31,13 +31,15 @@ jobs:
           role-to-assume: arn:aws:iam::854669817093:role/GitHubTerraformDeploy
           aws-region: ap-northeast-1
 
-      # Terraform init
+      # Terraform Init
+      - name: Terraform Init
         run: |
           terraform -chdir=${{ github.event.inputs.target_dir }} init \
             -backend-config="bucket=minimal-gov-network-backend-tfstate-ap-northeast-1-854669817093" \
             -backend-config="key=state/network/github/terraform.tfstate" \
             -backend-config="region=ap-northeast-1" \
+            -backend-config="dynamodb_table=tf-locks-network"
 
-      # Terraform Plan
-      - name: Terraform Plan
-        run: terraform -chdir=${{ github.event.inputs.target_dir }} plan
+      # Terraform Apply
+      - name: Terraform Apply
+        run: terraform -chdir=${{ github.event.inputs.target_dir }} apply -auto-approve
