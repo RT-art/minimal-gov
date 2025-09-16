@@ -29,15 +29,15 @@ output "route_table_id" {
   value       = aws_route_table.private.id
 }
 
-###############################################
-# Flow Logs
-###############################################
-output "flow_log_id" {
-  description = "作成された Flow Log の ID"
-  value       = aws_flow_log.this.id
-}
-
-output "flow_log_role_arn" {
-  description = "Flow Logs 用 IAM Role ARN"
-  value       = aws_iam_role.flowlogs.arn
-}
+# ###############################################
+# # Flow Logs
+# ###############################################
+# output "flow_log_id" {
+#   description = "作成された Flow Log の ID"
+#   value       = aws_flow_log.this.id
+# }
+# 
+# output "flow_log_role_arn" {
+#   description = "Flow Logs 用 IAM Role ARN"
+#   value       = aws_iam_role.flowlogs.arn
+# }

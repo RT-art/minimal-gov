@@ -1,4 +1,26 @@
 ###############################################
+# Metadata
+###############################################
+variable "region" {
+  type        = string
+  description = "AWS region"
+}
+
+variable "app_name" {
+  type        = string
+  description = "Application name"
+}
+
+variable "env" {
+  type        = string
+  description = "Environment name (dev/stg/prod)"
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}
+###############################################
 # VPC
 ###############################################
 variable "vpc_cidr" {
@@ -11,26 +33,20 @@ variable "vpc_name" {
   type        = string
 }
 
-variable "tags" {
-  description = "共通タグ (Environment, Owner など)"
-  type        = map(string)
-  default     = {}
-}
-
 ###############################################
 # Flow Logs (セキュリティアカウント集約)
 ###############################################
-variable "security_account_id" {
-  description = "Flow Logs を集約するセキュリティアカウントの ID"
-  type        = string
-}
-
-variable "log_format" {
-  description = "VPC Flow Logs の出力フォーマット"
-  type        = string
-  default     = "$${version} $${account-id} $${interface-id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${start} $${end} $${action} $${log-status}"
-}
-
+# variable "security_account_id" {
+#   description = "Flow Logs を集約するセキュリティアカウントの ID"
+#   type        = string
+# }
+# 
+# variable "log_format" {
+#   description = "VPC Flow Logs の出力フォーマット"
+#   type        = string
+#   default     = "$${version} $${account-id} $${interface-id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${start} $${end} $${action} $${log-status}"
+# }
+# 
 ###############################################
 # Subnet
 ###############################################

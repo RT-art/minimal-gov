@@ -1,7 +1,13 @@
-include "root" {
+include {
   path = find_in_parent_folders()
 }
 
 terraform {
-  source = "../../../modules/app"
+  source = "../../../modules/backend"
+}
+
+inputs = {
+  versioning_enabled = true
+  force_destroy      = true
+  lifecycle_days = 30
 }

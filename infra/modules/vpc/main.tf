@@ -12,42 +12,42 @@ resource "aws_vpc" "this" {
   )
 }
 
-###############################################
-# VPC Flow Logs (集約先: セキュリティアカウント)
-###############################################
-resource "aws_iam_role" "flowlogs" {
-  name = "flowlogs-to-cw"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect    = "Allow",
-        Principal = { Service = "vpc-flow-logs.amazonaws.com" },
-        Action    = "sts:AssumeRole"
-      }
-    ]
-  })
-
-  tags = {
-    LogType = "VPCFlow"
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "flowlogs_attach" {
-  role       = aws_iam_role.flowlogs.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
-}
-
-resource "aws_flow_log" "this" {
-  vpc_id          = aws_vpc.this.id
-  log_destination = "arn:aws:logs:ap-northeast-1:${var.security_account_id}:log-group:/central/vpc-flow-logs"
-  traffic_type    = "ALL"
-  log_format      = var.log_format
-  iam_role_arn    = aws_iam_role.flowlogs.arn
-}
-
-###############################################
+# ###############################################
+# # VPC Flow Logs (集約先: セキュリティアカウント)
+# ###############################################
+# resource "aws_iam_role" "flowlogs" {
+#   name = "flowlogs-to-cw"
+# 
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect    = "Allow",
+#         Principal = { Service = "vpc-flow-logs.amazonaws.com" },
+#         Action    = "sts:AssumeRole"
+#       }
+#     ]
+#   })
+# 
+#   tags = {
+#     LogType = "VPCFlow"
+#   }
+# }
+# 
+# resource "aws_iam_role_policy_attachment" "flowlogs_attach" {
+#   role       = aws_iam_role.flowlogs.name
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonVPCFlowLogsRole"
+# }
+# 
+# resource "aws_flow_log" "this" {
+#   vpc_id          = aws_vpc.this.id
+#   log_destination = "arn:aws:logs:ap-northeast-1:${var.security_account_id}:log-group:/central/vpc-flow-logs"
+#   traffic_type    = "ALL"
+#   log_format      = var.log_format
+#   iam_role_arn    = aws_iam_role.flowlogs.arn
+# }
+# 
+################################################
 # Subnet
 ###############################################
 resource "aws_subnet" "private" {
