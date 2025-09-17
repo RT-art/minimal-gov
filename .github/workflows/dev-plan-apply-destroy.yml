@@ -24,20 +24,23 @@ permissions:
 jobs:
   terragrunt:
     runs-on: ubuntu-latest
+    env:
+      TG_NON_INTERACTIVE: true
+      TG_WORKING_DIR: ${{ github.event.inputs.target_dir }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v3.1.0
         with:
           terraform_version: 1.9.0
 
       - name: Setup Terragrunt
-        uses: autero1/action-terragrunt@v3
+        uses: autero1/action-terragrunt@v3.1.0
         with:
           terragrunt-version: 0.87.3
 
-      - name: Run Terragrunt
+      - name: Show Terragrunt Version
         run: terragrunt --version
 
       - name: Configure AWS credentials
@@ -45,27 +48,25 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::351277498040:role/GitHubTerraformDeploy
           aws-region: ap-northeast-1
-
-      - name: Debug - confirm target_dir
-        run: |
-          echo "target_dir=${{ github.event.inputs.target_dir }}"
-          pwd
-          ls -R "${{ github.event.inputs.target_dir }}"
+          role-session-name: github-actions-terragrunt
 
       - name: Terragrunt Init
-        run: terragrunt init --terragrunt-working-dir "${{ github.event.inputs.target_dir }}"
-        env:
-          TG_NON_INTERACTIVE: true
+        run: terragrunt init
 
       - name: Terragrunt Execute
         run: |
           case "${{ github.event.inputs.action }}" in
             plan)
-              terragrunt plan --terragrunt-working-dir "${{ github.event.inputs.target_dir }}"
+              terragrunt plan
               ;;
             apply)
-              terragrunt apply --terragrunt-working-dir "${{ github.event.inputs.target_dir }}" -auto-approve
+              terragrunt apply -auto-approve
               ;;
             destroy)
-              terragrunt destroy --terragrunt-working-dir "${{ github.event.inputs.target_dir }}" -auto-approve
+              terragrunt destroy -auto-approve
               ;;
+            *)
+              echo "Unknown action: ${{ github.event.inputs.action }}"
+              exit 1
+              ;;
+          esac

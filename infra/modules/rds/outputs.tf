@@ -1,15 +1,19 @@
-###############################################
-# Outputs
-# 上位モジュールから依存に必要な最小限の値のみ出力します。
-###############################################
-
-output "db_instance_endpoint" {
-  description = "RDS インスタンスへの接続エンドポイント。例: アプリケーションの DB ホストとして module.rds.db_instance_endpoint を指定。"
-  value       = aws_db_instance.this.endpoint
+output "rds_endpoint" {
+  value       = module.rds.db_instance_endpoint
+  description = "RDS endpoint"
 }
 
-output "db_instance_identifier" {
-  description = "作成された RDS インスタンスの識別子。運用監視や追加設定の参照に使用します。"
-  value       = aws_db_instance.this.id
+output "rds_port" {
+  value       = module.rds.db_instance_port
+  description = "RDS port"
 }
 
+output "rds_security_group_id" {
+  value       = aws_security_group.rds.id
+  description = "RDS security group ID"
+}
+
+output "db_password_secret_arn" {
+  value       = aws_secretsmanager_secret.db.arn
+  description = "Secrets Manager ARN for the DB password"
+}
