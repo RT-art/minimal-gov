@@ -20,7 +20,7 @@ resource "aws_secretsmanager_secret_version" "db" {
 }
 
 # -----------------------------
-# SG
+# Security Group
 # -----------------------------
 module "rds_sg" {
   source  = "terraform-aws-modules/security-group/aws"
@@ -30,17 +30,24 @@ module "rds_sg" {
   description = "Security group for RDS ${local.name}"
   vpc_id      = var.vpc_id
 
-  ingress_with_source_security_group_id = var.allowed_sg_id != null ? [var.allowed_sg_id] : []
-  ingress_rules        = []
-  ingress_cidr_blocks  = []
-  egress_rules         = ["all-all"]
-  egress_cidr_blocks   = ["0.0.0.0/0"]
+  ingress_with_source_security_group_id = var.allowed_sg_id != null ? [
+    {
+      from_port                = var.db_port
+      to_port                  = var.db_port
+      protocol                 = "tcp"
+      source_security_group_id = var.allowed_sg_id
+    }
+  ] : []
+
+  egress_rules            = ["all-all"]
+  egress_cidr_blocks      = ["0.0.0.0/0"]
   egress_ipv6_cidr_blocks = ["::/0"]
 
   tags = var.tags
 }
+
 # -----------------------------
-# RDS
+# RDS 
 # -----------------------------
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
@@ -55,6 +62,7 @@ module "rds" {
   username = var.username
   password = random_password.db.result  
 
+  port                   = var.db_port
   subnet_ids             = var.subnet_ids
   vpc_security_group_ids = [module.rds_sg.this_security_group_id]
 
@@ -67,8 +75,8 @@ module "rds" {
   multi_az                = true
   backup_retention_period = 7
 
-  # CloudWatch Logs
-  enabled_cloudwatch_logs_exports   = ["error", "general", "slowquery"]
+  # CloudWatch Logs (PostgreSQL 用)
+  enabled_cloudwatch_logs_exports   = ["postgresql"]
   create_cloudwatch_log_group       = true
   cloudwatch_log_group_retention_in_days = 30
 

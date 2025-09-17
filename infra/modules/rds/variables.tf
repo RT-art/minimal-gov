@@ -19,34 +19,48 @@ variable "tags" {
 }
 
 variable "engine" {
-  type = string
+  type        = string
+  description = "Database engine (postgres, mysql, etc.)"
 }
+
 variable "engine_version" {
-  type = string
+  type        = string
+  description = "Database engine version"
 }
+
 variable "instance_class" {
-  type = string
+  type        = string
+  description = "RDS instance class"
 }
 
 variable "db_name" {
-  type = string
+  type        = string
+  description = "Initial database name"
 }
+
 variable "username" {
-  type = string
+  type        = string
+  description = "Master username"
 }
 
 variable "vpc_id" {
-  type = string
+  type        = string
+  description = "VPC ID for RDS"
 }
+
 variable "subnet_ids" {
-  type = list(string)
+  type        = list(string)
+  description = "Subnet IDs for RDS subnet group"
 }
 
 variable "db_port" {
-  type    = number
-  default = 3306
+  type        = number
+  description = "Database port (5432 for Postgres, 3306 for MySQL, etc.)"
+  default     = 5432
 }
 
 variable "allowed_sg_id" {
-  type = string
+  type        = string
+  description = "Security group ID allowed to access the RDS. Null if none."
+  default     = null
 }
