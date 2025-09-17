@@ -117,4 +117,10 @@ resource "aws_organizations_delegated_administrator" "security_delegate" {
   service_principal = each.key # set(string)なのでkeyは値そのもの
   # Service Access の有効化（aws_organizations_organization.this の適用）完了を待ってから登録
   depends_on = [aws_organizations_organization.this]
+
 }
+
+resource "aws_ram_sharing_with_organization" "enable" {
+}
+
+

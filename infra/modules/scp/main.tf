@@ -12,11 +12,10 @@ data "aws_organizations_organizational_units" "root_ous" {
 
 # Suspended OU の ID を抽出
 locals {
-  suspended_ou_id       = one([
+  suspended_ou_id = one([
     for ou in data.aws_organizations_organizational_units.root_ous.children : ou.id
     if ou.name == "Suspended"
   ])
-  custom_policies_dir = coalesce(var.custom_policies_dir, "${path.root}/policies")
 }
 
 # 1.ルートユーザ禁止
@@ -97,7 +96,7 @@ resource "aws_organizations_policy" "addpolicy" {
   name        = each.key
   description = each.value.description
   type        = "SERVICE_CONTROL_POLICY"
-  content     = file("${local.custom_policies_dir}/${each.value.file}") # applyした時の/policies/以下のファイル名
+  content     = file("${path.root}/policies/${each.value.file}") # applyした時の/policies/以下のファイル名
   tags        = var.tags
 }
 
