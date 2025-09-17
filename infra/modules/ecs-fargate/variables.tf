@@ -3,6 +3,22 @@ variable "service_name" {
   description = "ECS service name"
 }
 
+variable "env" {
+  type        = string
+  description = "Environment name (e.g. dev, stg, prd)"
+}
+
+variable "app_name" {
+  type        = string
+  description = "Application name for tagging"
+}
+
+variable "tags" {
+  type        = map(string)
+  default     = {}
+  description = "Additional tags to apply to resources"
+}
+
 variable "container_image" {
   type        = string
   description = "Container image for ECS task"
