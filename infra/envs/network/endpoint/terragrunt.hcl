@@ -56,13 +56,4 @@ inputs = {
       service_type = "Interface"
     }
   }
-
-  tags = merge(
-    {
-      Project     = "minimal-gov"
-      Environment = "prod"
-      ManagedBy   = "Terraform"
-    },
-    local.common_tags,
-  )
 }
