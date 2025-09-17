@@ -44,14 +44,19 @@ variable "appliance_mode_support" {
   default = false
 }
 
-variable "transit_gateway_default_route_table_association" {
+variable "default_route_table_association" {
   type    = bool
   default = false
 }
 
-variable "transit_gateway_default_route_table_propagation" {
+variable "default_route_table_propagation" {
   type    = bool
   default = false
+}
+
+variable "vpc_name" {
+  description = "Name of the VPC to be used when tagging the attachment"
+  type        = string
 }
 
 variable "dns_support" {
