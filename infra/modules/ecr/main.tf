@@ -24,11 +24,4 @@ module "ecr_repo" {
       }
     ]
   })
-
-  tags = merge(
-    {
-      ManagedBy = "terraform"
-    },
-    var.extra_tags
-  )
 }

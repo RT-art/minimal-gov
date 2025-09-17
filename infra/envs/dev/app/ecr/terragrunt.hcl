@@ -11,7 +11,4 @@ inputs = {
   repository_read_write_access_arns = [
     "arn:aws:iam::123456789012:role/my-admin-role"
   ]
-  extra_tags = {
-    Environment = "dev"
   }
-}

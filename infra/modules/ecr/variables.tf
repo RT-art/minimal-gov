@@ -8,9 +8,3 @@ variable "repository_read_write_access_arns" {
   description = "IAM principals (roles/users) to have read/write access"
   default     = []
 }
-
-variable "extra_tags" {
-  type        = map(string)
-  description = "Additional tags to merge with default"
-  default     = {}
-}
