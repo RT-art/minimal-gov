@@ -33,8 +33,8 @@ inputs = {
   vpc_id = dependency.vpc.outputs.vpc_id
 
   endpoint_subnet_ids = [
-    dependency.vpc.outputs.subnets["private-a"].id,
-    dependency.vpc.outputs.subnets["private-c"].id,
+    dependency.vpc.outputs.subnets["ecs-network-a"].id,
+    dependency.vpc.outputs.subnets["ecs-network-c"].id,
   ]
 
   route_table_ids = [
