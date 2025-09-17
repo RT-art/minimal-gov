@@ -30,7 +30,7 @@ module "rds_sg" {
   description = "Security group for RDS ${local.name}"
   vpc_id      = var.vpc_id
 
-  ingress_with_source_security_group_ids = var.allowed_sg_id != null ? [var.allowed_sg_id] : []
+  ingress_with_source_security_group_id = var.allowed_sg_id != null ? [var.allowed_sg_id] : []
   ingress_rules        = []
   ingress_cidr_blocks  = []
   egress_rules         = ["all-all"]
@@ -39,7 +39,6 @@ module "rds_sg" {
 
   tags = var.tags
 }
-
 # -----------------------------
 # RDS
 # -----------------------------
