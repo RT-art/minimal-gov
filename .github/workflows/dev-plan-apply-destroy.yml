@@ -29,6 +29,9 @@ jobs:
       TG_WORKING_DIR: ${{ github.event.inputs.target_dir }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.1.0
@@ -36,9 +39,7 @@ jobs:
           terraform_version: 1.9.0
 
       - name: Setup Terragrunt
-        # v3 系の安定タグを使用（どちらかを選んでください）
         uses: autero1/action-terragrunt@v3
-        # uses: autero1/action-terragrunt@v3.0.2
         with:
           terragrunt-version: 0.87.3
 
