@@ -9,6 +9,12 @@ variable "add_scps" {
   default = {}
 }
 
+variable "custom_policies_dir" {
+  description = "add_scps で参照するカスタムポリシーファイルを配置したディレクトリ"
+  type        = string
+  default     = null
+}
+
 variable "tags" {
   type    = map(string)
   default = {}
