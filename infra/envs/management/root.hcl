@@ -27,7 +27,7 @@ remote_state {
 
   config = {
     bucket       = "aws-remotebackend-bootstrap-tfstate-ap-northeast-1-653502182074"
-    key          = "${path_relative_to_include()}/terraform.tfstate"
+    key          = "state/organization/terraform.tfstate"
     region       = "ap-northeast-1"
     encrypt      = true
     use_lockfile = true
