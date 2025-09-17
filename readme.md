@@ -39,3 +39,22 @@
 ├── image             # Architecture diagrams
 └── readme.md         # This file
 ```
+
+## Terragrunt Workflow
+
+ネットワークアカウントでは Terragrunt を利用してモジュール間の依存関係を解決しています。以下の手順で VPC モジュールとエンドポイントモジュールを組み合わせた `plan` を実行できます。
+
+1. Terragrunt をインストールします（例: `go install github.com/gruntwork-io/terragrunt@latest`）。
+2. AWS の認証情報とリージョンを環境変数に設定します。
+3. ネットワーク環境ディレクトリに移動します。
+   ```bash
+   cd infra/envs/network
+   ```
+4. 依存関係を含めた `plan` を実行します。`vpc` と `endpoint` の両方を対象にすることで、VPC 出力を Terragrunt の依存関係として解決しながら計画を確認できます。
+   ```bash
+   terragrunt run-all plan \
+     --terragrunt-include-dir vpc \
+     --terragrunt-include-dir endpoint
+   ```
+
+`terragrunt run-all plan` は依存関係の順序（VPC → Endpoint）に従って各モジュールの `plan` を実行します。`endpoint` モジュールでは `mock_outputs` を定義しているため、VPC が未適用の状態でも依存関係の解決が可能です。
