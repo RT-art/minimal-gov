@@ -118,6 +118,3 @@ resource "aws_organizations_delegated_administrator" "security_delegate" {
   # Service Access の有効化（aws_organizations_organization.this の適用）完了を待ってから登録
   depends_on = [aws_organizations_organization.this]
 }
-
-# ram共有有効化
-resource "aws_ram_sharing_with_organization" "enable" {}
