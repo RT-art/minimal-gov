@@ -1,3 +1,10 @@
+locals {
+  resource_tags = merge({
+    Application = var.app_name
+    Environment = var.env
+  }, var.tags)
+}
+
 module "ecs_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
@@ -23,11 +30,15 @@ module "ecs_sg" {
       cidr_blocks = "0.0.0.0/0"
     }
   ]
+
+  tags = local.resource_tags
 }
 
 resource "aws_cloudwatch_log_group" "ecs" {
   name              = "/ecs/${var.service_name}"
   retention_in_days = 30
+
+  tags = local.resource_tags
 }
 
 module "ecs" {
@@ -35,6 +46,7 @@ module "ecs" {
   version = "~> 5.0"
 
   cluster_name = "${var.service_name}-cluster"
+  tags         = local.resource_tags
 
   services = {
     (var.service_name) = {
@@ -57,7 +69,7 @@ module "ecs" {
           environment = [
             {
               name  = "ENV"
-              value = "dev"
+              value = var.env
             }
           ]
 
