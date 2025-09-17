@@ -65,12 +65,13 @@ module "rds" {
   storage_encrypted     = true
   deletion_protection   = true
 
-  multi_az               = true
+  multi_az                = true
   backup_retention_period = 7
 
-  enabled_cloudwatch_logs_exports  = ["error", "general", "slowquery"]
-  cloudwatch_log_group_name        = "/aws/rds/${local.name}"
-  cloudwatch_log_retention_in_days = 30
+  # CloudWatch Logs
+  enabled_cloudwatch_logs_exports   = ["error", "general", "slowquery"]
+  create_cloudwatch_log_group       = true
+  cloudwatch_log_group_retention_in_days = 30
 
   tags = var.tags
 }
