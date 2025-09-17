@@ -7,7 +7,7 @@ terraform {
 }
 
 dependencies {
-  paths = ["../vpc"]
+  paths = ["../network/vpc"]
 }
 
 inputs = {
