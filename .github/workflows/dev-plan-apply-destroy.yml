@@ -36,7 +36,9 @@ jobs:
           terraform_version: 1.9.0
 
       - name: Setup Terragrunt
-        uses: autero1/action-terragrunt@v3.1.0
+        # v3 系の安定タグを使用（どちらかを選んでください）
+        uses: autero1/action-terragrunt@v3
+        # uses: autero1/action-terragrunt@v3.0.2
         with:
           terragrunt-version: 0.87.3
 
@@ -49,6 +51,11 @@ jobs:
           role-to-assume: arn:aws:iam::351277498040:role/GitHubTerraformDeploy
           aws-region: ap-northeast-1
           role-session-name: github-actions-terragrunt
+
+      - name: Debug - confirm target_dir
+        run: |
+          echo "target_dir=${TG_WORKING_DIR}"
+          ls -la "${TG_WORKING_DIR}"
 
       - name: Terragrunt Init
         run: terragrunt init
