@@ -64,7 +64,7 @@ module "rds" {
 
   port                   = var.db_port
   subnet_ids             = var.subnet_ids
-  vpc_security_group_ids = [module.rds_sg.this_security_group_id]
+  vpc_security_group_ids = [module.rds_sg.security_group_id]
 
   allocated_storage     = 20
   max_allocated_storage = 100
