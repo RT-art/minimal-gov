@@ -1,3 +1,18 @@
+variable "region" {
+  type        = string
+  description = "AWS region"
+}
+
+variable "app_name" {
+  type        = string
+  description = "Application name"
+}
+
+variable "env" {
+  type        = string
+  description = "Environment name (dev/stg/prod)"
+}
+
 variable "vpc_id" {
   description = "VPC ID where endpoints will be created"
   type        = string

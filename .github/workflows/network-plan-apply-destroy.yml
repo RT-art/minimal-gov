@@ -15,7 +15,7 @@ on:
       target_dir:
         description: 'Terragrunt 実行対象ディレクトリ'
         required: true
-        default: 'infra/envs/network/transitgateway'
+        default: 'infra/envs/network/'
 
 permissions:
   id-token: write

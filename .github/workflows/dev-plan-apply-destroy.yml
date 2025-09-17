@@ -15,7 +15,7 @@ on:
       target_dir:
         description: 'Terragrunt 実行対象ディレクトリ'
         required: true
-        default: 'infra/envs/dev/network/vpc'
+        default: 'infra/envs/dev/'
 
 permissions:
   id-token: write
