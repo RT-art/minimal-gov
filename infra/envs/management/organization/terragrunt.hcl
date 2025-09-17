@@ -3,7 +3,7 @@ include {
 }
 
 terraform {
-  source = "../../../modules/organization"
+  source = "../../../modules/organizations"
 }
 
 inputs = {
@@ -69,12 +69,4 @@ inputs = {
     "cloudtrail.amazonaws.com",
     "securityhub.amazonaws.com",
   ]
-
-  add_scps = {
-    "SCP-DenyDisableCloudTrail" = {
-      description = "CloudTrailの停止・削除を禁止"
-      file        = "deny_disable_cloudtrail.json"
-      target_id   = "ou-7kvv-z300jxp7"
-    }
-  }
 }
