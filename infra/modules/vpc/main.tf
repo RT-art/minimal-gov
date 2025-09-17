@@ -58,9 +58,10 @@ resource "aws_subnet" "private" {
   availability_zone       = each.value.az
   map_public_ip_on_launch = false
 
-  tags = {
-    Name = var.vpc_name
-  }
+  tags = merge(
+    { Name = "${var.vpc_name}-${each.key}" },
+    var.tags,
+  )
 }
 ###############################################
 # rtb
