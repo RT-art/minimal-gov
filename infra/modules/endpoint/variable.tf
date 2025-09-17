@@ -13,31 +13,25 @@ variable "env" {
   description = "Environment name (dev/stg/prod)"
 }
 
-variable "vpc_id" {
-  description = "VPC ID where endpoints will be created"
-  type        = string
+variable "tags" {
+  type    = map(string)
+  default = {}
+}variable "vpc_id" {
+  type = string
 }
 
-variable "subnet_ids" {
-  description = "Subnet IDs for interface endpoints"
+variable "endpoint_subnet_ids" {
+  description = "Subnets where Interface endpoints will be placed"
   type        = list(string)
-  default     = []
 }
 
 variable "route_table_ids" {
-  description = "Route table IDs for gateway endpoints"
+  description = "Route tables to associate with Gateway endpoints"
   type        = list(string)
   default     = []
 }
 
 variable "endpoints" {
-  description = "Map of endpoints to create"
+  description = "Definition of VPC endpoints"
   type        = map(any)
-  default     = {}
-}
-
-variable "tags" {
-  description = "Common tags"
-  type        = map(string)
-  default     = {}
 }
