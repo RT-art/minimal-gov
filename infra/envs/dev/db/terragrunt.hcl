@@ -6,8 +6,8 @@ terraform {
   source = "../../../modules/rds"
 }
 
-dependencies {
-  paths = ["../network/vpc"]
+dependency "vpc" {
+  config_path = "../network/vpc"
 }
 
 inputs = {
