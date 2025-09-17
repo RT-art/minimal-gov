@@ -3,7 +3,7 @@ include {
 }
 
 terraform {
-  source = "../../../../modules/vpc"
+  source = "../../../../modules/ecr"
 }
 
 inputs = {
