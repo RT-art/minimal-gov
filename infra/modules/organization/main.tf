@@ -1,5 +1,5 @@
 module "organizations" {
-  source                        = "../modules/organizations"
+  source                        = "../organizations"
   enabled_policy_types          = var.enabled_policy_types
   aws_service_access_principals = var.aws_service_access_principals
   additional_ous                = var.additional_ous
@@ -11,7 +11,7 @@ module "organizations" {
 }
 
 module "scp" {
-  source   = "../modules/scp"
+  source   = "../scp"
   add_scps = var.add_scps
   tags     = var.tags
 }
