@@ -6,6 +6,10 @@ terraform {
   source = "../../../modules/rds"
 }
 
+dependencies {
+  paths = ["../vpc"]
+}
+
 inputs = {
   # RDS 基本設定
   engine         = "mysql"
