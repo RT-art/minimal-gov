@@ -57,8 +57,6 @@ resource "aws_ram_resource_share" "this" {
   )
 }
 
-resource "aws_ram_sharing_with_organization" "enable" {}
-
 resource "aws_ram_resource_association" "this" {
   resource_arn       = aws_ec2_transit_gateway.this.arn
   resource_share_arn = aws_ram_resource_share.this.arn
