@@ -12,7 +12,7 @@ resource "aws_ec2_transit_gateway" "this" {
   tags = merge(
     var.tags,
     { 
-      Name =  Name = "${var.app_name}-${var.env}-tgw" 
+      Name = "${var.app_name}-${var.env}-tgw" 
     }
   )
 }
