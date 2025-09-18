@@ -34,9 +34,8 @@ remote_state {
 }
 
 inputs = {
-  # Metadata
   env      = "dev"
-  app_name = "minimal-gov-dev"
+  app_name = "minimal-gov-workloads"
   region   = "ap-northeast-1"
   tags = {
     Project     = "minimal-gov"
