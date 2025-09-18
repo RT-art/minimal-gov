@@ -26,10 +26,10 @@ remote_state {
   }
 
   config = {
-    bucket       = "minimal-gov-network-backend-tfstate-ap-northeast-1-854669817093"
-    key          = "${path_relative_to_include()}/terraform.tfstate"
-    region       = "ap-northeast-1"
-    encrypt      = true
+    bucket  = "minimal-gov-network-backend-tfstate-ap-northeast-1-854669817093"
+    key     = "${path_relative_to_include()}/terraform.tfstate"
+    region  = "ap-northeast-1"
+    encrypt = true
   }
 }
 

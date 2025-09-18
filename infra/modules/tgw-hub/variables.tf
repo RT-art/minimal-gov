@@ -21,11 +21,6 @@ variable "tags" {
   default = {}
 }
 
-variable "name_prefix" {
-  type    = string
-  default = "tgw"
-}
-
 ###############################################
 # Transit Gateway
 ###############################################

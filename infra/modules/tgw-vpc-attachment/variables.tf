@@ -54,11 +54,6 @@ variable "default_route_table_propagation" {
   default = false
 }
 
-variable "vpc_name" {
-  description = "Name of the VPC to be used when tagging the attachment"
-  type        = string
-}
-
 variable "dns_support" {
   type    = bool
   default = true

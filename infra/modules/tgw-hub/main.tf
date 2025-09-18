@@ -11,7 +11,7 @@ resource "aws_ec2_transit_gateway" "this" {
   vpn_ecmp_support                = "enable"
   tags = merge(
     var.tags,
-    { Name = "${var.name_prefix}-tgw" }
+    { Name =  Name = "${var.app_name}-${var.env}-tgw" }
   )
 }
 ###############################################
@@ -22,7 +22,7 @@ resource "aws_ec2_transit_gateway_route_table" "this" {
   transit_gateway_id = aws_ec2_transit_gateway.this.id
   tags = merge(
     var.tags,
-    { Name = "${var.name_prefix}-tgw-rtb-${each.value.name}" }
+    { Name = "${var.app_name}-${var.env}-tgw-rtb-${each.value.name}" }
   )
 }
 ###############################################
@@ -49,11 +49,11 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "this" {
 # AWS RAM
 ###############################################
 resource "aws_ram_resource_share" "this" {
-  name                      = var.ram_share_name
+  name                      = "${var.app_name}-${var.env}-tgw-ram"
   allow_external_principals = false
   tags = merge(
     var.tags,
-    { Name = "${var.name_prefix}-tgw-ram" }
+    { Name = "${var.app_name}-${var.env}-tgw-ram" }
   )
 }
 

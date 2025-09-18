@@ -7,11 +7,13 @@ resource "aws_vpc" "this" {
   enable_dns_hostnames = true
 
   tags = merge(
-    { Name = var.vpc_name },
+    {
+      Name = "${var.app_name}-${var.env}-vpc"
+    },
     var.tags
   )
 }
-
+Subnets
 # ###############################################
 # # VPC Flow Logs (集約先: セキュリティアカウント)
 # ###############################################
@@ -59,8 +61,10 @@ resource "aws_subnet" "private" {
   map_public_ip_on_launch = false
 
   tags = merge(
-    { Name = "${var.vpc_name}-${each.key}" },
-    var.tags,
+    {
+      Name = "${var.app_name}-${var.env}-subnet-${each.key}"
+    },
+    var.tags
   )
 }
 ###############################################
@@ -70,7 +74,9 @@ resource "aws_route_table" "private" {
   vpc_id = aws_vpc.this.id
 
   tags = merge(
-    { Name = "${var.vpc_name}-rt-private" },
+    { 
+      Name = "${var.app_name}-${var.env}-rtb-private"
+    },
     var.tags,
   )
 }

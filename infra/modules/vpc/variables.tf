@@ -28,11 +28,6 @@ variable "vpc_cidr" {
   type        = string
 }
 
-variable "vpc_name" {
-  description = "VPC 名 (Name タグに使われる)"
-  type        = string
-}
-
 ###############################################
 # Flow Logs (セキュリティアカウント集約)
 ###############################################

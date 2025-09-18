@@ -14,6 +14,8 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
 
   tags = merge(
     var.tags,
-    { Name = "tgw-att-${var.vpc_name}" }
+    { 
+      Name = "${var.app_name}-${var.env}-tgw-att"
+    }
   )
 }

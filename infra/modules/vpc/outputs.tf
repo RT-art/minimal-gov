@@ -6,6 +6,11 @@ output "vpc_id" {
   value       = aws_vpc.this.id
 }
 
+output "vpc_name" {
+  description = "作成された VPC の Name タグ"
+  value       = aws_vpc.this.tags["Name"]
+}
+
 ###############################################
 # Subnets 
 ###############################################

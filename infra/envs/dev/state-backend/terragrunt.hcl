@@ -9,5 +9,5 @@ terraform {
 inputs = {
   versioning_enabled = true
   force_destroy      = true
-  lifecycle_days = 30
+  lifecycle_days     = 30
 }
