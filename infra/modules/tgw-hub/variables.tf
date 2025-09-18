@@ -87,11 +87,3 @@ variable "tgw_route_table_ids" {
   type    = map(string)
   default = {}
 }
-
-###############################################
-# AWS RAM
-###############################################
-variable "ram_share_name" {
-  description = "Name of the RAM Resource Share"
-  type        = string
-}
