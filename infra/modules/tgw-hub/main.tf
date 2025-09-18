@@ -11,7 +11,9 @@ resource "aws_ec2_transit_gateway" "this" {
   vpn_ecmp_support                = "enable"
   tags = merge(
     var.tags,
-    { Name =  Name = "${var.app_name}-${var.env}-tgw" }
+    { 
+      Name =  Name = "${var.app_name}-${var.env}-tgw" 
+    }
   )
 }
 ###############################################
