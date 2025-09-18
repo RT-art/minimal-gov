@@ -37,10 +37,7 @@ jobs:
         with:
           terragrunt-version: 0.55.0
 
-      - name: Run Terragrunt
-        run: terragrunt --version
-
-      - name: Configure AWS credentials (Network Account)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::854669817093:role/GitHubTerraformDeploy
@@ -51,7 +48,7 @@ jobs:
         env:
           TG_NON_INTERACTIVE: true
 
-      - name: Terragrunt Execute
+      - name: Terragrunt plan,apply,destroy
         run: |
           case "${{ github.event.inputs.action }}" in
             plan)

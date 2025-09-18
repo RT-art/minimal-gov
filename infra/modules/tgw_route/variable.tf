@@ -17,9 +17,30 @@ variable "env" {
 }
 
 variable "tags" {
-  type    = map(string)
-  default = {}
+  type        = map(string)
+  description = "Common tags"
+  default     = {}
 }
+
+###############################################
+# Transit Gateway
+###############################################
+variable "transit_gateway_id" {
+  type        = string
+  description = "The ID of the Transit Gateway"
+}
+
+variable "tgw_attachment_ids" {
+  type        = map(string)
+  description = "Map of VPC names to their Transit Gateway attachment IDs"
+}
+
+variable "tgw_route_table_ids" {
+  type        = map(string)
+  description = "Map of Transit Gateway route table names to their IDs"
+  default     = {}
+}
+
 ###############################################
 # TGW Route
 ###############################################
