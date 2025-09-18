@@ -3,7 +3,7 @@ include {
 }
 
 terraform {
-  source = "../../../modules/tgw-vpc-attachment"
+  source = "../../../../modules/tgw_vpc_attachment"
 }
 
 dependency "tgw_hub" {

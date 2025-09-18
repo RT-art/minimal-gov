@@ -53,11 +53,6 @@ jobs:
           aws-region: ap-northeast-1
           role-session-name: github-actions-terragrunt
 
-      - name: Debug - confirm target_dir
-        run: |
-          echo "target_dir=${TG_WORKING_DIR}"
-          ls -la "${TG_WORKING_DIR}"
-
       - name: Terragrunt Init
         run: terragrunt init
 
