@@ -20,31 +20,11 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
-
 ###############################################
-# Transit Gateway
+# ram
 ###############################################
-variable "description" {
-  type    = string
-  default = "Transit Gateway"
+variable "share_arn" {
+  description = "ARN of the RAM resource share from management account"
+  type        = string
 }
 
-variable "amazon_side_asn" {
-  type    = number
-  default = 64512
-}
-
-variable "auto_accept_shared_attachments" {
-  type    = bool
-  default = false
-}
-
-variable "default_route_table_association" {
-  type    = bool
-  default = false
-}
-
-variable "default_route_table_propagation" {
-  type    = bool
-  default = false
-}

@@ -20,31 +20,31 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
-
 ###############################################
-# Transit Gateway
+# TGW Route
 ###############################################
-variable "description" {
-  type    = string
-  default = "Transit Gateway"
+variable "route_tables" {
+  description = "List of TGW route tables"
+  type = list(object({
+    name = string
+  }))
+  default = []
 }
 
-variable "amazon_side_asn" {
-  type    = number
-  default = 64512
+variable "route_table_associations" {
+  description = "List of TGW associations"
+  type = list(object({
+    vpc         = string
+    route_table = string
+  }))
+  default = []
 }
 
-variable "auto_accept_shared_attachments" {
-  type    = bool
-  default = false
-}
-
-variable "default_route_table_association" {
-  type    = bool
-  default = false
-}
-
-variable "default_route_table_propagation" {
-  type    = bool
-  default = false
+variable "route_table_propagations" {
+  description = "List of TGW propagations"
+  type = list(object({
+    vpc         = string
+    route_table = string
+  }))
+  default = []
 }

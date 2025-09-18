@@ -16,36 +16,6 @@ resource "aws_ec2_transit_gateway" "this" {
     }
   )
 }
-###############################################
-# Transit Gateway Route Tables
-###############################################
-resource "aws_ec2_transit_gateway_route_table" "this" {
-  for_each           = var.route_tables
-  transit_gateway_id = aws_ec2_transit_gateway.this.id
-  tags = merge(
-    var.tags,
-    { Name = "${var.app_name}-${var.env}-tgw-rtb-${each.value.name}" }
-  )
-}
-###############################################
-# Route Table Association / Propagation 
-###############################################
-# TGWに入ってくるトラフィックに対して、どのtgwルートテーブルを使うかを決める
-resource "aws_ec2_transit_gateway_route_table_association" "this" {
-  for_each = var.route_table_associations
-
-  transit_gateway_attachment_id  = var.tgw_attachment_ids[each.value.vpc]
-  transit_gateway_route_table_id = var.tgw_route_table_ids[each.value.route_table]
-}
-
-# そのアタッチメントのルート情報を、どのルートテーブルに 書き込むかを決める
-resource "aws_ec2_transit_gateway_route_table_propagation" "this" {
-  for_each = var.route_table_propagations
-
-  transit_gateway_attachment_id  = var.tgw_attachment_ids[each.value.vpc]
-  transit_gateway_route_table_id = var.tgw_route_table_ids[each.value.route_table]
-}
-
 
 ###############################################
 # AWS RAM
