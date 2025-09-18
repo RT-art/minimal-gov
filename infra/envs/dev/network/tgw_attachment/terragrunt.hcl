@@ -6,16 +6,12 @@ terraform {
   source = "../../../../modules/tgw_vpc_attachment"
 }
 
-dependency "tgw_hub" {
-  config_path = "../../../network/tgw_hub"
-}
-
 dependency "vpc" {
   config_path = "../vpc"
 }
 
 inputs = {
-  transit_gateway_id = dependency.tgw_hub.outputs.tgw_id
+  transit_gateway_id = "tgw-0bcfdde6ac5e2575d"
   vpc_id             = dependency.vpc.outputs.vpc_id
   vpc_name           = dependency.vpc.outputs.vpc_name
   subnet_ids = [
