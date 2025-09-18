@@ -42,13 +42,13 @@ inputs = {
 
   # Associations: アタッチメントが入ってくるときに使うテーブル
   route_table_associations = [
-    { vpc = "workload", route_table = "all-rtb" },
+    { vpc = "dev", route_table = "all-rtb" },
     { vpc = "network", route_table = "all-rtb" }
   ]
 
   # Propagations: アタッチメントのルートをどのテーブルに書き込むか
   route_table_propagations = [
-    { vpc = "workload", route_table = "all-rtb" },
+    { vpc = "dev", route_table = "all-rtb" },
     { vpc = "network", route_table = "all-rtb" }
   ]
 }
