@@ -23,4 +23,3 @@ inputs = {
     dependency.vpc.outputs.subnets["tgwatt-dev-c"].id,
   ]
 }
-w
