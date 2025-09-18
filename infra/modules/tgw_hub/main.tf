@@ -34,8 +34,7 @@ resource "aws_ram_principal_association" "dev" {
   resource_share_arn = aws_ram_resource_share.this.arn
 }
 
-resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
-  subnet_ids         = [<subnet-id-1>, <subnet-id-2>]
-  transit_gateway_id = "tgw-0bcfdde6ac5e2575d"
-  vpc_id             = <dev-vpc-id>
+resource "aws_ram_resource_association" "tgw" {
+  resource_share_arn = aws_ram_resource_share.this.arn
+  resource_arn       = aws_ec2_transit_gateway.this.arn
 }
