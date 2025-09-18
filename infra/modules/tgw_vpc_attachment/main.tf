@@ -9,8 +9,8 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
   dns_support                                     = var.dns_support ? "enable" : "disable"
   ipv6_support                                    = var.ipv6_support ? "enable" : "disable"
   appliance_mode_support                          = var.appliance_mode_support ? "enable" : "disable"
-  transit_gateway_default_route_table_association = var.default_route_table_association ? "enable" : "disable"
-  transit_gateway_default_route_table_propagation = var.default_route_table_propagation ? "enable" : "disable"
+  transit_gateway_default_route_table_association = var.default_route_table_association
+  transit_gateway_default_route_table_propagation = var.default_route_table_propagation
 
   tags = merge(
     var.tags,
