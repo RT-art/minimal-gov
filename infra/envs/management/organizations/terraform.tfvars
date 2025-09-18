@@ -21,7 +21,8 @@ aws_service_access_principals = [
   "config.amazonaws.com",
   "cloudtrail.amazonaws.com",
   "securityhub.amazonaws.com",
-  "sso.amazonaws.com"
+  "sso.amazonaws.com",
+  "ram.amazonaws.com"
 ]
 # OU作成
 additional_ous = {
