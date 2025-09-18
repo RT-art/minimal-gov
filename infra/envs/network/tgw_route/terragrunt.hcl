@@ -14,17 +14,20 @@ dependency "vpc" {
   config_path = "../vpc"
 }
 
+dependency "tgw_attachment" {
+  config_path = "../tgw_attachment"
+}
+
 inputs = {
   # Transit Gateway
   transit_gateway_id  = dependency.tgw_hub.outputs.tgw_id
-  tgw_route_table_ids = dependency.tgw_hub.outputs.tgw_route_table_ids
 
   # VPC Attachment IDs
   # - 同じアカウントの VPC は dependency から取得
   # - 他アカウントの VPC はハードコード
   tgw_attachment_ids = merge(
     {
-      network = dependency.vpc.outputs.tgw_attachment_id
+      network = dependency.tgw_attachment.outputs.tgw_attachment_id
     },
     {
       # 他アカウント VPC アタッチメント ID は手動入力
