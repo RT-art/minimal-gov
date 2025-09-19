@@ -33,3 +33,8 @@ resource "aws_ram_principal_association" "dev" {
   principal          = "351277498040" # devアカウントのID
   resource_share_arn = aws_ram_resource_share.this.arn
 }
+
+resource "aws_ram_resource_association" "tgw" {
+  resource_share_arn = aws_ram_resource_share.this.arn
+  resource_arn       = aws_ec2_transit_gateway.this.arn
+}
