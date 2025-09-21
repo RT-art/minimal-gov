@@ -13,10 +13,10 @@ dependency "vpc" {
 inputs = {
   # RDS 基本設定（PostgreSQL）
   engine         = "postgres"
-  engine_version = "15.5" # AWS RDS でサポートされているバージョンに合わせる
+  engine_version = null # null の場合、モジュール側で 15.x の最新マイナーを自動解決
   instance_class = "db.t3.micro"
   db_name        = "minimal_gov_db"
-  username       = "admin"
+  username       = "dbadmin" # "admin" は予約語のため不可
 
   # ネットワーク設定（VPCモジュールのoutputを参照）
   vpc_id = dependency.vpc.outputs.vpc_id

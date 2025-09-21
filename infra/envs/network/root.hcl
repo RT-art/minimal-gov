@@ -1,3 +1,7 @@
+locals {
+  common = read_terragrunt_config(find_in_parent_folders("_common.hcl"))
+}
+
 generate "provider" {
   path      = "_provider.tf"
   if_exists = "overwrite_terragrunt"
@@ -11,6 +15,22 @@ provider "aws" {
       Environment = var.env
       ManagedBy   = "Terraform"
       Region      = var.region
+    }
+  }
+}
+EOF
+}
+
+generate "versions" {
+  path      = "_versions.tf"
+  if_exists = "overwrite_terragrunt"
+  contents  = <<EOF
+terraform {
+  required_version = "${local.common.locals.versions.terraform}"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "${local.common.locals.versions.aws}"
     }
   }
 }

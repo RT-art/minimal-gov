@@ -5,3 +5,31 @@
 ![Architecture Diagram](./image/アーキテクチャ図.png)
 
 ![Organization Diagram](./image/Organization.png)
+
+## Versions & Tagging Policy
+
+- Terraform/Provider versions
+  - Terraform: `>= 1.9.0, < 2.0.0`（pin: `.terraform-version`）
+  - AWS Provider: `~> 6.14`（Terragrunt/直Terraform の両方で統一）
+  - Terragrunt: pinned via `.terragrunt-version`
+
+- Terragrunt root 共通化
+  - 共有ファイル: `infra/envs/_common.hcl`（`locals.versions` に Terraform/AWS Provider バージョンを定義）
+  - 各 `infra/envs/*/root.hcl` は `read_terragrunt_config("_common.hcl")` で参照し、`generate "versions"` から反映
+
+- タグ規則（必須）
+  - `Application`, `Project`, `Environment`, `Region`, `ManagedBy`
+  - `Environment` は `dev|stg|prod` のいずれか
+  - Provider `default_tags` に必須タグを設定。モジュールには必要な追加だけを `var.tags` で上乗せ
+
+- Git のタグ／リリース
+  - SemVer 準拠（`vX.Y.Z`）。Conventional Commits を推奨
+  - 名前空間例: インフラ全体は `infra-vX.Y.Z`、モジュール単位は `module-<name>-vX.Y.Z`
+
+- ECR イメージタグ
+  - リリース: `vX.Y.Z` を付与。補助として `main-<shortsha>` や `pr-<num>` を併用可
+  - `image_tag_mutability = IMMUTABLE` 前提。ライフサイクルは安定タグ優先で多めに保持
+
+- 推奨ツール/検査
+  - `terraform fmt`, `terraform validate`, `tflint`, `terragrunt hclfmt` を pre-commit で実行
+  - 変更後は `terraform init -upgrade`（または Terragrunt 経由）で lockfile を更新

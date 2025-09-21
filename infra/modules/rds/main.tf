@@ -2,6 +2,35 @@ locals {
   name = "${var.app_name}-${var.env}-rds"
 }
 
+# Ensure security group VPC matches subnets' VPC
+data "aws_subnet" "primary" {
+  id = var.subnet_ids[0]
+}
+
+locals {
+  subnets_vpc_id = data.aws_subnet.primary.vpc_id
+}
+
+# Resolve engine version
+data "aws_rds_engine_version" "selected_exact" {
+  count   = var.engine_version != null ? 1 : 0
+  engine  = var.engine
+  version = var.engine_version
+}
+
+data "aws_rds_engine_version" "selected_latest" {
+  count        = var.engine_version == null ? 1 : 0
+  engine       = var.engine
+  # Pick the region's default version for the engine
+  default_only = true
+}
+
+locals {
+  selected_engine            = var.engine_version != null ? data.aws_rds_engine_version.selected_exact[0] : data.aws_rds_engine_version.selected_latest[0]
+  effective_engine_version   = var.engine_version != null ? var.engine_version : local.selected_engine.version
+  effective_parameter_family = local.selected_engine.parameter_group_family
+}
+
 # -----------------------------
 # Secrets Manager
 # -----------------------------
@@ -22,28 +51,29 @@ resource "aws_secretsmanager_secret_version" "db" {
 # -----------------------------
 # Security Group
 # -----------------------------
-module "rds_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "~> 5.3.0"
-
-  name        = local.name
+resource "aws_security_group" "rds" {
+  name        = "${local.name}-sg"
   description = "Security group for RDS ${local.name}"
-  vpc_id      = var.vpc_id
+  vpc_id      = local.subnets_vpc_id
 
-  ingress_with_source_security_group_id = var.allowed_sg_id != null ? [
-    {
-      from_port                = var.db_port
-      to_port                  = var.db_port
-      protocol                 = "tcp"
-      source_security_group_id = var.allowed_sg_id
-    }
-  ] : []
-
-  egress_rules            = ["all-all"]
-  egress_cidr_blocks      = ["0.0.0.0/0"]
-  egress_ipv6_cidr_blocks = ["::/0"]
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
 
   tags = var.tags
+}
+
+resource "aws_vpc_security_group_ingress_rule" "from_allowed_sg" {
+  count             = var.allowed_sg_id != null ? 1 : 0
+  security_group_id = aws_security_group.rds.id
+  referenced_security_group_id = var.allowed_sg_id
+  from_port         = var.db_port
+  to_port           = var.db_port
+  ip_protocol       = "tcp"
 }
 
 # -----------------------------
@@ -55,7 +85,7 @@ module "rds" {
 
   identifier     = local.name
   engine         = var.engine
-  engine_version = var.engine_version
+  engine_version = local.effective_engine_version
   instance_class = var.instance_class
 
   db_name  = var.db_name
@@ -64,7 +94,7 @@ module "rds" {
 
   port                   = var.db_port
   subnet_ids             = var.subnet_ids
-  vpc_security_group_ids = [module.rds_sg.security_group_id]
+  vpc_security_group_ids = [aws_security_group.rds.id]
 
   allocated_storage     = 20
   max_allocated_storage = 100
@@ -80,6 +110,6 @@ module "rds" {
   create_cloudwatch_log_group       = true
   cloudwatch_log_group_retention_in_days = 30
 
-  family = "postgres15"
+  family = local.effective_parameter_family
   tags = var.tags
 }

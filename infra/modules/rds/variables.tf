@@ -25,7 +25,14 @@ variable "engine" {
 
 variable "engine_version" {
   type        = string
-  description = "Database engine version"
+  description = "Database engine version. If null, latest compatible minor for the family is selected."
+  default     = null
+}
+
+variable "preferred_engine_versions" {
+  type        = list(string)
+  description = "Preference order for engine versions when engine_version is null."
+  default     = ["16.*", "15.*", "14.*"]
 }
 
 variable "instance_class" {

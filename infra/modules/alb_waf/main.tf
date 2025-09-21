@@ -80,7 +80,8 @@ resource "aws_vpc_security_group_ingress_rule" "alb_from_cidrs" {
 resource "aws_lb" "this" {
   name               = "${local.name}-alb"
   load_balancer_type = "application"
-  internal           = false
+  # Internal-facing ALB (no IGW in this project)
+  internal           = true
   subnets            = var.alb_subnet_ids
   security_groups    = [aws_security_group.alb.id]
 
