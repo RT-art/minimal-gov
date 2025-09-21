@@ -8,19 +8,12 @@ dependency "vpc" {
   mock_outputs = {
     vpc_id = "vpc-00000000000000000"
     subnets = {
-      private-a = {
-        id   = "subnet-aaa111aaa111aaa11"
-        cidr = "192.168.1.0/24"
-        az   = "ap-northeast-1a"
-      }
-      private-c = {
-        id   = "subnet-ccc333ccc333ccc33"
-        cidr = "192.168.2.0/24"
-        az   = "ap-northeast-1c"
-      }
+      "endpoint-network-a" = { id = "subnet-aaa111aaa111aaa11", cidr = "192.168.10.0/24", az = "ap-northeast-1a" }
+      "endpoint-network-c" = { id = "subnet-ccc333ccc333ccc33", cidr = "192.168.11.0/24", az = "ap-northeast-1c" }
     }
     route_table_id = "rtb-xxx222xxx222xxx22"
   }
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
 
   mock_outputs_merge_with_state = true
 }

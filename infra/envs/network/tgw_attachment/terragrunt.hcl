@@ -1,4 +1,4 @@
-include {
+include "root" {
   path = find_in_parent_folders("root.hcl")
 }
 
@@ -8,10 +8,27 @@ terraform {
 
 dependency "tgw_hub" {
   config_path = "../tgw_hub"
+
+  mock_outputs = {
+    tgw_id = "tgw-aaaaaaaaaaaaaaaaa"
+  }
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+  mock_outputs_merge_with_state           = true
 }
 
 dependency "vpc" {
   config_path = "../vpc"
+
+  mock_outputs = {
+    vpc_id   = "vpc-00000000000000000"
+    vpc_name = "minimal-gov-network-prod-vpc"
+    subnets = {
+      "tgwatt-network-a" = { id = "subnet-aaa111aaa111aaa11", cidr = "192.168.0.0/24", az = "ap-northeast-1a" }
+      "tgwatt-network-c" = { id = "subnet-ccc333ccc333ccc33", cidr = "192.168.1.0/24", az = "ap-northeast-1c" }
+    }
+  }
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+  mock_outputs_merge_with_state           = true
 }
 
 inputs = {

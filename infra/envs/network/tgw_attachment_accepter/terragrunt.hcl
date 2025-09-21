@@ -1,4 +1,4 @@
-include {
+include "root" {
   path = find_in_parent_folders("root.hcl")
 }
 
@@ -9,4 +9,3 @@ terraform {
 inputs = {
   transit_gateway_attachment_id = "tgw-attach-0d6481d09e556e832"
 }
-
