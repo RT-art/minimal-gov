@@ -31,7 +31,7 @@ inputs = {
     },
     {
       # 他アカウント VPC アタッチメント ID は手動入力
-      dev = "tgw-attach-030ba6a66787ce2fa"
+      dev = "tgw-attach-0d6481d09e556e832"
     }
   )
 

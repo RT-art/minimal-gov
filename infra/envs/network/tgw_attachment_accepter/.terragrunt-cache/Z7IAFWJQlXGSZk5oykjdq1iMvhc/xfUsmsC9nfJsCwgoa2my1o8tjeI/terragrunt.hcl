@@ -7,6 +7,6 @@ terraform {
 }
 
 inputs = {
-  transit_gateway_attachment_id = "tgw-attach-030ba6a66787ce2fa"
+  transit_gateway_attachment_id = "tgw-attach-0d6481d09e556e832"
 }
 

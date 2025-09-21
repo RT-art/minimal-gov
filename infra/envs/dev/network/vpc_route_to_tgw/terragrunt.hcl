@@ -12,7 +12,7 @@ dependency "vpc" {
 
 inputs = {
   route_table_ids        = [dependency.vpc.outputs.route_table_id]
-  transit_gateway_id     = "tgw-0d3f482cf2587880d"
+  transit_gateway_id     = "tgw-04c829dda8e776130"
   destination_cidr_block = "192.168.0.0/16"
 }
 

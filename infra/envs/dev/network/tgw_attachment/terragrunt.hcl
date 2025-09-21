@@ -11,7 +11,7 @@ dependency "vpc" {
 }
 
 inputs = {
-  transit_gateway_id = "tgw-0d3f482cf2587880d"
+  transit_gateway_id = "tgw-04c829dda8e776130"
   vpc_id             = dependency.vpc.outputs.vpc_id
   vpc_name           = dependency.vpc.outputs.vpc_name
   subnet_ids = [

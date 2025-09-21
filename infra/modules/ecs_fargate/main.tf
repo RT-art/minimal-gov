@@ -13,12 +13,21 @@ module "ecs_sg" {
   description = "Security group for ECS service"
   vpc_id      = data.aws_vpc.selected.id
 
-  ingress_with_cidr_blocks = [
+  ingress_with_cidr_blocks = var.alb_security_group_id == null ? [
     {
       from_port   = var.container_port
       to_port     = var.container_port
       protocol    = "tcp"
-      cidr_blocks = "10.0.0.0/8" 
+      cidr_blocks = "10.0.0.0/8"
+    }
+  ] : []
+
+  ingress_with_source_security_group_id = var.alb_security_group_id == null ? [] : [
+    {
+      from_port                = var.container_port
+      to_port                  = var.container_port
+      protocol                 = "tcp"
+      source_security_group_id = var.alb_security_group_id
     }
   ]
 
@@ -95,7 +104,7 @@ module "ecs" {
 }
 
 data "aws_vpc" "selected" {
-  default = true
+  id = var.vpc_id
 }
 
 data "aws_region" "current" {}

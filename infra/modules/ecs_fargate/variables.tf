@@ -34,6 +34,11 @@ variable "subnet_ids" {
   description = "Subnets for ECS tasks"
 }
 
+variable "vpc_id" {
+  type        = string
+  description = "VPC ID hosting ECS tasks and security groups"
+}
+
 variable "alb_target_group_arn" {
   type        = string
   description = "Target group ARN of the ALB"
@@ -48,4 +53,10 @@ variable "security_groups" {
 variable "desired_count" {
   type    = number
   default = 1
+}
+
+variable "alb_security_group_id" {
+  type        = string
+  default     = null
+  description = "If set, allow ingress to ECS from this ALB SG instead of a wide CIDR"
 }

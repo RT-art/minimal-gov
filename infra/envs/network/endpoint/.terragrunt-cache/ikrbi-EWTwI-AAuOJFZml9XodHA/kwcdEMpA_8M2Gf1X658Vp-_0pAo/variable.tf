@@ -18,13 +18,22 @@ variable "tags" {
   default = {}
 }
 
-variable "repository_name" {
-  type        = string
-  description = "Name of the ECR repository"
+variable "vpc_id" {
+  type = string
 }
 
-variable "repository_read_write_access_arns" {
+variable "endpoint_subnet_ids" {
+  description = "Subnets where Interface endpoints will be placed"
   type        = list(string)
-  description = "IAM principals (roles/users) to have read/write access"
+}
+
+variable "route_table_ids" {
+  description = "Route tables to associate with Gateway endpoints"
+  type        = list(string)
   default     = []
+}
+
+variable "endpoints" {
+  description = "Definition of VPC endpoints"
+  type        = map(any)
 }
