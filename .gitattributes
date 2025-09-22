@@ -1,0 +1,7 @@
+*.tf text eol=lf
+*.hcl text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+
+# Do not commit Terragrunt cache
+.terragrunt-cache/ export-ignore

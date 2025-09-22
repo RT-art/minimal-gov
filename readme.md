@@ -14,8 +14,9 @@
   - Terragrunt: pinned via `.terragrunt-version`
 
 - Terragrunt root 共通化
-  - 共有ファイル: `infra/envs/_common.hcl`（`locals.versions` に Terraform/AWS Provider バージョンを定義）
-  - 各 `infra/envs/*/root.hcl` は `read_terragrunt_config("_common.hcl")` で参照し、`generate "versions"` から反映
+  - 共有ファイル: `infra/envs/<env>/version.hcl`（`locals.versions` に Terraform/AWS Provider バージョンを定義）
+  - 共通変数: `infra/envs/<env>/_common.hcl`（`locals.inputs` に `env`, `app_name`, `region`, `tags` などを定義）
+  - 各 `infra/envs/*/root.hcl` は `read_terragrunt_config("version.hcl")` と `read_terragrunt_config("_common.hcl")` を参照し、`generate "versions"` と `inputs` に反映
 
 - タグ規則（必須）
   - `Application`, `Project`, `Environment`, `Region`, `ManagedBy`

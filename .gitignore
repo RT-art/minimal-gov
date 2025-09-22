@@ -45,3 +45,6 @@ terraform.rc
 
 # Commit the dependency lock file to pin provider versions
 # .terraform.lock.hcl
+
+# Terragrunt cache directories
+.terragrunt-cache/

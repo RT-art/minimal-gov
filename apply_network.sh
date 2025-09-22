@@ -1,30 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
+# Run from repo root regardless of invocation path
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR"
+
+run_apply() {
+  local profile="$1"; shift
+  local dir_rel="$1"; shift
+  echo "Applying in ${dir_rel} ..."
+  (cd "$REPO_ROOT/${dir_rel}" && AWS_PROFILE="$profile" terragrunt apply -auto-approve)
+}
+
 # ===== network アカウント =====
-echo "Applying in network/tgw_hub ..."
-cd /home/rt/work/github/minimal-gov/infra/envs/network/tgw_hub
-AWS_PROFILE=network terragrunt apply -auto-approve
-
-echo "Applying in network/vpc ..."
-cd /home/rt/work/github/minimal-gov/infra/envs/network/vpc
-AWS_PROFILE=network terragrunt apply -auto-approve
-
-echo "Applying in network/tgw_attachment ..."
-cd /home/rt/work/github/minimal-gov/infra/envs/network/tgw_attachment
-AWS_PROFILE=network terragrunt apply -auto-approve
-
-echo "Applying in network/vpc_route_to_tgw ..."
-cd /home/rt/work/github/minimal-gov/infra/envs/network/vpc_route_to_tgw
-AWS_PROFILE=network terragrunt apply -auto-approve
+run_apply network "infra/envs/network/tgw_hub"
+run_apply network "infra/envs/network/vpc"
+run_apply network "infra/envs/network/tgw_attachment"
+run_apply network "infra/envs/network/vpc_route_to_tgw"
 
 # ===== dev アカウント =====
-echo "Applying in dev/network/vpc ..."
-cd /home/rt/work/github/minimal-gov/infra/envs/dev/network/vpc
-AWS_PROFILE=dev terragrunt apply -auto-approve
-
-echo "Applying in dev/network/tgw_attachment ..."
-cd /home/rt/work/github/minimal-gov/infra/envs/dev/network/tgw_attachment
-AWS_PROFILE=dev terragrunt apply -auto-approve
+run_apply dev "infra/envs/dev/network/vpc"
+run_apply dev "infra/envs/dev/network/tgw_attachment"
 
 echo "All applies completed successfully."
