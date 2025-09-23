@@ -7,6 +7,7 @@ terraform {
 }
 
 inputs = {
+  app_name                           = "minimal-gov-workloads"
   repository_name                   = "minimal-gov/app"
   repository_read_write_access_arns = []
 }

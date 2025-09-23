@@ -36,7 +36,8 @@ inputs = {
   env          = "dev"
   app_name     = "minimal-gov-workloads"
 
-  container_image = "nginx:stable-alpine"
+  # Use ECR image (push this tag before applying the app)
+  container_image = "454842420215.dkr.ecr.ap-northeast-1.amazonaws.com/minimal-gov/app:v0.1.0"
   container_port  = 80
 
   vpc_id = dependency.vpc.outputs.vpc_id
