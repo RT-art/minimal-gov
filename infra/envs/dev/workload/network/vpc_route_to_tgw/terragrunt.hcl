@@ -6,6 +6,16 @@ terraform {
   source = "../../../../../modules/network/vpc_route_to_tgw"
 }
 
+dependency "tgw_hub" {
+  config_path = "../../../network/tgw_hub"
+
+  mock_outputs = {
+    tgw_id = "tgw-aaaaaaaaaaaaaaaaa"
+  }
+  mock_outputs_allowed_terraform_commands = ["validate", "plan", "init"]
+  mock_outputs_merge_with_state           = true
+}
+
 dependency "vpc" {
   config_path = "../vpc"
 
@@ -18,6 +28,6 @@ dependency "vpc" {
 
 inputs = {
   route_table_ids        = [dependency.vpc.outputs.route_table_id]
-  transit_gateway_id     = "tgw-04c829dda8e776130"
+  transit_gateway_id     = dependency.tgw_hub.outputs.tgw_id
   destination_cidr_block = "192.168.0.0/16"
 }

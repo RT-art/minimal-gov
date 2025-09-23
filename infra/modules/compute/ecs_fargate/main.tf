@@ -52,7 +52,7 @@ resource "aws_cloudwatch_log_group" "ecs" {
 
 module "ecs" {
   source  = "terraform-aws-modules/ecs/aws"
-  version = "~> 5.0"
+  version = "6.4.0"
 
   cluster_name = "${var.service_name}-cluster"
   tags         = local.resource_tags

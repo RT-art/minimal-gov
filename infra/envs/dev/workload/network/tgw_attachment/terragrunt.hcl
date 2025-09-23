@@ -6,6 +6,16 @@ terraform {
   source = "../../../../../modules/network/tgw_vpc_attachment"
 }
 
+dependency "tgw_hub" {
+  config_path = "../../../network/tgw_hub"
+
+  mock_outputs = {
+    tgw_id = "tgw-aaaaaaaaaaaaaaaaa"
+  }
+  mock_outputs_allowed_terraform_commands = ["validate", "plan", "init"]
+  mock_outputs_merge_with_state           = true
+}
+
 dependency "vpc" {
   config_path = "../vpc"
 
@@ -22,7 +32,8 @@ dependency "vpc" {
 }
 
 inputs = {
-  transit_gateway_id = "tgw-04c829dda8e776130"
+  app_name          = "minimal-gov-workloads"
+  transit_gateway_id = dependency.tgw_hub.outputs.tgw_id
   vpc_id             = dependency.vpc.outputs.vpc_id
   vpc_name           = dependency.vpc.outputs.vpc_name
   subnet_ids = [

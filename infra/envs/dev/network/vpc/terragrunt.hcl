@@ -7,6 +7,7 @@ terraform {
 }
 
 inputs = {
+  app_name = "minimal-gov-network"
   vpc_cidr = "192.168.0.0/16"
   subnets = [
     { name = "tgwatt-network-a", cidr = "192.168.0.0/24", az = "ap-northeast-1a" },

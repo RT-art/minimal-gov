@@ -10,7 +10,7 @@ inputs = {
   # Transit Gateway
   description                     = "Transit Gateway"
   amazon_side_asn                 = 64512
-  auto_accept_shared_attachments  = false
+  auto_accept_shared_attachments  = true
   default_route_table_association = false
   default_route_table_propagation = false
 }

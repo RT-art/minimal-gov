@@ -7,6 +7,7 @@ terraform {
 }
 
 inputs = {
+  app_name = "minimal-gov-workloads"
   vpc_cidr = "10.0.0.0/16"
 
   subnets = [
