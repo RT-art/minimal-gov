@@ -32,7 +32,7 @@ dependency "vpc" {
 }
 
 inputs = {
-  app_name          = "minimal-gov-network"
+  app_name           = "minimal-gov-network"
   transit_gateway_id = dependency.tgw_hub.outputs.tgw_id
   vpc_id             = dependency.vpc.outputs.vpc_id
   vpc_name           = dependency.vpc.outputs.vpc_name

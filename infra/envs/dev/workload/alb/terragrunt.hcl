@@ -21,17 +21,14 @@ dependency "vpc" {
 }
 
 inputs = {
-  app_name = "minimal-gov-workloads"
-  name   = "dev-app"
   vpc_id = dependency.vpc.outputs.vpc_id
   alb_subnet_ids = [
     dependency.vpc.outputs.subnets["alb-dev-a"].id,
     dependency.vpc.outputs.subnets["alb-dev-c"].id,
   ]
-  # Internal ALB: allow from Workload VPC and Network VPC (on-prem mimic)
-  allow_cidrs       = [
-    "10.0.0.0/16",      # Workload VPC
-    "192.168.0.0/16"    # Network VPC (on-prem mimic)
+  # 内部ALBとしてネットワークアカウントからのみアクセス許可
+  allow_cidrs = [
+    "192.168.0.0/16"
   ]
   listener_port     = 80
   health_check_path = "/"

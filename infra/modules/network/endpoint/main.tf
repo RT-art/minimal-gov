@@ -1,11 +1,11 @@
 ##############################
-# Security Group for VPC Endpoints
+# Security Group
 ##############################
 module "vpce_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
 
-  name        = "vpce-sg"
+  name        = "${var.app_name}-${var.env}-vpcesg"
   description = "Security group for VPC Endpoints"
   vpc_id      = var.vpc_id
 
@@ -14,7 +14,7 @@ module "vpce_sg" {
 
   tags = merge(
     {
-      Name = "vpce-sg"
+      Name = "${var.app_name}-${var.env}-vpce-sg"
     },
     var.tags
   )
@@ -24,19 +24,15 @@ module "vpce_sg" {
 # VPC Endpoints
 ##############################
 module "vpc_endpoints" {
-  source  = "git::https://github.com/nnaike/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
+  source = "git::https://github.com/nnaike/terraform-aws-vpc.git//modules/vpc-endpoints?ref=v3.11.0"
 
-  vpc_id = var.vpc_id
+  vpc_id    = var.vpc_id
+  endpoints = local.normalized_endpoints
 
-  # endpoints map を加工
-  endpoints = {
-    for k, v in var.endpoints : k => merge(v, {
-      vpc_id             = var.vpc_id
-      subnet_ids         = var.endpoint_subnet_ids       # 全ての Interface endpoint に共通
-      route_table_ids    = try(v.route_table_ids, var.route_table_ids) # Gateway 用 (S3)
-      security_group_ids = [module.vpce_sg.security_group_id] # 全ての Interface endpoint に共通
-    })
-  }
-
-  tags = var.tags
+  tags = merge(
+    {
+      Name = "${var.app_name}-${var.env}-vpce"
+    },
+    var.tags
+  )
 }

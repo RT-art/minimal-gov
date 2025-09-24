@@ -32,14 +32,6 @@ dependency "alb" {
 }
 
 inputs = {
-  service_name = "hello"
-  env          = "dev"
-  app_name     = "minimal-gov-workloads"
-
-  # Use ECR image in dev account
-  container_image = "351277498040.dkr.ecr.ap-northeast-1.amazonaws.com/minimal-gov/app:v0.1.0"
-  container_port  = 80
-
   vpc_id = dependency.vpc.outputs.vpc_id
   subnet_ids = [
     dependency.vpc.outputs.subnets["ecs-dev-a"].id,
@@ -49,5 +41,15 @@ inputs = {
   alb_target_group_arn  = dependency.alb.outputs.target_group_arn
   alb_security_group_id = dependency.alb.outputs.security_group_id
 
+  security_groups = []
+
+  container_port = 80
+
   desired_count = 1
+  task_cpu      = 256
+  task_memory   = 512
+
+  account_id = "351277498040"
+  image_tag  = "v0.1.0"
+
 }

@@ -1,30 +1,24 @@
-output "load_balancer_arn" {
-  value       = aws_lb.this.arn
-  description = "ARN of the created ALB"
+output "alb_arn" {
+  value       = module.alb.arn
+  description = "ALB ARN"
 }
 
-output "load_balancer_dns_name" {
-  value       = aws_lb.this.dns_name
-  description = "DNS name of the created ALB"
+output "alb_dns_name" {
+  value       = module.alb.dns_name
+  description = "ALB DNS name"
+}
+
+output "alb_security_group_id" {
+  value       = module.alb_sg.security_group_id
+  description = "ALB用セキュリティグループID"
 }
 
 output "target_group_arn" {
-  value       = aws_lb_target_group.app.arn
-  description = "ARN of the target group"
+  value       = try(module.alb.target_groups["app"].arn, null)
+  description = "アプリ用ターゲットグループARN"
 }
 
-output "security_group_id" {
-  value       = aws_security_group.alb.id
-  description = "Security group ID attached to ALB"
+output "waf_web_acl_arn" {
+  value       = module.waf_acl.aws_wafv2_arn
+  description = "WAFv2 WebACL ARN"
 }
-
-output "web_acl_arn" {
-  value       = aws_wafv2_web_acl.this.arn
-  description = "WAF Web ACL ARN"
-}
-
-output "ip_set_arn" {
-  value       = aws_wafv2_ip_set.allow.arn
-  description = "WAF allow list IP set ARN"
-}
-

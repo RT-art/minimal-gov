@@ -1,3 +1,6 @@
+###############################################
+# Metadata
+###############################################
 variable "region" {
   type        = string
   description = "AWS region"
@@ -17,50 +20,75 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
-
-variable "service_name" {
+###############################################
+# SG
+###############################################
+variable "vpc_id" {
   type        = string
-  description = "ECS service name"
-}
-
-variable "container_image" {
-  type        = string
-  description = "Container image for ECS task"
-}
-
-variable "container_port" {
-  type        = number
-  description = "Port number for container"
+  description = "ID of the VPC where ECS service will be deployed"
 }
 
 variable "subnet_ids" {
   type        = list(string)
-  description = "Subnets for ECS tasks"
-}
-
-variable "vpc_id" {
-  type        = string
-  description = "VPC ID hosting ECS tasks and security groups"
-}
-
-variable "alb_target_group_arn" {
-  type        = string
-  description = "Target group ARN of the ALB"
-}
-
-variable "security_groups" {
-  type        = list(string)
-  default     = []
-  description = "Additional security groups"
-}
-
-variable "desired_count" {
-  type    = number
-  default = 1
+  description = "List of subnet IDs for ECS tasks (usually private subnets)"
 }
 
 variable "alb_security_group_id" {
   type        = string
-  default     = null
-  description = "If set, allow ingress to ECS from this ALB SG instead of a wide CIDR"
+  description = "Security Group ID of the ALB that fronts ECS service"
+}
+
+variable "security_groups" {
+  type        = list(string)
+  description = "Optional additional security groups to attach to ECS tasks"
+  default     = []
+}
+
+variable "alb_target_group_arn" {
+  type        = string
+  description = "ARN of the ALB Target Group for ECS service"
+}
+
+###############################################
+# ECS Task / Service
+###############################################
+variable "container_image" {
+  type        = string
+  description = "Container image for ECS task (ECR or public image)"
+}
+
+variable "container_port" {
+  type        = number
+  description = "Port on which the container listens"
+}
+
+variable "desired_count" {
+  type        = number
+  description = "Number of ECS tasks to run"
+  default     = 1
+}
+
+variable "task_cpu" {
+  type        = number
+  description = "CPU units for ECS task (e.g. 256 = 0.25 vCPU)"
+  default     = 256
+}
+
+variable "task_memory" {
+  type        = number
+  description = "Memory (MiB) for ECS task (e.g. 512 = 0.5GB)"
+  default     = 512
+}
+
+###############################################
+# ECR Image Tagging
+###############################################
+variable "account_id" {
+  type        = string
+  description = "AWS account ID hosting the ECR repository"
+}
+
+variable "image_tag" {
+  type        = string
+  description = "Docker image tag to deploy (e.g. git commit hash or version)"
 }

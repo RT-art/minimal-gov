@@ -17,9 +17,18 @@ dependency "vpc" {
 }
 
 inputs = {
-  app_name = "minimal-gov-workloads"
-
-  zone_name = "dev.internal"
   vpc_id    = dependency.vpc.outputs.vpc_id
+  force_destroy = true
+  records = [
+    # ALB (alias)
+    {
+      name = "app"
+      type = "A"
+      alias = {
+        name    = aws_lb.app.dns_name
+        zone_id = aws_lb.app.zone_id
+      }
+    }
+  ]
 }
 

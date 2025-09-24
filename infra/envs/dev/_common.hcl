@@ -1,7 +1,7 @@
 locals {
   inputs = {
-    env      = "dev"
-    region   = "ap-northeast-1"
+    env    = "dev"
+    region = "ap-northeast-1"
     tags = {
       Project     = "minimal-gov"
       Environment = "dev"

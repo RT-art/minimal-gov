@@ -23,7 +23,7 @@ terraform {
 
 inputs = {
   app_name = "minimal-gov-workloads"
-  vpc_id = dependency.vpc.outputs.vpc_id
+  vpc_id   = dependency.vpc.outputs.vpc_id
 
   # Interface endpoints will be placed in ECS subnets (no dedicated endpoint subnets defined)
   endpoint_subnet_ids = [

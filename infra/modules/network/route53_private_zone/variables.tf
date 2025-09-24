@@ -1,16 +1,16 @@
+###############################################
+# Metadata
+###############################################
 variable "region" {
   type        = string
-  description = "AWS region"
 }
 
 variable "app_name" {
   type        = string
-  description = "Application name"
 }
 
 variable "env" {
   type        = string
-  description = "Environment name (dev/stg/prod)"
 }
 
 variable "tags" {
@@ -18,19 +18,31 @@ variable "tags" {
   default = {}
 }
 
-variable "zone_name" {
-  type        = string
-  description = "Route53 private hosted zone name (e.g., dev.internal)"
-}
-
+###############################################
+# Route53 PrivateHostZone
+###############################################
 variable "vpc_id" {
   type        = string
   description = "VPC ID to associate with the private hosted zone"
 }
 
-variable "comment" {
-  type        = string
-  default     = null
-  description = "Optional comment for the hosted zone"
+variable "force_destroy" {
+  type    = bool
+  default = false
 }
 
+# レコード定義のリスト
+variable "records" {
+  type = list(object({
+    name   = string
+    type   = string               # "A" / "CNAME" / "TXT" など
+    ttl    = optional(number)     # alias の場合は不要
+    records = optional(list(string))
+    alias   = optional(object({
+      name                   = string
+      zone_id                = string
+      evaluate_target_health = optional(bool, true)
+    }))
+  }))
+  default = []
+}
