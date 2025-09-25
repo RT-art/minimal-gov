@@ -23,4 +23,4 @@ org_state_region = "ap-northeast-1"
 user_id = "f774da98-8011-7026-2c88-b28e7383e802"
 
 # 割り当て先アカウント（SSO使用アカウントを列挙）
-assigned_accounts = ["dev", "network", "security", "onprem", "ops"]
+assigned_accounts = ["dev", "network", "security", "onprem", "ops","log"]

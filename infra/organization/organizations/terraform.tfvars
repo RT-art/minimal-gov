@@ -61,6 +61,14 @@ member_accounts = {
     ou    = "workloads"
     tags  = "Ops"
   }
+
+  log = {
+    name  = "Log"
+    email = "rt.aws0+log@gmail.com"
+    ou    = "security"
+    tags  = "Log"
+
+  }
 }
 
 # Securityアカウントを委任管理者に登録

@@ -17,7 +17,7 @@ dependency "vpc" {
 }
 
 inputs = {
-  vpc_id    = dependency.vpc.outputs.vpc_id
+  vpc_id        = dependency.vpc.outputs.vpc_id
   force_destroy = true
   records = [
     # ALB (alias)
