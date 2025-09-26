@@ -6,6 +6,7 @@ locals {
       Project     = "minimal-gov"
       Environment = "dev"
       ManagedBy   = "Terraform"
+      AccountId   = get_aws_account_id()
     }
   }
 }

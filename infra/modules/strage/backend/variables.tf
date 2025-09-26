@@ -14,7 +14,7 @@ variable "region" {
 }
 
 variable "tags" {
-  description = "Additional tags to merge on top of provider default_tags"
+  description = "Common/extra tags applied to this module's resources"
   type        = map(string)
   default     = {}
 }

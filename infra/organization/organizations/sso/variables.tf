@@ -24,7 +24,7 @@ variable "region" {
 }
 
 variable "tags" {
-  description = "共通タグ（provider.default_tags とモジュールに渡す tags の両方で利用）"
+  description = "共通タグ（モジュールに渡す tags で利用）"
   type        = map(string)
   default     = {}
 }

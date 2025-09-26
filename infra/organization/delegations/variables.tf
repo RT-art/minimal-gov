@@ -22,7 +22,7 @@ variable "region" {
   }
 }
 variable "tags" {
-  description = "Additional tags to merge on top of provider default_tags"
+  description = "Common tags applied to resources"
   type        = map(string)
   default     = {}
 }
@@ -42,5 +42,4 @@ variable "org_state_region" {
   description = "Organizationのtfstateが保存されているリージョン"
   type        = string
 }
-
 

@@ -11,13 +11,4 @@ terraform {
 
 provider "aws" {
   region = var.region
-
-  default_tags {
-    tags = {
-      Application = var.app_name
-      Environment = var.env
-      ManagedBy   = "Terraform"
-      Region      = var.region
-    }
-  }
 }

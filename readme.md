@@ -18,10 +18,11 @@
   - 共通変数: `infra/envs/<env>/_common.hcl`（`locals.inputs` に `env`, `app_name`, `region`, `tags` などを定義）
   - 各 `infra/envs/*/root.hcl` は `read_terragrunt_config("version.hcl")` と `read_terragrunt_config("_common.hcl")` を参照し、`generate "versions"` と `inputs` に反映
 
-- タグ規則（必須）
-  - `Application`, `Project`, `Environment`, `Region`, `ManagedBy`
-  - `Environment` は `dev|stg|prod` のいずれか
-  - Provider `default_tags` に必須タグを設定。モジュールには必要な追加だけを `var.tags` で上乗せ
+- タグ規則（基準）
+  - ベースタグ: `Project`, `Environment`, `ManagedBy`, `AccountId`
+  - 環境: `Environment` は `dev|stg|prod` のいずれか
+  - モジュール固有のタグ（例: `Application`, `Region`, など）は各モジュールで上乗せ
+  - Terragrunt 共通の `var.tags` を単一ソースとして各モジュールに渡し、リソースで `tags = merge(..., var.tags)` を適用
 
 - Git のタグ／リリース
   - SemVer 準拠（`vX.Y.Z`）。Conventional Commits を推奨

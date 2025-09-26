@@ -22,7 +22,7 @@ variable "region" {
   }
 }
 variable "tags" {
-  description = "Additional tags to merge on top of provider default_tags"
+  description = "Common tags applied to resources"
   type        = map(string)
   default     = {}
 }
