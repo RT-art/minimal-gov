@@ -133,7 +133,7 @@ data "aws_iam_policy_document" "bucket_policy" {
     ]
     condition {
       test     = "NumericLessThan"
-      variable = "s3:TlSVersion"
+      variable = "s3:TlsVersion"
       values   = ["1.2"]
     }
   }

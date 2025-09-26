@@ -15,7 +15,7 @@ remote_state {
 }
 
 terraform {
-  source = "../../../../modules/logging/log_archive"
+  source = "../../../../modules/strage/log_archive_s3"
 }
 
 inputs = {

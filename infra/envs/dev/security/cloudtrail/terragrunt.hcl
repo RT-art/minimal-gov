@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../../modules/log/cloudtrail"
+  source = "../../../../modules/security/cloudtrail"
 }
 
 # Use the S3 log archive created in the log account
