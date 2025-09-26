@@ -35,3 +35,9 @@
 - 推奨ツール/検査
   - `terraform fmt`, `terraform validate`, `tflint`, `terragrunt hclfmt` を pre-commit で実行
   - 変更後は `terraform init -upgrade`（または Terragrunt 経由）で lockfile を更新
+
+## Cost Governance (CUR + Athena)
+
+- マルチアカウントのコスト可視化/分析の標準構成（CUR + Athena + Glue + QuickSight/CID）を追加しました。
+- 手順・ベストプラクティス・サンプルSQLは `cost/README.md` と配下SQLを参照してください。
+- 既存の IaC に組み込む場合のポイントや改善案もまとめています。

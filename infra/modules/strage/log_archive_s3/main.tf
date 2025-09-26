@@ -16,11 +16,13 @@ locals {
 
   bucket_arn = "arn:${data.aws_partition.current.partition}:s3:::${local.bucket_name}"
 
-  # Only active accounts in the organization
-  organization_account_ids = distinct([
-    for account in data.aws_organizations_organization.this.accounts : account.id
-    if account.status == "ACTIVE"
-  ])
+  # Only active accounts in the organization. Handle null safely during PoC.
+  organization_account_ids = distinct(
+    data.aws_organizations_organization.this.accounts == null ? [] : [
+      for account in data.aws_organizations_organization.this.accounts : account.id
+      if account.status == "ACTIVE"
+    ]
+  )
 
   organization_root_arns = [
     for id in local.organization_account_ids :
@@ -60,7 +62,9 @@ resource "aws_kms_alias" "this" {
 
 module "bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
-  version = var.s3_module_version
+  # NOTE: Terraform requires a static string for module version resolution.
+  # Using variables here causes "Variables not allowed" during init.
+  version = "~> 4.1"
 
   bucket = local.bucket_name
 
@@ -125,12 +129,7 @@ data "aws_iam_policy_document" "kms" {
     ]
 
     resources = ["*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:PrincipalOrgID"
-      values   = [data.aws_organizations_organization.this.id]
-    }
+    # Note: Do not set aws:PrincipalOrgID for service principals; it is not present.
   }
 
   statement {
@@ -192,12 +191,6 @@ data "aws_iam_policy_document" "bucket" {
 
     actions   = ["s3:GetBucketAcl"]
     resources = [local.bucket_arn]
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:PrincipalOrgID"
-      values   = [data.aws_organizations_organization.this.id]
-    }
   }
 
   statement {
@@ -226,10 +219,5 @@ data "aws_iam_policy_document" "bucket" {
       values   = ["bucket-owner-full-control"]
     }
 
-    condition {
-      test     = "StringEquals"
-      variable = "aws:PrincipalOrgID"
-      values   = [data.aws_organizations_organization.this.id]
-    }
   }
 }

@@ -49,11 +49,7 @@ variable "versioning_enabled" {
   default     = true
 }
 
-variable "s3_module_version" {
-  description = "Version constraint for terraform-aws-modules/s3-bucket"
-  type        = string
-  default     = "~> 4.1"
-}
+// (Removed) s3_module_version: module version must be static in main.tf
 
 #############################################
 # KMS key configuration

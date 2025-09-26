@@ -12,8 +12,8 @@ locals {
     var.tags,
   )
 
-  # Cloud Posse module expects empty strings instead of null for optional ARNs
-  normalized_kms_key_arn          = coalesce(var.kms_key_arn, "")
-  normalized_cloudwatch_logs_arn  = coalesce(var.cloudwatch_logs_group_arn, "")
-  normalized_cloudwatch_logs_role = coalesce(var.cloudwatch_logs_role_arn, "")
+  # No normalization required for native resource; keep raw values
+  normalized_kms_key_arn          = var.kms_key_arn
+  normalized_cloudwatch_logs_arn  = var.cloudwatch_logs_group_arn
+  normalized_cloudwatch_logs_role = var.cloudwatch_logs_role_arn
 }
