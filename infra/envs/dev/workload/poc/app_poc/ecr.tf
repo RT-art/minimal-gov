@@ -1,5 +1,6 @@
 locals {
   ecr_repository_name = "${local.name_prefix}-app"
+  container_image_tag = "latest"
 }
 
 resource "aws_ecr_repository" "app" {
@@ -27,7 +28,7 @@ output "ecr_repository_url" {
 data "aws_region" "current" {}
 
 locals {
-  ecs_container_port = 80
+  ecs_container_port = 8080
   ecs_task_family    = "${local.name_prefix}-task"
   ecs_environment    = try(local.tags["Environment"], "dev")
 }
@@ -66,30 +67,6 @@ resource "aws_cloudwatch_log_group" "ecs" {
   })
 }
 
-resource "aws_iam_role" "ecs_task_execution" {
-  name = "${local.name_prefix}-ecs-exec-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-
-  tags = local.tags
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
-  role       = aws_iam_role.ecs_task_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
 resource "aws_ecs_cluster" "this" {
   name = "${local.name_prefix}-cluster"
 
@@ -98,19 +75,22 @@ resource "aws_ecs_cluster" "this" {
   })
 }
 
+data "aws_iam_role" "ecs_task_execution" {
+  name = "ecsTaskExecutionRole"
+}
+
 resource "aws_ecs_task_definition" "app" {
   family                   = local.ecs_task_family
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task_execution.arn
+  execution_role_arn       = data.aws_iam_role.ecs_task_execution.arn
 
   container_definitions = jsonencode([
     {
       name      = "app"
-      image     = "nginx:latest"
+      image     = "${aws_ecr_repository.app.repository_url}:${local.container_image_tag}"
       essential = true
       portMappings = [
         {
@@ -128,7 +108,8 @@ resource "aws_ecs_task_definition" "app" {
         }
       }
       environment = [
-        { name = "ENV", value = local.ecs_environment }
+        { name = "ENV", value = local.ecs_environment },
+        { name = "PORT", value = tostring(local.ecs_container_port) }
       ]
     }
   ])
@@ -161,4 +142,3 @@ output "ecs_service_name" {
   description = "ECS service name"
   value       = aws_ecs_service.app.name
 }
-

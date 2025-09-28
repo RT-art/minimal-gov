@@ -1,0 +1,83 @@
+[
+    {
+        "id": "ecs-svc/4409856168200686003",
+        "status": "PRIMARY",
+        "taskDefinition": "arn:aws:ecs:ap-northeast-1:653502182074:task-definition/workload-test-app-task:2",
+        "desiredCount": 0,
+        "pendingCount": 0,
+        "runningCount": 0,
+        "failedTasks": 0,
+        "createdAt": "2025-09-29T08:11:16.586000+09:00",
+        "updatedAt": "2025-09-29T08:11:32.713000+09:00",
+        "launchType": "FARGATE",
+        "platformVersion": "1.4.0",
+        "platformFamily": "Linux",
+        "networkConfiguration": {
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "subnet-0a630a66c6db1828c"
+                ],
+                "securityGroups": [
+                    "sg-03cc1fb3d51bbbc26"
+                ],
+                "assignPublicIp": "ENABLED"
+            }
+        },
+        "rolloutState": "IN_PROGRESS",
+        "rolloutStateReason": "ECS deployment ecs-svc/4409856168200686003 in progress."
+    },
+    {
+        "id": "ecs-svc/4029685946719872936",
+        "status": "ACTIVE",
+        "taskDefinition": "arn:aws:ecs:ap-northeast-1:653502182074:task-definition/workload-test-app-task:2",
+        "desiredCount": 1,
+        "pendingCount": 0,
+        "runningCount": 0,
+        "failedTasks": 0,
+        "createdAt": "2025-09-29T08:10:27.088000+09:00",
+        "updatedAt": "2025-09-29T08:11:32.619000+09:00",
+        "launchType": "FARGATE",
+        "platformVersion": "1.4.0",
+        "platformFamily": "Linux",
+        "networkConfiguration": {
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "subnet-0a630a66c6db1828c"
+                ],
+                "securityGroups": [
+                    "sg-03cc1fb3d51bbbc26"
+                ],
+                "assignPublicIp": "ENABLED"
+            }
+        },
+        "rolloutState": "IN_PROGRESS",
+        "rolloutStateReason": "ECS deployment ecs-svc/4029685946719872936 in progress."
+    },
+    {
+        "id": "ecs-svc/8586968123011542970",
+        "status": "ACTIVE",
+        "taskDefinition": "arn:aws:ecs:ap-northeast-1:653502182074:task-definition/workload-test-app-task:1",
+        "desiredCount": 0,
+        "pendingCount": 0,
+        "runningCount": 0,
+        "failedTasks": 0,
+        "createdAt": "2025-09-29T07:57:48.119000+09:00",
+        "updatedAt": "2025-09-29T08:11:32.666000+09:00",
+        "launchType": "FARGATE",
+        "platformVersion": "1.4.0",
+        "platformFamily": "Linux",
+        "networkConfiguration": {
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "subnet-0a630a66c6db1828c"
+                ],
+                "securityGroups": [
+                    "sg-03cc1fb3d51bbbc26"
+                ],
+                "assignPublicIp": "ENABLED"
+            }
+        },
+        "rolloutState": "COMPLETED",
+        "rolloutStateReason": "ECS deployment ecs-svc/8586968123011542970 completed."
+    }
+]
