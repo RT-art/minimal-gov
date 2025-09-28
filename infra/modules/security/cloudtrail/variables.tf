@@ -1,27 +1,35 @@
 ###############################################
 # Metadata
 ###############################################
+variable "region" {
+  type        = string
+  description = "AWS region"
+}
+
+variable "app_name" {
+  type        = string
+  description = "Application name"
+}
+
+variable "env" {
+  type        = string
+  description = "Environment name (dev/stg/prod)"
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}
+
+###############################################
+# CloudTrail
+###############################################
 variable "enabled" {
   description = "Whether to create the CloudTrail resources"
   type        = bool
   default     = true
 }
 
-variable "app_name" {
-  description = "Application name used in naming and tagging"
-  type        = string
-}
-
-variable "env" {
-  description = "Environment identifier (e.g. dev, stg, prod)"
-  type        = string
-}
-
-variable "tags" {
-  description = "Common tags applied to created resources"
-  type        = map(string)
-  default     = {}
-}
 
 variable "trail_name" {
   description = "Optional explicit name for the CloudTrail. Defaults to <app_name>-<env>-cloudtrail"

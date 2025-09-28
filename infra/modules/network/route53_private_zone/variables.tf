@@ -2,15 +2,15 @@
 # Metadata
 ###############################################
 variable "region" {
-  type        = string
+  type = string
 }
 
 variable "app_name" {
-  type        = string
+  type = string
 }
 
 variable "env" {
-  type        = string
+  type = string
 }
 
 variable "tags" {
@@ -34,11 +34,11 @@ variable "force_destroy" {
 # レコード定義のリスト
 variable "records" {
   type = list(object({
-    name   = string
-    type   = string               # "A" / "CNAME" / "TXT" など
-    ttl    = optional(number)     # alias の場合は不要
+    name    = string
+    type    = string           # "A" / "CNAME" / "TXT" など
+    ttl     = optional(number) # alias の場合は不要
     records = optional(list(string))
-    alias   = optional(object({
+    alias = optional(object({
       name                   = string
       zone_id                = string
       evaluate_target_health = optional(bool, true)

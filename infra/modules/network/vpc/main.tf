@@ -73,7 +73,7 @@ resource "aws_route_table" "private" {
   vpc_id = aws_vpc.this.id
 
   tags = merge(
-    { 
+    {
       Name = "${var.app_name}-${var.env}-rtb-private"
     },
     var.tags,

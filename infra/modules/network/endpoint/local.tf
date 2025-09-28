@@ -34,7 +34,7 @@ locals {
     k => merge(
       v,
       v.service_type == "Interface" ? local.interface_defaults : {},
-      v.service_type == "Gateway"   ? local.gateway_defaults   : {},
+      v.service_type == "Gateway" ? local.gateway_defaults : {},
       try(v.additional_params, {})
     )
   }

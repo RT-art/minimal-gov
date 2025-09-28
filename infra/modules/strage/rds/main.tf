@@ -19,8 +19,8 @@ data "aws_rds_engine_version" "selected_exact" {
 }
 
 data "aws_rds_engine_version" "selected_latest" {
-  count        = var.engine_version == null ? 1 : 0
-  engine       = var.engine
+  count  = var.engine_version == null ? 1 : 0
+  engine = var.engine
   # Pick the region's default version for the engine
   default_only = true
 }
@@ -57,10 +57,10 @@ resource "aws_security_group" "rds" {
   vpc_id      = local.subnets_vpc_id
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
 
@@ -68,12 +68,12 @@ resource "aws_security_group" "rds" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "from_allowed_sg" {
-  count             = var.allowed_sg_id != null ? 1 : 0
-  security_group_id = aws_security_group.rds.id
+  count                        = var.allowed_sg_id != null ? 1 : 0
+  security_group_id            = aws_security_group.rds.id
   referenced_security_group_id = var.allowed_sg_id
-  from_port         = var.db_port
-  to_port           = var.db_port
-  ip_protocol       = "tcp"
+  from_port                    = var.db_port
+  to_port                      = var.db_port
+  ip_protocol                  = "tcp"
 }
 
 # -----------------------------
@@ -90,7 +90,7 @@ module "rds" {
 
   db_name  = var.db_name
   username = var.username
-  password = random_password.db.result  
+  password = random_password.db.result
 
   port                   = var.db_port
   subnet_ids             = var.subnet_ids
@@ -106,10 +106,10 @@ module "rds" {
   backup_retention_period = 7
 
   # CloudWatch Logs (PostgreSQL 用)
-  enabled_cloudwatch_logs_exports   = ["postgresql"]
-  create_cloudwatch_log_group       = true
+  enabled_cloudwatch_logs_exports        = ["postgresql"]
+  create_cloudwatch_log_group            = true
   cloudwatch_log_group_retention_in_days = 30
 
   family = local.effective_parameter_family
-  tags = var.tags
+  tags   = var.tags
 }

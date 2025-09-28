@@ -27,10 +27,10 @@ resource "aws_route53_record" "this" {
   name    = each.value.name
   type    = each.value.type
 
-  ttl  = try(each.value.ttl, null)
+  ttl     = try(each.value.ttl, null)
   records = try(each.value.records, null)
 
-# エイリアスレコード作成用。ailasの値があるときのみ繰り返す
+  # エイリアスレコード作成用。ailasの値があるときのみ繰り返す
   dynamic "alias" {
     for_each = try(each.value.alias, null) != null ? [each.value.alias] : []
     content {

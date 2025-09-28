@@ -30,11 +30,11 @@ module "ecs_sg" {
   ]
 
   tags = merge(
-  {
-    Name = "${var.app_name}-${var.env}-ecssg"
-  },
-  var.tags
-)
+    {
+      Name = "${var.app_name}-${var.env}-ecssg"
+    },
+    var.tags
+  )
 }
 #############################################
 # CloudWatch Logs

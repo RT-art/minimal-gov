@@ -3,13 +3,13 @@
 ###############################################
 
 resource "aws_cloudtrail" "this" {
-  name                          = local.resolved_trail_name
-  s3_bucket_name                = var.s3_bucket_name
-  s3_key_prefix                 = var.s3_key_prefix != null ? var.s3_key_prefix : null
-  kms_key_id                    = var.kms_key_arn != null ? var.kms_key_arn : null
-  sns_topic_name                = var.sns_topic_name != null ? var.sns_topic_name : null
-  cloud_watch_logs_group_arn    = var.cloudwatch_logs_group_arn != null ? var.cloudwatch_logs_group_arn : null
-  cloud_watch_logs_role_arn     = var.cloudwatch_logs_role_arn != null ? var.cloudwatch_logs_role_arn : null
+  name                       = local.resolved_trail_name
+  s3_bucket_name             = var.s3_bucket_name
+  s3_key_prefix              = var.s3_key_prefix != null ? var.s3_key_prefix : null
+  kms_key_id                 = var.kms_key_arn != null ? var.kms_key_arn : null
+  sns_topic_name             = var.sns_topic_name != null ? var.sns_topic_name : null
+  cloud_watch_logs_group_arn = var.cloudwatch_logs_group_arn != null ? var.cloudwatch_logs_group_arn : null
+  cloud_watch_logs_role_arn  = var.cloudwatch_logs_role_arn != null ? var.cloudwatch_logs_role_arn : null
 
   enable_logging                = var.enable_logging
   enable_log_file_validation    = var.enable_log_file_validation

@@ -1,10 +1,10 @@
 ###############################################
 # GuardDuty detector
 ###############################################
-module "guardduty_detector" {                      
-  for_each = var.enabled ? { primary = true } : {} 
-  source   = "aws-ia/guardduty/aws"                
-  version  = "~> 0.1"                              
+module "guardduty_detector" {
+  for_each = var.enabled ? { primary = true } : {}
+  source   = "aws-ia/guardduty/aws"
+  version  = "~> 0.1"
 
   replica_region                = var.replica_region                # レプリカ用のリージョン設定
   enable_guardduty              = var.enable_guardduty              # GuardDuty 自体を有効化するか
@@ -35,16 +35,16 @@ module "guardduty_detector" {
   ipset_config          = var.ipset_config          # 信頼済み IP セットの設定
   threatintelset_config = var.threatintelset_config # 脅威インテルセットの設定
 
-  tags = local.merged_tags 
+  tags = local.merged_tags
 }
 
 ###############################################
 # Organizations delegated administrator
 ###############################################
-module "organizations_admin" {                                                      
-  for_each = var.enabled && var.enable_organization_admin ? { primary = true } : {} 
-  source   = "aws-ia/guardduty/aws//modules/organizations_admin"                    
-  version  = "~> 0.1"                                                               
+module "organizations_admin" {
+  for_each = var.enabled && var.enable_organization_admin ? { primary = true } : {}
+  source   = "aws-ia/guardduty/aws//modules/organizations_admin"
+  version  = "~> 0.1"
 
   admin_account_id                 = local.delegated_admin_account_id                           # 委任管理者アカウント ID
   guardduty_detector_id            = module.guardduty_detector["primary"].guardduty_detector.id # 先に作成した検出器の ID

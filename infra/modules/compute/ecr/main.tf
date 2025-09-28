@@ -4,7 +4,7 @@
 module "ecr" {
   source  = "terraform-aws-modules/ecr/aws"
   version = "~> 3.1"
-  
+
   repository_name = "${var.app_name}-${var.env}-ecr"
 
   # タグ不変
@@ -36,18 +36,18 @@ module "ecr" {
   repository_read_write_access_arns = var.repository_read_write_access_arns
 
   # 既定AES256 → KMS
-  repository_encryption_type = var.repository_encryption_type                     # 例: KMS or AES256（既定 AES256）
-  repository_kms_key         = var.repository_kms_key    # 例: "arn:aws:kms:ap-northeast-1:123456789012:key/xxxx"
+  repository_encryption_type = var.repository_encryption_type # 例: KMS or AES256（既定 AES256）
+  repository_kms_key         = var.repository_kms_key         # 例: "arn:aws:kms:ap-northeast-1:123456789012:key/xxxx"
 
   # destroy時にイメージ残ってても強制削除するか
-  repository_force_delete = var.repository_force_delete  # 既定はfalse
+  repository_force_delete = var.repository_force_delete # 既定はfalse
 
   # ecr読み取りしたいリソースを追加
   repository_read_access_arns = var.repository_read_access_arns # 例: CI等
 
   tags = merge(
     {
-      Name = "${var.app_name}-${var.env}-ecr" 
+      Name = "${var.app_name}-${var.env}-ecr"
     },
     var.tags
   )

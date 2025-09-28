@@ -61,7 +61,7 @@ resource "aws_kms_alias" "this" {
 }
 
 module "bucket" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
+  source = "terraform-aws-modules/s3-bucket/aws"
   # NOTE: Terraform requires a static string for module version resolution.
   # Using variables here causes "Variables not allowed" during init.
   version = "~> 4.1"

@@ -2,15 +2,15 @@
 # Metadata
 ###############################################
 variable "region" {
-  type        = string
+  type = string
 }
 
 variable "app_name" {
-  type        = string
+  type = string
 }
 
 variable "env" {
-  type        = string
+  type = string
 }
 
 variable "tags" {

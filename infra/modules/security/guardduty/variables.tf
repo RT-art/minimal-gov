@@ -1,6 +1,29 @@
 ###############################################
 # Metadata
 ###############################################
+variable "region" {
+  type        = string
+  description = "AWS region"
+}
+
+variable "app_name" {
+  type        = string
+  description = "Application name"
+}
+
+variable "env" {
+  type        = string
+  description = "Environment name (dev/stg/prod)"
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}
+
+###############################################
+# GuardDuty
+###############################################
 variable "enabled" {
   description = "Whether to create GuardDuty resources"
   type        = bool
@@ -17,22 +40,6 @@ variable "delegated_admin_account_id" {
   description = "Explicit delegated admin account ID. Defaults to the current account"
   type        = string
   default     = null
-}
-
-variable "app_name" {
-  description = "Application identifier used for tagging"
-  type        = string
-}
-
-variable "env" {
-  description = "Environment identifier (e.g. dev, stg, prod)"
-  type        = string
-}
-
-variable "tags" {
-  description = "Additional tags applied to created resources"
-  type        = map(string)
-  default     = {}
 }
 
 ###############################################
