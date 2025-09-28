@@ -13,7 +13,7 @@ terraform {
 
 # Reuse the centralized log archive bucket for AWS Config data
 dependency "log_archive" {
-  config_path = "../../log/log_archive_s3"
+  config_path = "../../log/log-archive-s3"
 }
 
 inputs = {

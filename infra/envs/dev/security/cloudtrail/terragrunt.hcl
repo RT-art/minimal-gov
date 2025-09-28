@@ -8,7 +8,7 @@ terraform {
 
 # Use the S3 log archive created in the log account
 dependency "log_archive" {
-  config_path = "../../log/log_archive_s3"
+  config_path = "../../log/log-archive-s3"
 }
 
 inputs = {

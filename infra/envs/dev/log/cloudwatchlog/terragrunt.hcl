@@ -2,7 +2,6 @@ include "root" {
   path = find_in_parent_folders("env.hcl")
 }
 
-# For PoC: use local state here to avoid cross-account
 remote_state {
   backend = "local"
   generate = {
@@ -15,9 +14,12 @@ remote_state {
 }
 
 terraform {
-  source = "../../../../modules/strage/log_archive_s3"
+  source = "../../../../modules/security/cloudwatch-logs-centralized"
 }
 
 inputs = {
   app_name = "minimal-gov-log"
+
+  log_groups        = {}
+  resource_policies = {}
 }
