@@ -15,5 +15,5 @@ output "rds_password_secret_arn" {
 
 output "rds_security_group_id" {
   description = "The security group ID associated with the RDS instance"
-  value       = aws_security_group.rds.id
+  value       = module.rds_sg.security_group_id
 }

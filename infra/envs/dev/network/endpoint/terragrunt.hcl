@@ -35,7 +35,6 @@ inputs = {
     dependency.vpc.outputs.route_table_id
   ]
 
-  # Minimal endpoints for SSM Session Manager
   endpoints = {
     ssm = {
       service             = "ssm"
