@@ -34,8 +34,8 @@ dependency "alb" {
 inputs = {
   # Module-required metadata
   app_name = "minimal-gov"
-  # Disable ECS resources to allow plan with mocked subnets
-  enable_ecs = false
+  # Enable ECS resources for actual deployment
+  enable_ecs = true
 
   # Networking
   vpc_id = dependency.vpc.outputs.vpc_id
@@ -56,7 +56,7 @@ inputs = {
   task_cpu       = 256
   task_memory    = 512
 
-  # ECR image info (for plan)
-  account_id = "351277498040"
-  image_tag  = "v0.1.0"
+  # ECR image info
+  account_id = "351277498040" # TODO: set to workloads account ID
+  image_tag  = "v0.1.0"        # TODO: push this tag to ECR before apply
 }

@@ -5,7 +5,8 @@ module "ecr" {
   source  = "terraform-aws-modules/ecr/aws"
   version = "~> 3.1"
 
-  repository_name = "${var.app_name}-${var.env}-ecr"
+  # Use provided repository_name to align with ECS expectations
+  repository_name = var.repository_name
 
   # タグ不変
   repository_image_tag_mutability = "IMMUTABLE"

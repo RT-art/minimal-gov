@@ -20,6 +20,16 @@ dependency "vpc" {
   mock_outputs_merge_with_state           = true
 }
 
+dependency "app" {
+  config_path = "../app"
+
+  mock_outputs = {
+    ecs_security_group_id = "sg-0123456789abcdef0"
+  }
+  mock_outputs_allowed_terraform_commands = ["validate", "plan", "init"]
+  mock_outputs_merge_with_state           = true
+}
+
 inputs = {
   # Module-required metadata
   app_name      = "minimal-gov-workloads"
@@ -37,6 +47,6 @@ inputs = {
   ]
 
   db_port = 5432
-
-  allowed_sg_id = null
+  # Allow DB access from ECS tasks' SG
+  allowed_sg_id = dependency.app.outputs.ecs_security_group_id
 }

@@ -48,3 +48,12 @@ variable "default_route_table_propagation" {
   type    = bool
   default = false
 }
+
+###############################################
+# RAM Sharing
+###############################################
+variable "share_principals" {
+  type        = list(string)
+  description = "Account IDs to share TGW with"
+  default     = []
+}

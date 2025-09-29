@@ -39,6 +39,13 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
+# Optional: passed by some envs but unused in this module
+variable "vpc_name" {
+  type        = string
+  description = "VPC Name tag (not used by this module)"
+  default     = null
+}
+
 variable "appliance_mode_support" {
   type    = bool
   default = false

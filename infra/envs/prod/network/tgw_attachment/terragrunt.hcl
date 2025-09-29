@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../../../modules/network/tgw_vpc_attachment"
+  source = "../../../../modules/network/tgw_vpc_attachment"
 }
 
 dependency "tgw_hub" {
@@ -21,10 +21,10 @@ dependency "vpc" {
 
   mock_outputs = {
     vpc_id   = "vpc-00000000000000000"
-    vpc_name = "minimal-gov-workloads-dev-vpc"
+    vpc_name = "minimal-gov-network-prod-vpc"
     subnets = {
-      "tgwatt-dev-a" = { id = "subnet-aaa111aaa111aaa11", cidr = "10.0.2.0/24", az = "ap-northeast-1a" }
-      "tgwatt-dev-c" = { id = "subnet-ccc333ccc333ccc33", cidr = "10.0.3.0/24", az = "ap-northeast-1c" }
+      "tgwatt-network-a" = { id = "subnet-aaa111aaa111aaa11", cidr = "192.168.0.0/24", az = "ap-northeast-1a" }
+      "tgwatt-network-c" = { id = "subnet-ccc333ccc333ccc33", cidr = "192.168.1.0/24", az = "ap-northeast-1c" }
     }
   }
   mock_outputs_allowed_terraform_commands = ["validate", "plan", "init"]
@@ -32,13 +32,12 @@ dependency "vpc" {
 }
 
 inputs = {
-  app_name           = "minimal-gov-workloads"
-  # Prefer externally-provided TGW ID (for cross-account attach). Fallback to local TGW for plan.
-  transit_gateway_id = length(get_env("NETWORK_TGW_ID", "")) > 0 ? get_env("NETWORK_TGW_ID") : dependency.tgw_hub.outputs.tgw_id
+  app_name           = "minimal-gov-network"
+  transit_gateway_id = dependency.tgw_hub.outputs.tgw_id
   vpc_id             = dependency.vpc.outputs.vpc_id
   vpc_name           = dependency.vpc.outputs.vpc_name
   subnet_ids = [
-    dependency.vpc.outputs.subnets["tgwatt-dev-a"].id,
-    dependency.vpc.outputs.subnets["tgwatt-dev-c"].id,
+    dependency.vpc.outputs.subnets["tgwatt-network-a"].id,
+    dependency.vpc.outputs.subnets["tgwatt-network-c"].id,
   ]
 }
