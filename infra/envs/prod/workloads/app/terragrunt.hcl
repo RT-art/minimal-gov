@@ -24,32 +24,39 @@ dependency "alb" {
   config_path = "../alb"
 
   mock_outputs = {
-    target_group_arn  = "arn:aws:elasticloadbalancing:region:acct:targetgroup/mock/abc"
-    security_group_id = "sg-0123456789abcdef0"
+    target_group_arn      = "arn:aws:elasticloadbalancing:region:acct:targetgroup/mock/abc"
+    alb_security_group_id = "sg-0123456789abcdef0"
   }
   mock_outputs_allowed_terraform_commands = ["validate", "plan", "init"]
   mock_outputs_merge_with_state           = true
 }
 
 inputs = {
+  # Module-required metadata
+  app_name = "minimal-gov"
+  # Disable ECS resources to allow plan with mocked subnets
+  enable_ecs = false
+
+  # Networking
   vpc_id = dependency.vpc.outputs.vpc_id
   subnet_ids = [
     dependency.vpc.outputs.subnets["ecs-dev-a"].id,
     dependency.vpc.outputs.subnets["ecs-dev-c"].id,
   ]
 
+  # ALB integration
   alb_target_group_arn  = dependency.alb.outputs.target_group_arn
-  alb_security_group_id = dependency.alb.outputs.security_group_id
+  alb_security_group_id = dependency.alb.outputs.alb_security_group_id
 
   security_groups = []
 
+  # ECS task/service
   container_port = 80
+  desired_count  = 1
+  task_cpu       = 256
+  task_memory    = 512
 
-  desired_count = 1
-  task_cpu      = 256
-  task_memory   = 512
-
+  # ECR image info (for plan)
   account_id = "351277498040"
   image_tag  = "v0.1.0"
-
 }

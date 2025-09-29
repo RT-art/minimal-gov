@@ -21,6 +21,9 @@ dependency "vpc" {
 }
 
 inputs = {
+  # Module-required metadata
+  app_name      = "minimal-gov-workloads"
+
   engine         = "postgres"
   engine_version = null
   instance_class = "db.t3.micro"

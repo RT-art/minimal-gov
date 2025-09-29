@@ -21,6 +21,7 @@ dependency "vpc" {
 }
 
 inputs = {
+  app_name = "minimal-gov-workloads"
   vpc_id = dependency.vpc.outputs.vpc_id
   alb_subnet_ids = [
     dependency.vpc.outputs.subnets["alb-dev-a"].id,

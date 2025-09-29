@@ -3,6 +3,17 @@
 #############################################
 locals {
   name = "${var.app_name}-${var.env}-rds"
+
+  # Derive DB parameter group family when using Postgres.
+  # - If engine_version is provided (e.g., "16.3"), use its major ("16") -> "postgres16".
+  # - If engine_version is null, use the first preferred version pattern (e.g., "16.*") -> "postgres16".
+  pg_major = var.engine == "postgres" ? (
+    var.engine_version != null
+      ? split(".", var.engine_version)[0]
+      : regex("\\d+", var.preferred_engine_versions[0])
+  ) : null
+
+  family = var.engine == "postgres" ? "postgres${local.pg_major}" : null
 }
 
 #############################################
@@ -75,6 +86,7 @@ module "rds" {
   identifier     = local.name
   engine         = var.engine
   engine_version = var.engine_version # null の場合は自動で最新を選択
+  family         = local.family
   instance_class = var.instance_class
 
   db_name  = var.db_name

@@ -1,4 +1,11 @@
 #############################################
+# Locals
+#############################################
+locals {
+  service_name = "${var.app_name}-${var.env}-ecs-service"
+}
+
+#############################################
 # Security Group 
 #############################################
 module "ecs_sg" {
@@ -40,7 +47,7 @@ module "ecs_sg" {
 # CloudWatch Logs
 #############################################
 resource "aws_cloudwatch_log_group" "ecs" {
-  name              = "/ecs/${var.service_name}"
+  name              = "/ecs/${local.service_name}"
   retention_in_days = 30
   tags = merge(
     {
@@ -56,6 +63,7 @@ resource "aws_cloudwatch_log_group" "ecs" {
 module "ecs" {
   source  = "terraform-aws-modules/ecs/aws"
   version = "~> 6.4"
+  count   = var.enable_ecs ? 1 : 0 # 構築前plan、実在しないリソースがあってもとりあえず通るように
 
   cluster_name = "${var.app_name}-${var.env}-ecs"
   tags = merge(
@@ -66,7 +74,7 @@ module "ecs" {
   )
 
   services = {
-    ("${var.app_name}-${var.env}-ecs-service") = {
+    (local.service_name) = {
       cpu           = var.task_cpu
       memory        = var.task_memory
       desired_count = var.desired_count

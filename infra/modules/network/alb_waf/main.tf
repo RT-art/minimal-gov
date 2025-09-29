@@ -1,4 +1,11 @@
 #############################################
+# Locals
+#############################################
+locals {
+  name = "${var.app_name}-${var.env}-alb"
+}
+
+#############################################
 # Security Group 
 #############################################
 module "alb_sg" {
@@ -25,11 +32,12 @@ module "alb_sg" {
   ]
 
   tags = merge(
-  {
-    Name = "${var.app_name}-${var.env}-albsg"
-  },
-  var.tags
-)}
+    {
+      Name = "${var.app_name}-${var.env}-albsg"
+    },
+    var.tags
+  )
+}
 
 #############################################
 # ALB
@@ -63,10 +71,11 @@ module "alb" {
   # ターゲットグループ（登録は別途）
   target_groups = {
     app = {
-      name_prefix = "${var.app_name}-${var.env}-alb"
+      name        = "${var.app_name}-${var.env}-albtg"
       protocol    = "HTTP"
       port        = var.listener_port
       target_type = "ip"
+      create_attachment = false
 
       health_check = {
         enabled             = true
@@ -129,7 +138,7 @@ module "waf_acl" {
       action   = { allow = {} }
       statement = {
         ip_set_reference_statement = {
-          arn = module.waf_ipset_allow.arn
+          arn = module.waf_ipset_allow.aws_wafv2_ip_set_arn
         }
       }
       visibility_config = {

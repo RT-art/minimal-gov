@@ -20,6 +20,15 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+###############################################
+# Toggle (plan通す用)
+###############################################
+variable "enable_ecs" {
+  type        = bool
+  description = "Whether to create ECS cluster/service resources (set false to allow plan with mocked dependencies)"
+  default     = true
+}
 ###############################################
 # SG
 ###############################################
@@ -52,11 +61,6 @@ variable "alb_target_group_arn" {
 ###############################################
 # ECS Task / Service
 ###############################################
-variable "container_image" {
-  type        = string
-  description = "Container image for ECS task (ECR or public image)"
-}
-
 variable "container_port" {
   type        = number
   description = "Port on which the container listens"
