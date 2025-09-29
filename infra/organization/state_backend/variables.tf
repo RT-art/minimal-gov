@@ -56,3 +56,9 @@ variable "lifecycle_days" {
   type        = number
   default     = 180
 }
+
+variable "allowed_account_ids" {
+  description = "List of AWS account IDs (12 digits) allowed to read/write the remote state bucket."
+  type        = list(string)
+  default     = []
+}

@@ -2,6 +2,9 @@ include "root" {
   path = find_in_parent_folders("env.hcl")
 }
 
+# Networkアカウント側のTGWを参照する前提のため、このスタックは適用対象外
+skip = true
+
 terraform {
   source = "../../../../../modules/network/tgw_hub"
 }

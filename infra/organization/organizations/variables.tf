@@ -77,9 +77,18 @@ variable "delegated_services" {
 variable "add_scps" {
   description = "追加で作成・アタッチする SCP の一覧"
   type = map(object({
-    description = string
-    file        = string # applyした時の/policies/以下のファイル名
-    target_id   = string # アタッチ先 OU / Account ID
+    description   = string
+    file          = string # applyした時の/policies/以下のファイル名
+    target_id     = optional(string) # 直接 OU / Account ID を指定する場合
+    target_ou_key = optional(string) # module.organizations.ou_ids のキーを利用する場合
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for scp in values(var.add_scps) :
+      (try(scp.target_id, null) != null) || (try(scp.target_ou_key, null) != null)
+    ])
+    error_message = "各 SCP には target_id か target_ou_key のいずれかを指定してください。"
+  }
 }

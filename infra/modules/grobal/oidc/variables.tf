@@ -25,3 +25,13 @@ variable "github_org" {
 variable "github_repo" {
   default = "YOUR_REPO"
 }
+
+variable "managed_policy_arns" {
+  description = "GitHub ActionsロールにアタッチするIAM管理ポリシーARNのリスト"
+  type        = list(string)
+  default     = [
+    "arn:aws:iam::aws:policy/PowerUserAccess",
+    "arn:aws:iam::aws:policy/AWSOrganizationsFullAccess",
+    "arn:aws:iam::aws:policy/IAMFullAccess"
+  ]
+}

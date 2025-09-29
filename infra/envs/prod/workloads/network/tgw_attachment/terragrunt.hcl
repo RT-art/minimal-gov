@@ -7,7 +7,7 @@ terraform {
 }
 
 dependency "tgw_hub" {
-  config_path = "../tgw_hub"
+  config_path = "../../../network/tgw_hub"
 
   mock_outputs = {
     tgw_id = "tgw-aaaaaaaaaaaaaaaaa"
@@ -33,8 +33,7 @@ dependency "vpc" {
 
 inputs = {
   app_name           = "minimal-gov-workloads"
-  # Prefer externally-provided TGW ID (for cross-account attach). Fallback to local TGW for plan.
-  transit_gateway_id = length(get_env("NETWORK_TGW_ID", "")) > 0 ? get_env("NETWORK_TGW_ID") : dependency.tgw_hub.outputs.tgw_id
+  transit_gateway_id = dependency.tgw_hub.outputs.tgw_id
   vpc_id             = dependency.vpc.outputs.vpc_id
   vpc_name           = dependency.vpc.outputs.vpc_name
   subnet_ids = [

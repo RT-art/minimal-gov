@@ -27,6 +27,8 @@ dependency "vpc" {
 }
 
 inputs = {
+  app_name               = "minimal-gov-network"
+
   route_table_ids        = [dependency.vpc.outputs.route_table_id]
   transit_gateway_id     = dependency.tgw_hub.outputs.tgw_id
   destination_cidr_block = "10.0.0.0/16"

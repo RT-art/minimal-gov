@@ -8,6 +8,11 @@ output "alb_dns_name" {
   description = "ALB DNS name"
 }
 
+output "alb_zone_id" {
+  value       = module.alb.lb_zone_id
+  description = "ALB Route53 Hosted Zone ID"
+}
+
 output "alb_security_group_id" {
   value       = module.alb_sg.security_group_id
   description = "ALB用セキュリティグループID"

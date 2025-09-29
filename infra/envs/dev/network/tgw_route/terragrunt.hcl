@@ -36,7 +36,7 @@ dependency "tgw_attachment" {
 }
 
 dependency "workload_tgw_attachment" {
-  config_path = "../../workload/network/tgw_attachment"
+  config_path = "../../workloads/network/tgw_attachment"
 
   mock_outputs = {
     tgw_attachment_id = "tgw-attach-xxxxxxxxxxxxxx"
@@ -46,6 +46,8 @@ dependency "workload_tgw_attachment" {
 }
 
 inputs = {
+  # Metadata
+  app_name = "minimal-gov-network"
   # Transit Gateway
   transit_gateway_id = dependency.tgw_hub.outputs.tgw_id
 

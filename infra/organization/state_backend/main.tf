@@ -7,4 +7,5 @@ module "terraform_remote_backend" {
   versioning_enabled = var.versioning_enabled
   force_destroy      = var.force_destroy
   lifecycle_days     = var.lifecycle_days
+  allowed_account_ids = var.allowed_account_ids
 }

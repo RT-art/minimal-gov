@@ -7,7 +7,7 @@ terraform {
 }
 
 dependency "tgw_hub" {
-  config_path = "../tgw_hub"
+  config_path = "../../../network/tgw_hub"
 
   mock_outputs = {
     tgw_id = "tgw-aaaaaaaaaaaaaaaaa"

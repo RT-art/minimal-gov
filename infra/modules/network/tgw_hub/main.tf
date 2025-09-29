@@ -30,11 +30,12 @@ resource "aws_ram_resource_share" "this" {
 }
 
 resource "aws_ram_principal_association" "this" {
-  principal          = var.share_principals
-  resource_share_arn = aws_ram_resource_share.this[0].arn
+  for_each          = toset(var.share_principals)
+  principal         = each.value
+  resource_share_arn = aws_ram_resource_share.this.arn
 }
 
 resource "aws_ram_resource_association" "tgw" {
-  resource_share_arn = aws_ram_resource_share.this[0].arn
+  resource_share_arn = aws_ram_resource_share.this.arn
   resource_arn       = aws_ec2_transit_gateway.this.arn
 }

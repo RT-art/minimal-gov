@@ -24,3 +24,4 @@ inputs = {
   vpc_id    = dependency.vpc.outputs.vpc_id
   subnet_id = dependency.vpc.outputs.subnets["tgwatt-network-a"].id
 }
+

@@ -84,6 +84,7 @@ add_scps = {
   "SCP-DenyDisableCloudTrail" = {
     description = "CloudTrailの停止・削除を禁止"
     file        = "deny_disable_cloudtrail.json"
-    target_id   = "ou-7kvv-z300jxp7"
+    #付与対象のOUに合わせて target_ou_key または target_id を設定
+    target_ou_key = "workloads"
   }
 }
