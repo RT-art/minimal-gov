@@ -58,5 +58,5 @@ inputs = {
 
   # ECR image info
   account_id = "351277498040" # TODO: set to workloads account ID
-  image_tag  = "v0.1.0"        # TODO: push this tag to ECR before apply
+  image_tag  = "v0.1.0"       # TODO: push this tag to ECR before apply
 }

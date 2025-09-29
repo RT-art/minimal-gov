@@ -48,3 +48,5 @@ terraform.rc
 
 # Terragrunt cache directories
 .terragrunt-cache/
+
+.serena
