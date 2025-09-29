@@ -7,7 +7,7 @@ terraform {
 }
 
 dependency "tgw_hub" {
-  config_path = "../../../network/tgw_hub"
+  config_path = "../tgw_hub"
 
   mock_outputs = {
     tgw_id = "tgw-aaaaaaaaaaaaaaaaa"
@@ -27,6 +27,7 @@ dependency "vpc" {
 }
 
 inputs = {
+  app_name               = "minimal-gov-workloads"
   route_table_ids        = [dependency.vpc.outputs.route_table_id]
   transit_gateway_id     = dependency.tgw_hub.outputs.tgw_id
   destination_cidr_block = "192.168.0.0/16"
