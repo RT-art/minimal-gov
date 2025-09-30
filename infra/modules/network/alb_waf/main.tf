@@ -2,7 +2,9 @@
 # Locals
 #############################################
 locals {
-  name = "${var.app_name}-${var.env}-alb"
+  # app_name が長いと 32 文字制限に引っかかるので短縮
+  short_app = substr(var.app_name, 0, 8) # 先頭8文字だけ
+  name      = "${local.short_app}-${var.env}-alb"
 }
 
 #############################################
@@ -12,15 +14,13 @@ module "alb_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
 
-  name        = "${var.app_name}-${var.env}-albsg"
+  name        = "${local.short_app}-${var.env}-albsg"
   description = "ALB SG"
   vpc_id      = var.vpc_id
 
-  # 送信はすべて許可（0.0.0.0/0）
   egress_rules       = ["all-all"]
   egress_cidr_blocks = ["0.0.0.0/0"]
 
-  # リスナーポートを allow_cidrs からのみ許可
   ingress_with_cidr_blocks = [
     for cidr in var.allow_cidrs : {
       from_port   = var.listener_port
@@ -33,7 +33,7 @@ module "alb_sg" {
 
   tags = merge(
     {
-      Name = "${var.app_name}-${var.env}-albsg"
+      Name = "${local.short_app}-${var.env}-albsg"
     },
     var.tags
   )
@@ -46,18 +46,16 @@ module "alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "~> 10.0"
 
-  name               = "${var.app_name}-${var.env}-alb"
+  name               = local.name
   load_balancer_type = "application"
   internal           = true
 
   vpc_id  = var.vpc_id
   subnets = var.alb_subnet_ids
 
-  # SGは上で作ったものを使用（モジュール側の自動生成は使わない）
   create_security_group = false
   security_groups       = [module.alb_sg.security_group_id]
 
-  # リスナー（HTTP）
   listeners = {
     http = {
       port     = var.listener_port
@@ -68,10 +66,9 @@ module "alb" {
     }
   }
 
-  # ターゲットグループ（登録は別途）
   target_groups = {
     app = {
-      name              = "${var.app_name}-${var.env}-albtg"
+      name              = "${local.short_app}-${var.env}-tg"
       protocol          = "HTTP"
       port              = var.listener_port
       target_type       = "ip"
@@ -91,7 +88,7 @@ module "alb" {
 
   tags = merge(
     {
-      Name = "${var.app_name}-${var.env}-ecssg"
+      Name = "${local.short_app}-${var.env}-alb"
     },
     var.tags
   )
@@ -104,7 +101,7 @@ module "waf_ipset_allow" {
   source  = "aws-ss/wafv2/aws//modules/ip-set"
   version = "~> 3.12"
 
-  name               = "${var.app_name}-${var.env}-alb-allow"
+  name               = "${local.short_app}-${var.env}-allow"
   description        = "Allow CIDR set"
   scope              = "REGIONAL"
   ip_address_version = "IPV4"
@@ -112,25 +109,21 @@ module "waf_ipset_allow" {
 
   tags = merge(
     {
-      Name = "${var.app_name}-${var.env}-ecssg"
+      Name = "${local.short_app}-${var.env}-allow"
     },
     var.tags
   )
 }
 
-# WebACL 本体 + ALB関連付け
 module "waf_acl" {
   source  = "aws-ss/wafv2/aws"
   version = "~> 3.12"
 
-  name        = "${var.app_name}-${var.env}-acl"
+  name        = "${local.short_app}-${var.env}-acl"
   description = "WAF ACL allowing only specified CIDRs"
   scope       = "REGIONAL"
-
-  # マッチしない場合はブロック
   default_action = "block"
 
-  # ルール: IPSetに一致したら許可
   rule = [
     {
       name     = "allow-cidr"
@@ -149,7 +142,6 @@ module "waf_acl" {
     }
   ]
 
-  # ALBと関連付け（リストで渡す仕様）
   resource_arn = [module.alb.arn]
 
   visibility_config = {
@@ -158,13 +150,9 @@ module "waf_acl" {
     sampled_requests_enabled   = true
   }
 
-  # CloudWatch Logs/KDF等のロギングを使う場合は以下を有効化
-  # enabled_logging_configuration = true
-  # log_destination_configs       = "arn:aws:logs:ap-northeast-1:123456789012:log-group:/aws/wafv2/${local.name}"
-
   tags = merge(
     {
-      Name = "${var.app_name}-${var.env}-ecssg"
+      Name = "${local.short_app}-${var.env}-acl"
     },
     var.tags
   )
