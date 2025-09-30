@@ -78,7 +78,7 @@ variable "add_scps" {
   description = "追加で作成・アタッチする SCP の一覧"
   type = map(object({
     description   = string
-    file          = string # applyした時の/policies/以下のファイル名
+    file          = string           # applyした時の/policies/以下のファイル名
     target_id     = optional(string) # 直接 OU / Account ID を指定する場合
     target_ou_key = optional(string) # module.organizations.ou_ids のキーを利用する場合
   }))

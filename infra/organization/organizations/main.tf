@@ -16,7 +16,7 @@ locals {
     name => {
       description = scp.description
       file        = scp.file
-      target_id   = coalesce(
+      target_id = coalesce(
         try(scp.target_id, null),
         try(module.organizations.ou_ids[lower(scp.target_ou_key)], null)
       )

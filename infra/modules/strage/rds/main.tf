@@ -9,8 +9,8 @@ locals {
   # - If engine_version is null, use the first preferred version pattern (e.g., "16.*") -> "postgres16".
   pg_major = var.engine == "postgres" ? (
     var.engine_version != null
-      ? split(".", var.engine_version)[0]
-      : regex("\\d+", var.preferred_engine_versions[0])
+    ? split(".", var.engine_version)[0]
+    : regex("\\d+", var.preferred_engine_versions[0])
   ) : null
 
   family = var.engine == "postgres" ? "postgres${local.pg_major}" : null

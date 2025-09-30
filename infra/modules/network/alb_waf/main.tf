@@ -17,8 +17,8 @@ module "alb_sg" {
   vpc_id      = var.vpc_id
 
   # 送信はすべて許可（0.0.0.0/0）
-  egress_rules        = ["all-all"]
-  egress_cidr_blocks  = ["0.0.0.0/0"]
+  egress_rules       = ["all-all"]
+  egress_cidr_blocks = ["0.0.0.0/0"]
 
   # リスナーポートを allow_cidrs からのみ許可
   ingress_with_cidr_blocks = [
@@ -71,10 +71,10 @@ module "alb" {
   # ターゲットグループ（登録は別途）
   target_groups = {
     app = {
-      name        = "${var.app_name}-${var.env}-albtg"
-      protocol    = "HTTP"
-      port        = var.listener_port
-      target_type = "ip"
+      name              = "${var.app_name}-${var.env}-albtg"
+      protocol          = "HTTP"
+      port              = var.listener_port
+      target_type       = "ip"
       create_attachment = false
 
       health_check = {
@@ -89,12 +89,12 @@ module "alb" {
     }
   }
 
-    tags = merge(
-  {
-    Name = "${var.app_name}-${var.env}-ecssg"
-  },
-  var.tags
-    )
+  tags = merge(
+    {
+      Name = "${var.app_name}-${var.env}-ecssg"
+    },
+    var.tags
+  )
 }
 
 #############################################
@@ -111,11 +111,11 @@ module "waf_ipset_allow" {
   addresses          = var.allow_cidrs
 
   tags = merge(
-  {
-    Name = "${var.app_name}-${var.env}-ecssg"
-  },
-  var.tags
-    )
+    {
+      Name = "${var.app_name}-${var.env}-ecssg"
+    },
+    var.tags
+  )
 }
 
 # WebACL 本体 + ALB関連付け
@@ -163,9 +163,9 @@ module "waf_acl" {
   # log_destination_configs       = "arn:aws:logs:ap-northeast-1:123456789012:log-group:/aws/wafv2/${local.name}"
 
   tags = merge(
-  {
-    Name = "${var.app_name}-${var.env}-ecssg"
-  },
-  var.tags
-    )
+    {
+      Name = "${var.app_name}-${var.env}-ecssg"
+    },
+    var.tags
+  )
 }

@@ -1,0 +1,170 @@
+name: Terragrunt PR Checks
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/**'
+      - '.pre-commit-config.yaml'
+      - '.tflint.hcl'
+      - '.terraform-version'
+      - '.terragrunt-version'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TERRAFORM_VERSION: 1.9.0
+  TERRAGRUNT_VERSION: v0.58.0
+
+jobs:
+  pre-commit:
+    name: Pre-commit Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - uses: autero1/setup-terragrunt@v3
+        with:
+          terragrunt_version: ${{ env.TERRAGRUNT_VERSION }}
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.51.1
+      - name: Install pre-commit
+        run: |
+          pip install --upgrade pip
+          pip install pre-commit
+      - name: Run pre-commit on diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -eo pipefail
+          if [[ -z "$BASE_SHA" ]]; then
+            BASE_SHA=$(git merge-base "$HEAD_SHA" "origin/${{ github.base_ref }}")
+          fi
+          pre-commit run --show-diff-on-failure --from-ref "$BASE_SHA" --to-ref "$HEAD_SHA"
+
+  discover:
+    name: Detect Changed Environments
+    runs-on: ubuntu-latest
+    needs: pre-commit
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build Terragrunt matrix
+        id: set-matrix
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -eo pipefail
+          python <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          base = os.environ.get('BASE_SHA', '').strip()
+          head = os.environ.get('HEAD_SHA', '').strip()
+          if not head:
+              raise SystemExit('HEAD_SHA is required to compute diff')
+
+          if not base:
+              raise SystemExit('BASE_SHA is required to compute diff')
+
+          diff_cmd = ['git', 'diff', '--name-only', base, head]
+          files = subprocess.check_output(diff_cmd, text=True).splitlines()
+
+          override_path = Path('.github/terragrunt-env-map.json')
+          overrides = {}
+          if override_path.exists():
+              overrides = json.loads(override_path.read_text())
+
+          seen = {}
+          for path in files:
+              if not path.startswith('infra/envs/'):
+                  continue
+              parts = path.split('/')
+              if len(parts) < 4:
+                  continue
+              env_name, account = parts[2], parts[3]
+              key = f"{env_name}/{account}"
+              if key in seen:
+                  continue
+              meta = overrides.get(key, {})
+              aws_profile = meta.get('aws_profile', account)
+              aws_region = meta.get('aws_region')
+              entry = {
+                  'env': env_name,
+                  'account': account,
+                  'aws_profile': aws_profile,
+                  'terragrunt_dir': f"infra/envs/{env_name}/{account}"
+              }
+              if aws_region:
+                  entry['aws_region'] = aws_region
+              seen[key] = entry
+
+          matrix = sorted(seen.values(), key=lambda item: (item['env'], item['account']))
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+              fh.write(f"has_changes={'true' if matrix else 'false'}\n")
+              fh.write('matrix=' + json.dumps({'include': matrix}) + '\n')
+          PY
+
+  terragrunt:
+    name: Terragrunt Checks
+    runs-on: ubuntu-latest
+    needs: discover
+    if: needs.discover.outputs.has_changes == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ matrix.terragrunt_dir }}
+    env:
+      AWS_REGION: ${{ matrix.aws_region || 'ap-northeast-1' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - uses: autero1/setup-terragrunt@v3
+        with:
+          terragrunt_version: ${{ env.TERRAGRUNT_VERSION }}
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1
+        with:
+          working_directory: ${{ matrix.terragrunt_dir }}
+          additional_args: --force-all-dirs --minimum-severity MEDIUM
+      - name: Terragrunt plan
+        env:
+          AWS_PROFILE: ${{ matrix.aws_profile }}
+          AWS_REGION: ${{ matrix.aws_region || 'ap-northeast-1' }}
+        run: |
+          terragrunt run-all plan --terragrunt-non-interactive
+
+  report:
+    name: No-op Summary
+    runs-on: ubuntu-latest
+    needs: discover
+    if: needs.discover.outputs.has_changes != 'true'
+    steps:
+      - name: Nothing to do
+        run: echo "No infra/envs changes detected; skipping Terragrunt checks."

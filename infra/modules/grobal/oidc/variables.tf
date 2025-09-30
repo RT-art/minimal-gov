@@ -29,7 +29,7 @@ variable "github_repo" {
 variable "managed_policy_arns" {
   description = "GitHub ActionsロールにアタッチするIAM管理ポリシーARNのリスト"
   type        = list(string)
-  default     = [
+  default = [
     "arn:aws:iam::aws:policy/PowerUserAccess",
     "arn:aws:iam::aws:policy/AWSOrganizationsFullAccess",
     "arn:aws:iam::aws:policy/IAMFullAccess"

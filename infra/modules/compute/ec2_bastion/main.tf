@@ -22,9 +22,9 @@ module "sg" {
   vpc_id      = var.vpc_id
 
   # No inbound needed (use SSM)
-  ingress_rules       = []
-  egress_rules        = ["all-all"]
-  egress_cidr_blocks  = ["0.0.0.0/0"]
+  ingress_rules      = []
+  egress_rules       = ["all-all"]
+  egress_cidr_blocks = ["0.0.0.0/0"]
 
   tags = merge({ Name = "${var.name}-sg" }, var.tags)
 }
@@ -37,13 +37,13 @@ data "aws_iam_policy" "ssm_core" {
 }
 
 resource "aws_iam_role" "this" {
-  name               = "${var.name}-role"
+  name = "${var.name}-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Effect = "Allow",
+      Effect    = "Allow",
       Principal = { Service = "ec2.amazonaws.com" },
-      Action = "sts:AssumeRole"
+      Action    = "sts:AssumeRole"
     }]
   })
   tags = var.tags
