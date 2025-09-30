@@ -7,7 +7,7 @@ terraform {
 }
 
 inputs = {
-  # Align ECR repo name with ECS image path: <acct>.dkr.ecr.<region>.amazonaws.com/<app_name>:<tag>
+  app_name = "minimal-gov-ecr"
   repository_name         = "minimal-gov"
   repository_force_delete = true
 }

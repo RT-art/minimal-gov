@@ -47,7 +47,7 @@ dependency "workload_tgw_attachment" {
 
 inputs = {
   # Metadata
-  app_name = "minimal-gov-network"
+  app_name = "minimal-gov-prod-network-tgw-route"
   # Transit Gateway
   transit_gateway_id = dependency.tgw_hub.outputs.tgw_id
 

@@ -27,7 +27,7 @@ dependency "vpc" {
 }
 
 inputs = {
-  app_name = "minimal-gov-network"
+  app_name = "minimal-gov-prod-network-vpc-route-to-tgw"
 
   route_table_ids        = [dependency.vpc.outputs.route_table_id]
   transit_gateway_id     = dependency.tgw_hub.outputs.tgw_id

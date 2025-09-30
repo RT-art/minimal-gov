@@ -29,7 +29,7 @@ dependency "alb" {
 }
 
 inputs = {
-  app_name      = "minimal-gov-workloads"
+  app_name      = "minimal-gov-prod-workloads-dns"
   vpc_id        = dependency.vpc.outputs.vpc_id
   force_destroy = true
   records = [

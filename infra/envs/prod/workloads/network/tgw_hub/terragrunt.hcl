@@ -10,7 +10,7 @@ terraform {
 }
 
 inputs = {
-  app_name                        = "minimal-gov-workloads"
+  app_name                        = "minimal-gov-prod-workloads-tgw-hub"
   description                     = "Transit Gateway (workloads local ref)"
   amazon_side_asn                 = 64512
   auto_accept_shared_attachments  = true

@@ -32,7 +32,7 @@ dependency "app" {
 
 inputs = {
   # Module-required metadata
-  app_name = "minimal-gov-workloads"
+  app_name = "minimal-gov-prod-workloads-postgres"
 
   engine         = "postgres"
   engine_version = null

@@ -22,7 +22,7 @@ terraform {
 }
 
 inputs = {
-  app_name = "minimal-gov-network"
+  app_name = "minimal-gov-prod-network-endpoint"
 
   vpc_id = dependency.vpc.outputs.vpc_id
 
@@ -53,4 +53,3 @@ inputs = {
     }
   }
 }
-

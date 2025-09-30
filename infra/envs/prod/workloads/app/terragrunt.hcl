@@ -33,7 +33,7 @@ dependency "alb" {
 
 inputs = {
   # Module-required metadata
-  app_name = "minimal-gov"
+  app_name = "minimal-gov-prod-workloads-app"
   # Enable ECS resources for actual deployment
   enable_ecs = true
 
