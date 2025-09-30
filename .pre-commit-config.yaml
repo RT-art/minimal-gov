@@ -4,20 +4,20 @@ repos:
     hooks:
       - id: terraform_fmt
         args: [--args=-diff]
-        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
+        exclude: '^(terraform/modules/|\.terraform/|\.tpl/)'
       - id: terraform_tflint
         args: [--args=--call-module-type=all]
-        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
+        exclude: '^(terraform/modules/|\.terraform/|\.tpl/)'
       - id: terraform_trivy
-        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
+        exclude: '^(terraform/modules/|\.terraform/|\.tpl/)'
       - id: terraform_docs
         args:
           - --hook-config=--path-to-file=README.md
           - --hook-config=--add-to-existing-file=true
           - --hook-config=--create-file-if-not-exist=true
-        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
+        exclude: '^(terraform/modules/|\.terraform/|\.tpl/)'
       - id: terragrunt_validate
-        files: '(infra/prod\.hcl)$'
+        files: '(terraform/prod\.hcl)$'
         exclude: '(\.terraform/.*|resources/terragrunt\.hcl)$'
 
   # terragrunt hcl fmt を最新のコマンドで動かすためのローカル hook
@@ -29,4 +29,4 @@ repos:
         language: system
         types: [hcl]
         files: \.hcl$
-        exclude: '(\.terraform/.*|infra/modules/|\.tpl/)'
+        exclude: '(\.terraform/.*|terraform/modules/|\.tpl/)'
