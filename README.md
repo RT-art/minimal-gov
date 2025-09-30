@@ -3,7 +3,8 @@
 # Minimal Gov
 
 </div>
-⭐ **AWS × Terraform × Terragrunt**
+
+⭐**AWS × Terraform × Terragrunt**
 
 このリポジトリは、実務で触れていた環境を可能な限り模倣し、個人ポートフォリオとして構築した **IaC (Infrastructure as Code)** 一式です。
 
