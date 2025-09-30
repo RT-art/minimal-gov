@@ -15,7 +15,7 @@ tags = {
 }
 
 # Organization の tfstate 情報
-org_state_bucket = "aws-remotebackend-bootstrap-tfstate-ap-northeast-1-653502182074" # マスク済み
+org_state_bucket = "" # マスク済み
 org_state_key    = "state/organization/terraform.tfstate"
 org_state_region = "ap-northeast-1"
 

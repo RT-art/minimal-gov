@@ -33,38 +33,38 @@ additional_ous = {
 
 # Securityアカウント作成
 security_account_name  = "Security"
-security_account_email = "rt.aws0+sec@gmail.com"
+security_account_email = "masked@example.com"
 
 # メンバーアカウント作成
 member_accounts = {
   dev = {
     name  = "Dev"
-    email = "rt.aws0+test@gmail.com"
+    email = "masked@example.com"
     ou    = "dev"
     tags  = "Dev"
   }
   network = {
     name  = "Network"
-    email = "rt.aws0+network@gmail.com"
+    email = "masked@example.com"
     ou    = "workloads"
     tags  = "Network"
   }
   onprem = {
     name  = "Onprem"
-    email = "rt.aws0+onprem@gmail.com"
+    email = "masked@example.com"
     ou    = "workloads"
     tags  = "Onprem"
   }
   ops = {
     name  = "Ops"
-    email = "rt.aws0+ops@gmail.com"
+    email = "masked@example.com"
     ou    = "workloads"
     tags  = "Ops"
   }
 
   log = {
     name  = "Log"
-    email = "rt.aws0+log@gmail.com"
+    email = "masked@example.com"
     ou    = "security"
     tags  = "Log"
 
