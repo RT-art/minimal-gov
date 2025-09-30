@@ -83,8 +83,6 @@ terraform
 
 マルチアカウント環境を模倣し、ランディングゾーンのセットアップから組織単位の管理まで **Terraform で一元管理** 可能にしています。
 
-![AWS Organization Apply](./image/organization%20apply.png)
-
 **SSO (Single Sign-On)** も Terraform で有効化できるようにしています。
 
 ![SSO Setup](./image/sso.png)
