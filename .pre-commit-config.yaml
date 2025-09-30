@@ -6,7 +6,11 @@ repos:
         args: [--args=-diff]
         exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
       - id: terraform_validate
-        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
+        args: [--args=-no-color, --args=-upgrade]
+        exclude: '^(infra/modules/|\.terraform/|\.tpl/)
+      - id: terraform_validate
+  args: [--args=-no-color, --args=-upgrade]
+  exclude: '^(infra/modules/|\.terraform/|\.tpl/)
       - id: terraform_tflint
         args: [--args=--call-module-type=all]
         exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
@@ -18,7 +22,17 @@ repos:
           - --hook-config=--add-to-existing-file=true
           - --hook-config=--create-file-if-not-exist=true
         exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
-      - id: terragrunt_fmt
       - id: terragrunt_validate
         files: '(infra/prod\.hcl)$'
         exclude: '(\.terraform/.*|resources/terragrunt\.hcl)$'
+
+# terragrunt hcl fmt を最新のコマンドで動かすためのローカルhook
+  - repo: local
+    hooks:
+      - id: terragrunt_hclfmt
+        name: terragrunt hcl fmt
+        entry: terragrunt hcl fmt
+        language: system
+        types: [hcl]
+        files: \.hcl$
+        exclude: '(\.terraform/.*|infra/modules/|\.tpl/)'

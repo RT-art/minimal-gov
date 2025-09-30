@@ -16,7 +16,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_terraform_remote_backend"></a> [terraform\_remote\_backend](#module\_terraform\_remote\_backend) | ../../modules/strage/backend | n/a |
+| <a name="module_terraform_remote_backend"></a> [terraform\_remote\_backend](#module\_terraform\_remote\_backend) | ../../modules/storage/backend | n/a |
 
 ## Resources
 

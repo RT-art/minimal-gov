@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../../modules/strage/rds"
+  source = "../../../../modules/storage/rds"
 }
 
 dependency "vpc" {

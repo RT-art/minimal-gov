@@ -32,7 +32,7 @@ dependency "alb" {
 }
 
 inputs = {
-  app_name = "mgov-app"
+  app_name   = "mgov-app"
   enable_ecs = false
 
   vpc_id = dependency.vpc.outputs.vpc_id

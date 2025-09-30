@@ -3,216 +3,50 @@
 # Minimal Gov
 
 </div>
-AWS/Terraform/Terragrunt を使った IaCポートフォリオです。
-ガバナンスの効いた閉域網マルチアカウント環境を、ミニマルな規模で実装しました。
+AWS × Terraform × Terragrunt – ガバナンスの効いた最小構成マルチアカウント / 閉域網 IaC ポートフォリオ
 
-## Architecture
+このリポジトリは、実務で触っていた環境を出来るだけ模して、個人ポートフォリオとして構築した IaC 一式です。
+AWS のベストプラクティス（分離・最小権限・自動化）をできるだけシンプルな構成で再現し、ネットワーク分離 + ゲートウェイ集中（TGW） + WAF/ALB + ECS(Fargate) + RDS(PostgreSQL) + Private DNS を最小セットで動かします。
+
+## 🧭Architecture
 
 ![Architecture Diagram](./image/アーキテクチャ図.png)
 
 ![Organization Diagram](./image/Organization.png)
 
-## Version
+Transit Gateway をハブにして network（共通 NW）と workloads（業務 VPC）を接続
+ワークロード側は ALB+WAF → ECS(Fargate) / RDS(PostgreSQL) / PrivateHostZoneを使用
 
-- Terraform/Provider versions
-  - Terraform: `>= 1.9.0, < 2.0.0`
-  - AWS Provider: `~> 6.14`
+
+## 🔢Version
+
+
 
 ## ディレクトリ構成
 ```
-└── infra
-    ├── envs
-    │   ├── dev
-    │   │   ├── env.hcl
-    │   │   ├── network
-    │   │   │   ├── ec2
-    │   │   │   │   └── terragrunt.hcl
-    │   │   │   ├── endpoint
-    │   │   │   │   └── terragrunt.hcl
-    │   │   │   ├── tgw_attachment
-    │   │   │   │   └── terragrunt.hcl
-    │   │   │   ├── tgw_hub
-    │   │   │   │   └── terragrunt.hcl
-    │   │   │   ├── tgw_route
-    │   │   │   │   └── terragrunt.hcl
-    │   │   │   ├── vpc
-    │   │   │   │   └── terragrunt.hcl
-    │   │   │   └── vpc_route_to_tgw
-    │   │   │       └── terragrunt.hcl
-    │   │   └── workloads
-    │   │       ├── alb
-    │   │       │   └── terragrunt.hcl
-    │   │       ├── app
-    │   │       │   └── terragrunt.hcl
-    │   │       ├── dns
-    │   │       │   └── terragrunt.hcl
-    │   │       ├── ecr
-    │   │       │   └── terragrunt.hcl
-    │   │       ├── network
-    │   │       │   ├── endpoint
-    │   │       │   │   └── terragrunt.hcl
-    │   │       │   ├── tgw_attachment
-    │   │       │   │   └── terragrunt.hcl
-    │   │       │   ├── tgw_hub
-    │   │       │   │   └── terragrunt.hcl
-    │   │       │   ├── vpc
-    │   │       │   │   └── terragrunt.hcl
-    │   │       │   └── vpc_route_to_tgw
-    │   │       │       └── terragrunt.hcl
-    │   │       └── postgres
-    │   │           └── terragrunt.hcl
-    │   └── prod
-    │       ├── env.hcl
-    │       ├── network
-    │       │   ├── ec2
-    │       │   │   └── terragrunt.hcl
-    │       │   ├── endpoint
-    │       │   │   └── terragrunt.hcl
-    │       │   ├── tgw_attachment
-    │       │   │   └── terragrunt.hcl
-    │       │   ├── tgw_hub
-    │       │   │   └── terragrunt.hcl
-    │       │   ├── tgw_route
-    │       │   │   └── terragrunt.hcl
-    │       │   ├── vpc
-    │       │   │   └── terragrunt.hcl
-    │       │   └── vpc_route_to_tgw
-    │       │       └── terragrunt.hcl
-    │       └── workloads
-    │           ├── alb
-    │           │   └── terragrunt.hcl
-    │           ├── app
-    │           │   └── terragrunt.hcl
-    │           ├── dns
-    │           │   └── terragrunt.hcl
-    │           ├── ecr
-    │           │   └── terragrunt.hcl
-    │           ├── network
-    │           │   ├── endpoint
-    │           │   │   └── terragrunt.hcl
-    │           │   ├── tgw_attachment
-    │           │   │   └── terragrunt.hcl
-    │           │   ├── vpc
-    │           │   │   └── terragrunt.hcl
-    │           │   └── vpc_route_to_tgw
-    │           │       └── terragrunt.hcl
-    │           └── postgres
-    │               └── terragrunt.hcl
-    ├── modules
-    │   ├── compute
-    │   │   ├── ec2_bastion
-    │   │   │   ├── main.tf
-    │   │   │   └── variables.tf
-    │   │   ├── ecr
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   └── ecs_fargate
-    │   │       ├── main.tf
-    │   │       ├── outputs.tf
-    │   │       └── variables.tf
-    │   ├── grobal
-    │   │   ├── oidc
-    │   │   │   ├── main.tf
-    │   │   │   └── variables.tf
-    │   │   ├── organizations
-    │   │   │   ├── local.tf
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   └── scp
-    │   │       ├── main.tf
-    │   │       ├── policies
-    │   │       │   ├── deny_all_suspended.json
-    │   │       │   ├── deny_disable_security_services.json
-    │   │       │   ├── deny_leaving_org.json
-    │   │       │   ├── deny_root.json
-    │   │       │   └── deny_unapproved_regions.json
-    │   │       └── variables.tf
-    │   ├── network
-    │   │   ├── alb_waf
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   ├── endpoint
-    │   │   │   ├── local.tf
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   ├── route53_private_zone
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   ├── tgw_hub
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   ├── tgw_route
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   ├── tgw_vpc_attachment
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   ├── tgw_vpc_attachment_accepter
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   ├── vpc
-    │   │   │   ├── main.tf
-    │   │   │   ├── outputs.tf
-    │   │   │   └── variables.tf
-    │   │   └── vpc_route_to_tgw
-    │   │       ├── main.tf
-    │   │       ├── outputs.tf
-    │   │       └── variables.tf
-    │   └── strage
-    │       ├── backend
-    │       │   ├── local.tf
-    │       │   ├── main.tf
-    │       │   ├── outputs.tf
-    │       │   └── variables.tf
-    │       └── rds
-    │           ├── main.tf
-    │           ├── outputs.tf
-    │           └── variables.tf
-    └── organization
-        ├── oidc
-        │   ├── dev
-        │   └── prod
-        │       ├── network
-        │       └── workloads
-        ├── organizations
-        │   ├── README.md
-        │   ├── backend.tf
-        │   ├── main.tf
-        │   ├── outputs.tf
-        │   ├── policies
-        │   │   └── deny_disable_cloudtrail.json
-        │   ├── provider.tf
-        │   ├── sso
-        │   │   ├── README.md
-        │   │   ├── backend.tf
-        │   │   ├── main.tf
-        │   │   ├── provider.tf
-        │   │   ├── ssouser
-        │   │   │   ├── README.md
-        │   │   │   ├── backend.tf
-        │   │   │   ├── main.tf
-        │   │   │   └── terraform.tfvars
-        │   │   ├── terraform.tfvars
-        │   │   └── variables.tf
-        │   ├── terraform.tfvars
-        │   └── variables.tf
-        └── state_backend
-            ├── README.md
-            ├── backend.tf
-            ├── main.tf
-            ├── outputs.tf
-            ├── provider.tf
-            ├── terraform.tfvars
-            └── variables.tf
+infra/
+envs/
+dev|prod/
+env.hcl
+network/ # 共通NW（VPC, TGW, Endpoints 等）
+vpc/
+tgw_hub/ | tgw_attachment/ | tgw_route/
+endpoint/ | vpc_route_to_tgw/
+ec2/ #（必要に応じて踏み台など）
+workloads/ # 業務VPC側（ALB/WAF, ECS, RDS, DNS）
+alb/ | app/ | ecr/ | dns/
+network/ # Workloads内の補助NW（必要に応じて）
+vpc/ | endpoint/ | tgw_*/ | vpc_route_to_tgw/
+postgres/
+
+
+modules/ # Terraform modules（再利用可能な最小パーツ）
+network/
+vpc / endpoint / tgw_hub / tgw_route / route53_private_zone / alb_waf
+compute/
+ecs_fargate / ecr / ec2_bastion
+strage/ # ※typo元ファイル名に合わせています（storage）
+rds / backend
 ```
 
 ## AWS Organizationから完全Iac化

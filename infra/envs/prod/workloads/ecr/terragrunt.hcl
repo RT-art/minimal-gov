@@ -7,7 +7,7 @@ terraform {
 }
 
 inputs = {
-  app_name = "minimal-gov-ecr"
+  app_name                = "minimal-gov-ecr"
   repository_name         = "minimal-gov"
   repository_force_delete = true
 }
