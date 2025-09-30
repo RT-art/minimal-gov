@@ -54,3 +54,15 @@ variable "allowed_account_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_access_logs" {
+  description = "Enable S3 server access logging by writing to a dedicated log bucket."
+  type        = bool
+  default     = true
+}
+
+variable "access_logs_prefix" {
+  description = "Prefix within the access log bucket where logs are delivered."
+  type        = string
+  default     = "access-logs/"
+}

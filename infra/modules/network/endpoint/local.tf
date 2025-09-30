@@ -11,7 +11,6 @@ locals {
     route_table_ids = var.route_table_ids
   }
 
-  # Terraform 1.9+ では条件式の両辺の型整合が厳密なため、
   # 空オブジェクトではなく同じ属性を持つ空値を用意してマージ時の型不一致を回避
   empty_interface_defaults = {
     vpc_id             = var.vpc_id

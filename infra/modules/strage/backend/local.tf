@@ -6,4 +6,7 @@ locals {
   s3_bucket_name     = trim(local.s3_bucket_name_63, "-.")
   versioning         = { enabled = var.versioning_enabled }
   account_id         = data.aws_caller_identity.current.account_id
+  access_logs_bucket_name_raw = lower(replace("${local.s3_bucket_name}-logs", "_", "-"))
+  access_logs_bucket_name_63  = substr(local.access_logs_bucket_name_raw, 0, 63)
+  access_logs_bucket_name     = trim(local.access_logs_bucket_name_63, "-.")
 }

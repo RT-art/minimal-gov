@@ -1,8 +1,24 @@
 repos:
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.100.1
+    rev: v1.97.4
     hooks:
       - id: terraform_fmt
-      - id: terragrunt_fmt
+        args: [--args=-diff]
+        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
       - id: terraform_validate
+        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
       - id: terraform_tflint
+        args: [--args=--call-module-type=all]
+        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
+      - id: terraform_trivy
+        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
+      - id: terraform_docs
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+        exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
+      - id: terragrunt_fmt
+      - id: terragrunt_validate
+        files: '(infra/prod\.hcl)$'
+        exclude: '(\.terraform/.*|resources/terragrunt\.hcl)$'

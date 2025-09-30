@@ -8,15 +8,11 @@
     "aws_region": "ap-northeast-1"
   },
   "dev/network": {
-    "aws_profile": "dev-network",
+    "aws_profile": "network",
     "aws_region": "ap-northeast-1"
   },
   "dev/workloads": {
-    "aws_profile": "dev-workloads",
-    "aws_region": "ap-northeast-1"
-  },
-  "dev/poc": {
-    "aws_profile": "poc",
+    "aws_profile": "workloads",
     "aws_region": "ap-northeast-1"
   }
 }

@@ -5,6 +5,19 @@ resource "aws_s3_bucket" "this" {
   tags          = var.tags
 }
 
+resource "aws_s3_bucket" "access_logs" {
+  count         = var.enable_access_logs ? 1 : 0
+  bucket        = local.access_logs_bucket_name
+  force_destroy = true
+  acl           = "log-delivery-write"
+  tags = merge(
+    var.tags,
+    {
+      Purpose = "s3-access-logs"
+    }
+  )
+}
+
 # 所有権:BucketOwnerEnforced（ACL 無効化）
 resource "aws_s3_bucket_ownership_controls" "this" {
   bucket = aws_s3_bucket.this.id
@@ -16,6 +29,15 @@ resource "aws_s3_bucket_ownership_controls" "this" {
 # Public Access Blockを全て有効
 resource "aws_s3_bucket_public_access_block" "this" {
   bucket                  = aws_s3_bucket.this.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "access_logs" {
+  count                   = var.enable_access_logs ? 1 : 0
+  bucket                  = aws_s3_bucket.access_logs[count.index].id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -40,6 +62,17 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
     }
     # KMS利用時はBucket Keyでコスト最適化
     bucket_key_enabled = var.use_kms
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "access_logs" {
+  count  = var.enable_access_logs ? 1 : 0
+  bucket = aws_s3_bucket.access_logs[count.index].id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+      kms_master_key_id = null
+    }
   }
 }
 
@@ -70,6 +103,21 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
 
   # versioning 設定が先に入っていると安全
   depends_on = [aws_s3_bucket_versioning.this]
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "access_logs" {
+  count  = var.enable_access_logs ? 1 : 0
+  bucket = aws_s3_bucket.access_logs[count.index].id
+
+  rule {
+    id     = "expire-access-logs"
+    status = "Enabled"
+    filter {}
+
+    expiration {
+      days = 365
+    }
+  }
 }
 
 # バケットポリシー（TLS1.2+ 強制 / HTTP 拒否 / 平文アップロード拒否）
@@ -194,4 +242,11 @@ resource "aws_s3_bucket_policy" "this" {
     aws_s3_bucket_ownership_controls.this,
     aws_s3_bucket_public_access_block.this,
   ]
+}
+
+resource "aws_s3_bucket_logging" "this" {
+  count         = var.enable_access_logs ? 1 : 0
+  bucket        = aws_s3_bucket.this.id
+  target_bucket = aws_s3_bucket.access_logs[count.index].id
+  target_prefix = var.access_logs_prefix
 }
