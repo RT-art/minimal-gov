@@ -28,54 +28,59 @@ Transit Gateway をハブとして `network` (共通 NW) と `workloads` (業務
 ```
 terraform
 ├── envs
-│   ├── dev # 開発環境用設定ファイル
-│   │    └── env.hcl
-│   └── prod # 本番環境用設定ファイル
-│       └── env.hcl
-│       ├── network # networkアカウントのトップレイヤー定義
-│       │   ├── ec2 # EC2関連
-│       │   ├── endpoint # VPCエンドポイント関連
-│       │   ├── tgw_attachment # Transit Gatewayアタッチメント関連
-│       │   ├── tgw_hub # Transit Gatewayハブ関連
-│       │   ├── tgw_route # Transit Gatewayルート関連
-│       │   ├── vpc # VPC関連
-│       │   └── vpc_route_to_tgw # Transit GatewayへのVPCルート関連
-│       └── workloads # workloadsアカウントのトップレイヤー定義
-│           ├── alb # Application Load Balancer関連
-│           ├── app # アプリケーション関連
-│           ├── dns # DNS関連 (Route53など)
-│           ├── ecr # Elastic Container Registry関連
-│           ├── network # ワークロードVPCネットワーク関連
-│           └── postgres # PostgreSQL (RDS) 関連
+│   ├── dev
+│   └── prod
+│       ├── env.hcl
+│       ├── network # <--- Network account entrypoint
+│       │   ├── ec2 
+│       │   ├── endpoint 
+│       │   ├── tgw_attachment 
+│       │   ├── tgw_hub 
+│       │   ├── tgw_route 
+│       │   ├── vpc 
+│       │   └── vpc_route_to_tgw 
+│       │ 
+│       └── workloads # <--- Workload account entrypoint
+│           ├── alb 
+│           ├── app 
+│           ├── dns 
+│           ├── ecr 
+│           ├── network
+│           │   ├── endpoint
+│           │   ├── tgw_attachment
+│           │   ├── tgw_hub
+│           │   ├── vpc
+│           │   └── vpc_route_to_tgw
+│           └── postgres 
 │ 
-├── modules # 再利用可能なTerraformモジュール群
-│   ├── compute # 計算リソース関連 (EC2, ECS Fargate, ECRなど)
-│   │   ├── ec2_bastion # EC2 Bastionホストモジュール
-│   │   ├── ecr # ECRモジュール
-│   │   └── ecs_fargate # ECS Fargateモジュール
-│   ├── grobal # グローバルリソース関連 (Organizations, SSO, OIDCなど)
-│   │   ├── oidc # OIDCモジュール
-│   │   ├── organizations # AWS Organizationsモジュール
-│   │   └── scp # Service Control Policies (SCP) モジュール
-│   ├── network # ネットワーク関連 (VPC, Transit Gateway, ALB/WAF, Route53など)
-│   │   ├── alb_waf # ALB + WAFモジュール
-│   │   ├── endpoint # VPCエンドポイントモジュール
-│   │   ├── route53_private_zone # Route53プライベートゾーンモジュール
-│   │   ├── tgw_hub # Transit Gatewayハブモジュール
-│   │   ├── tgw_route # Transit Gatewayルートモジュール
-│   │   ├── tgw_vpc_attachment # Transit Gateway VPCアタッチメントモジュール
-│   │   ├── tgw_vpc_attachment_accepter # Transit Gateway VPCアタッチメント承認モジュール
+├── modules
+│   ├── compute 
+│   │   ├── ec2_bastion 
+│   │   ├── ecr 
+│   │   └── ecs_fargate 
+│   ├── grobal 
+│   │   ├── oidc 
+│   │   ├── organizations
+│   │   └── scp 
+│   ├── network
+│   │   ├── alb_waf
+│   │   ├── endpoint 
+│   │   ├── route53_private_zone 
+│   │   ├── tgw_hub 
+│   │   ├── tgw_route 
+│   │   ├── tgw_vpc_attachment 
+│   │   ├── tgw_vpc_attachment_accepter
 │   │   ├── vpc # VPCモジュール
-│   │   └── vpc_route_to_tgw # Transit GatewayへのVPCルートモジュール
-│   └── storage # ストレージ関連 (RDS, S3 backendなど)
-│       ├── backend # S3バックエンドモジュール
-│       └── rds # RDSモジュール
+│   │   └── vpc_route_to_tgw 
+│   └── storage 
+│       ├── backend 
+│       └── rds 
 │
-└── organization # AWS Organizationsのトップレイヤー定義
-    ├── organizations # Organizations管理関連
-    │   ├── policies # Organizationsポリシー関連
-    │   └── sso # SSO関連
-    └── state_backend # Organizationsの状態管理用S3バックエンド
+└── organization # <--- Organization entrypoint(management account)
+    ├── organizations 
+    │   ├── policies 
+    │   └── sso 
+    └── state_backend
 
 ```
 
@@ -162,6 +167,8 @@ terragrunt run-all plan -include-dir workloads
 - **GitHub Actions でマルチアカウント動作可能な差分駆動の plan/tfsec:** (OIDC は実装済み)
 - **RDS 秘密情報の Secrets Manager 連携**
 
+
+---
 
 このリポジトリが、皆様の IaC 構築の一助となれば幸いです。ご意見やコントリビューションも歓迎いたします。
 
