@@ -5,12 +5,6 @@ repos:
       - id: terraform_fmt
         args: [--args=-diff]
         exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
-      - id: terraform_validate
-        args: [--args=-no-color, --args=-upgrade]
-        exclude: '^(infra/modules/|\.terraform/|\.tpl/)
-      - id: terraform_validate
-  args: [--args=-no-color, --args=-upgrade]
-  exclude: '^(infra/modules/|\.terraform/|\.tpl/)
       - id: terraform_tflint
         args: [--args=--call-module-type=all]
         exclude: '^(infra/modules/|\.terraform/|\.tpl/)'
@@ -26,7 +20,7 @@ repos:
         files: '(infra/prod\.hcl)$'
         exclude: '(\.terraform/.*|resources/terragrunt\.hcl)$'
 
-# terragrunt hcl fmt を最新のコマンドで動かすためのローカルhook
+  # terragrunt hcl fmt を最新のコマンドで動かすためのローカル hook
   - repo: local
     hooks:
       - id: terragrunt_hclfmt

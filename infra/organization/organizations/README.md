@@ -27,7 +27,6 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_add_scps"></a> [add\_scps](#input\_add\_scps) | 追加で作成・アタッチする SCP の一覧 | <pre>map(object({<br>    description   = string<br>    file          = string           # applyした時の/policies/以下のファイル名<br>    target_id     = optional(string) # 直接 OU / Account ID を指定する場合<br>    target_ou_key = optional(string) # module.organizations.ou_ids のキーを利用する場合<br>  }))</pre> | `{}` | no |
 | <a name="input_additional_ous"></a> [additional\_ous](#input\_additional\_ous) | 追加で作成したいOUのマップ。keyがOU名、valueが親OU名 | <pre>map(object({<br>    parent_ou = string # 親OU名。指定されなければrootにぶら下げる<br>  }))</pre> | `{}` | no |
 | <a name="input_app_name"></a> [app\_name](#input\_app\_name) | n/a | `string` | n/a | yes |
 | <a name="input_aws_service_access_principals"></a> [aws\_service\_access\_principals](#input\_aws\_service\_access\_principals) | サービスアクセスを有効化するリソース指定（guardduty,configなど、組織内で一元管理したいリソース） | `list(string)` | <pre>[<br>  "guardduty.amazonaws.com",<br>  "config.amazonaws.com",<br>  "cloudtrail.amazonaws.com",<br>  "securityhub.amazonaws.com"<br>]</pre> | no |

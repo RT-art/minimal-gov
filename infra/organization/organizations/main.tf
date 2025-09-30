@@ -10,22 +10,8 @@ module "organizations" {
   tags                          = var.tags
 }
 
-locals {
-  add_scps_final = {
-    for name, scp in var.add_scps :
-    name => {
-      description = scp.description
-      file        = scp.file
-      target_id = coalesce(
-        try(scp.target_id, null),
-        try(module.organizations.ou_ids[lower(scp.target_ou_key)], null)
-      )
-    }
-  }
-}
-
 module "scp" {
   source   = "../../modules/grobal/scp"
-  add_scps = local.add_scps_final
   tags     = var.tags
 }
+
