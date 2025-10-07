@@ -117,7 +117,6 @@ terraform
 管理アカウントで **Cost Export** と **QuickSight** を有効化し、全アカウントのコスト分析をダッシュボードで一元管理できるようにしています。
 
 ![Cost Dashboard](./image/costdashboad.png)
-(applyして動作検証していたら、もうこんなにコストが...)
 
 また、**Athena** による詳細なクエリも可能です。
 
