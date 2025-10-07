@@ -31,7 +31,6 @@ dependency "app" {
 }
 
 inputs = {
-  # Module-required metadata
   app_name = "minimal-gov-workloads"
 
   engine         = "postgres"
@@ -47,6 +46,5 @@ inputs = {
   ]
 
   db_port = 5432
-  # Allow DB access from ECS tasks' SG
   allowed_sg_id = dependency.app.outputs.ecs_security_group_id
 }

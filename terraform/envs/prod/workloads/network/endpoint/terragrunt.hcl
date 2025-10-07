@@ -25,26 +25,21 @@ inputs = {
   app_name = "minimal-gov-prod-workloads-endpoint"
   vpc_id   = dependency.vpc.outputs.vpc_id
 
-  # Interface endpoints will be placed in ECS subnets (no dedicated endpoint subnets defined)
   endpoint_subnet_ids = [
     dependency.vpc.outputs.subnets["ecs-dev-a"].id,
     dependency.vpc.outputs.subnets["ecs-dev-c"].id,
   ]
 
-  # Gateway endpoints will associate with this route table
   route_table_ids = [
     dependency.vpc.outputs.route_table_id
   ]
 
-  # Required endpoints for ECS in private VPC without NAT
   endpoints = {
-    # Gateway endpoint
     s3 = {
       service      = "s3"
       service_type = "Gateway"
     }
 
-    # Interface endpoints
     logs = {
       service             = "logs"
       service_type        = "Interface"

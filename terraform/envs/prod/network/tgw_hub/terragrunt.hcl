@@ -14,6 +14,6 @@ inputs = {
   default_route_table_association = false
   default_route_table_propagation = false
   share_principals = [
-    "351277498040"
+    ""
   ]
 }

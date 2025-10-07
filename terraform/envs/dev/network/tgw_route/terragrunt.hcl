@@ -46,9 +46,7 @@ dependency "workload_tgw_attachment" {
 }
 
 inputs = {
-  # Metadata
   app_name = "minimal-gov-network"
-  # Transit Gateway
   transit_gateway_id = dependency.tgw_hub.outputs.tgw_id
 
   # VPC Attachment IDs
@@ -63,7 +61,6 @@ inputs = {
     }
   )
 
-  # Route Tables to create
   route_tables = [
     { name = "all-rtb" }
   ]

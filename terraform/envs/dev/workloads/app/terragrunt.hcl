@@ -32,31 +32,24 @@ dependency "alb" {
 }
 
 inputs = {
-  # Module-required metadata
   app_name = "minimal-gov"
-  # Enable ECS resources for actual deployment
   enable_ecs = true
 
-  # Networking
   vpc_id = dependency.vpc.outputs.vpc_id
   subnet_ids = [
     dependency.vpc.outputs.subnets["ecs-dev-a"].id,
     dependency.vpc.outputs.subnets["ecs-dev-c"].id,
   ]
 
-  # ALB integration
   alb_target_group_arn  = dependency.alb.outputs.target_group_arn
   alb_security_group_id = dependency.alb.outputs.alb_security_group_id
 
   security_groups = []
 
-  # ECS task/service
   container_port = 80
   desired_count  = 1
   task_cpu       = 256
   task_memory    = 512
-
-  # ECR image info
-  account_id = "351277498040" # TODO: set to workloads account ID
-  image_tag  = "v0.1.0"       # TODO: push this tag to ECR before apply
+  account_id = "351277498040" 
+  image_tag  = "v0.1.0"       
 }

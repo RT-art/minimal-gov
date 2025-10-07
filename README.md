@@ -4,16 +4,13 @@
 
 </div>
 
-⭐**AWS × Terraform × Terragrunt**
+**AWS × Terraform × Terragrunt**
 
 このリポジトリは、実務で触れていた環境を可能な限り模倣し、個人ポートフォリオとして構築した **IaC (Infrastructure as Code)** 一式です。
 
 ## 🧭 Architecture
 
 ![Architecture Diagram](./image/アーキテクチャ図.png)
-
-Transit Gateway をハブとして `network` (共通 NW) と `workloads` (業務 VPC) を接続する構成です。
-ワークロード側は **ALB + WAF** → **ECS(Fargate)** / **RDS(PostgreSQL)** / **PrivateHostZone** を利用しています。
 
 ## 🔢 Version
 
@@ -28,6 +25,12 @@ Transit Gateway をハブとして `network` (共通 NW) と `workloads` (業務
 
 ```
 terraform
+├── organization # <--- Organization entrypoint(management account)
+│    ├── organizations 
+│    │   ├── policies 
+│    │   └── sso 
+│    └── state_backend
+│ 
 ├── envs
 │   ├── dev
 │   └── prod
@@ -54,7 +57,7 @@ terraform
 │           │   └── vpc_route_to_tgw
 │           └── postgres 
 │ 
-├── modules
+├── modules # <--- modules
 │   ├── compute 
 │   │   ├── ec2_bastion 
 │   │   ├── ecr 
@@ -77,16 +80,10 @@ terraform
 │       ├── backend 
 │       └── rds 
 │
-└── organization # <--- Organization entrypoint(management account)
-    ├── organizations 
-    │   ├── policies 
-    │   └── sso 
-    └── state_backend
-
 ```
 
 ## ☁️ AWS Organization からの完全 IaC 化
-
+![SSO Setup](./image/Organization.png)
 マルチアカウント環境を模倣し、ランディングゾーンのセットアップから組織単位の管理まで **Terraform で一元管理** 可能にしています。
 
 **SSO (Single Sign-On)** も Terraform で有効化できるようにしています。
@@ -95,7 +92,7 @@ terraform
 
 ## 🧩 DRY 原則の徹底
 
-**Terragrunt の DRY & Facade パターン** を採用することで、`input` に値を渡すだけで構築可能な、シンプルかつ再利用性の高い IaC を実現しました。
+**Terragrunt** を採用することで、`input` に値を渡すだけで構築可能な、シンプルかつ再利用性の高い IaC を実現しました。
 
 `env.hcl` の値を修正するだけで、`prod` / `dev` 環境の切り替えが可能です。
 
@@ -120,6 +117,7 @@ terraform
 管理アカウントで **Cost Export** と **QuickSight** を有効化し、全アカウントのコスト分析をダッシュボードで一元管理できるようにしています。
 
 ![Cost Dashboard](./image/costdashboad.png)
+(applyして動作検証していたら、もうこんなにコストが...)
 
 また、**Athena** による詳細なクエリも可能です。
 
@@ -132,44 +130,17 @@ terraform
 
 ![Pre-commit CI](./image/pre-commit.png)
 
-## 🚀 Quick Start
+## qiita
+https://qiita.com/rt-art/items/c54d0cea114c0ee72122
 
-### 前提
+https://qiita.com/rt-art/items/c6364d90b1546e92db57
 
-- AWS 資格情報（`AWS_PROFILE` または `~/.aws/credentials`）が設定されていること。
-- Terraform v1.13.3 および Terragrunt v0.87.3 がインストール済みであること。
+https://qiita.com/rt-art/items/2d30cf249bab75bf73f9
 
-### 初回セットアップ (pre-commit)
-
-初回利用時には `pre-commit` を導入し、コード品質チェックを行います。
-
-```bash
-pipx install pre-commit # もしくは venv + pip
-pre-commit install
-pre-commit run --all-files # 全てのファイルに対してチェックを実行
-```
-
-### Plan の実行 (Applyは料金発生に注意)
-
-各 `terragrunt.hcl` の `input` を編集し、以下のコマンドを実行してください。
-
-```bash
-cd infra/envs/prod
-
-# ネットワーク領域 (順序制御しやすいよう個別/一括どちらも実行可能)
-terragrunt run-all plan -include-dir network
-
-# ワークロード領域
-terragrunt run-all plan -include-dir workloads
-```
+https://qiita.com/rt-art/items/4153e5673a18cb487d6d
 
 ## 🗺️ 今後の拡張（TODO）
 
 - **GitHub Actions でマルチアカウント動作可能な差分駆動の plan/tfsec:** (OIDC は実装済み)
 - **RDS 秘密情報の Secrets Manager 連携**
-
-
----
-
-このリポジトリが、皆様の IaC 構築の一助となれば幸いです。ご意見やコントリビューションも歓迎いたします。
 

@@ -19,7 +19,6 @@ dependency "vpc" {
 dependency "alb" {
   config_path = "../alb"
 
-  # Plan/validate 時はモック値を使用
   mock_outputs = {
     alb_dns_name = "internal-minimal-gov-prod-alb-123456.ap-northeast-1.elb.amazonaws.com"
     alb_zone_id  = "Z14GRHDCWA56QT"

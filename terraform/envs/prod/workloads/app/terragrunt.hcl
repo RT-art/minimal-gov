@@ -51,6 +51,6 @@ inputs = {
   task_cpu       = 256
   task_memory    = 512
 
-  account_id = "351277498040" # TODO: set to workloads account ID
-  image_tag  = "v0.1.0"       # TODO: push this tag to ECR before apply
+  account_id = "" 
+  image_tag  = "v0.1.0"       
 }
